@@ -1,0 +1,318 @@
+ocio_profile_version: 2.1
+
+environment:
+  {}
+search_path: "./:./transforms/"
+strictparsing: false
+name: love_v01
+description: OCIO config for BYU Love and Dungeons, '25. Isaac Criddle, author.
+
+roles:
+  aces_interchange: ACES2065-1
+  cie_xyz_d65_interchange: CIE-XYZ-D65
+  color_picking: sRGB Texture
+  color_timing: ACEScct
+  compositing_log: ACEScct
+  default: ACEScg
+  data: Linear|Rawr
+  matte_paint: sRGB Texture
+  scene_linear: ACEScg
+  texture_paint: sRGB Texture
+
+file_rules:
+  - !<Rule> {name: JPG, extension: "jpg", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: JPEG, extension: "jpeg", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: mp4, extension: "mp4", pattern: "*", colorspace: Display Rec.709}
+  - !<Rule> {name: mov, extension: "mov", pattern: "*", colorspace: Display Rec.709}
+  - !<Rule> {name: mkv, extension: "mkv", pattern: "*", colorspace: Display Rec.709}
+  - !<Rule> {name: TIF, extension: "tif", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: TIFF, extension: "tiff", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: PNG, extension: "png", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: OpenEXR, extension: "exr", pattern: "*", colorspace: ACEScg}
+  - !<Rule> {name: Default, colorspace: ACEScg}
+
+shared_views:
+  - !<View> {name: Show Look, view_transform: Show Look, display_colorspace: <USE_DISPLAY_NAME>}
+  - !<View> {name: Technical, view_transform: Technical, display_colorspace: <USE_DISPLAY_NAME>}
+  - !<View> {name: ACES 1.0 SDR Video, view_transform: ACES 1.0 SDR Video, display_colorspace: <USE_DISPLAY_NAME>}
+  - !<View> {name: Linear|Rawr, colorspace: Linear|Rawr}
+
+displays:
+  Display Rec.709:
+    - !<Views> [Show Look, Technical, Linear|Rawr]
+  Display sRGB:
+    - !<Views> [Technical]
+
+active_displays: [Display Rec.709]
+active_views: [Show Look, Show Look Test, Technical, Linear|Rawr, ACES 1.0 SDR Video]
+inactive_colorspaces: [CIE-XYZ-D65, Display sRGB]
+
+looks:
+  - !<Look>
+    name: ACES 1.3 Reference Gamut Compression
+    process_space: ACES2065-1
+    description: |
+      LMT (applied in ACES2065-1) to compress scene-referred values from common cameras into the AP1 gamut
+
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:LMT.Academy.ReferenceGamutCompress.a1.v1.0
+
+      AMF Components
+      --------------
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:InvLMT.Academy.ReferenceGamutCompress.a1.v1.0
+    transform: !<BuiltinTransform> {style: ACES-LMT - ACES 1.3 Reference Gamut Compression}
+
+default_view_transform: Show Look
+
+view_transforms:
+  - !<ViewTransform>
+    name: Technical
+    from_scene_reference: !<BuiltinTransform> {style: UTILITY - ACES-AP0_to_CIE-XYZ-D65_BFD}
+
+  - !<ViewTransform>
+    name: Show Look
+    from_scene_reference: !<GroupTransform>
+      children:
+        - !<ColorSpaceTransform> {src: ACEScg, dst: ACEScct}
+        - !<CDLTransform> {slope: [1.18, 1.16, 1.17], offset: [0.01, 0.01, 0.015], power: [1.3, 1.28, 1.26]}
+        - !<ColorSpaceTransform> {src: ACEScct, dst: ACEScg}
+        - !<ColorSpaceTransform> {src: EGamut, dst: ACEScg}
+        - !<FileTransform> {src: EGamut_2_XYZ.spimtx, interpolation: tetrahedral, direction: inverse}
+        - !<FileTransform> {src: TLog_2_Linear.spi1d, interpolation: linear, direction: inverse}
+        - !<FileTransform> {src: TLog_2_sRGB_TCAMv2.cub, interpolation: tetrahedral}
+        - !<BuiltinTransform> {style: DISPLAY - CIE-XYZ-D65_to_REC.1886-REC.709, direction: inverse}
+
+  - !<ViewTransform>
+    name: ACES 1.0 SDR Video
+    description: |
+      Component of ACES Output Transforms for SDR D65 video
+
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ODT.Academy.RGBmonitor_100nits_dim.a1.0.3
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ODT.Academy.Rec709_100nits_dim.a1.0.3
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ODT.Academy.Rec2020_100nits_dim.a1.0.3
+
+      AMF Components
+      --------------
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:InvODT.Academy.RGBmonitor_100nits_dim.a1.0.3
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:InvODT.Academy.Rec709_100nits_dim.a1.0.3
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:InvODT.Academy.Rec2020_100nits_dim.a1.0.3
+    from_scene_reference: !<BuiltinTransform> {style: ACES-OUTPUT - ACES2065-1_to_CIE-XYZ-D65 - SDR-VIDEO_1.0}
+
+display_colorspaces:
+  - !<ColorSpace>
+    name: CIE-XYZ-D65
+    aliases: [cie_xyz_d65]
+    family: ""
+    equalitygroup: ""
+    bitdepth: 32f
+    description: The "CIE XYZ (D65)" display connection colorspace.
+    isdata: false
+    allocation: uniform
+
+  - !<ColorSpace>
+    name: Display Linear|Rawr
+    aliases: [Display - Linear|Rawr]
+    family: Display
+    equalitygroup: ""
+    bitdepth: 32f
+    description: The utility "Raw" colorspace.
+    isdata: true
+    categories: [file-io, texture]
+    allocation: uniform
+
+  - !<ColorSpace>
+    name: Display sRGB
+    aliases: [srgb_display]
+    family: Display
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert CIE XYZ (D65 white) to sRGB (piecewise EOTF)
+
+    isdata: false
+    categories: [file-io]
+    encoding: sdr-video
+    allocation: uniform
+    from_display_reference: !<BuiltinTransform> {style: DISPLAY - CIE-XYZ-D65_to_sRGB}
+
+  - !<ColorSpace>
+    name: Display Rec.709
+    aliases: [rec1886_rec709_display]
+    family: Display
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert CIE XYZ (D65 white) to Rec.1886/Rec.709 (HD video)
+
+    isdata: false
+    categories: [file-io]
+    encoding: sdr-video
+    allocation: uniform
+    from_display_reference: !<BuiltinTransform> {style: DISPLAY - CIE-XYZ-D65_to_REC.1886-REC.709}
+
+colorspaces:
+  - !<ColorSpace>
+    name: ACES2065-1
+    aliases: [aces2065_1, ACES - ACES2065-1, lin_ap0]
+    family: ACES
+    equalitygroup: ""
+    bitdepth: 32f
+    description: The "Academy Color Encoding System" reference colorspace.
+    isdata: false
+    categories: [file-io]
+    encoding: scene-linear
+    allocation: uniform
+
+  - !<ColorSpace>
+    name: ACEScc
+    aliases: [ACES - ACEScc, acescc_ap1]
+    family: ACES
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert ACEScc to ACES2065-1
+
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ACEScsc.Academy.ACEScc_to_ACES.a1.0.3
+
+      AMF Components
+      --------------
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ACEScsc.Academy.ACES_to_ACEScc.a1.0.3
+    isdata: false
+    categories: [file-io]
+    encoding: log
+    allocation: uniform
+    to_scene_reference: !<BuiltinTransform> {style: ACEScc_to_ACES2065-1}
+
+  - !<ColorSpace>
+    name: ACEScct
+    aliases: [ACES - ACEScct, acescct_ap1]
+    family: ACES
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert ACEScct to ACES2065-1
+
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ACEScsc.Academy.ACEScct_to_ACES.a1.0.3
+
+      AMF Components
+      --------------
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ACEScsc.Academy.ACES_to_ACEScct.a1.0.3
+    isdata: false
+    categories: [file-io, working-space]
+    encoding: log
+    allocation: uniform
+    to_scene_reference: !<BuiltinTransform> {style: ACEScct_to_ACES2065-1}
+
+  - !<ColorSpace>
+    name: ACEScg
+    aliases: [ACES - ACEScg, lin_ap1]
+    family: ACES
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert ACEScg to ACES2065-1
+
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ACEScsc.Academy.ACEScg_to_ACES.a1.0.3
+
+      AMF Components
+      --------------
+      ACEStransformID: urn:ampas:aces:transformId:v1.5:ACEScsc.Academy.ACES_to_ACEScg.a1.0.3
+    isdata: false
+    categories: [file-io, working-space, texture]
+    encoding: scene-linear
+    allocation: uniform
+    to_scene_reference: !<BuiltinTransform> {style: ACEScg_to_ACES2065-1}
+
+  - !<ColorSpace>
+    name: Linear Rec.709|sRGB
+    aliases: [lin_rec709_srgb, Utility - Linear - Rec.709, lin_rec709, lin_srgb, Utility - Linear - sRGB]
+    family: Utility
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert ACES2065-1 to linear Rec.709 primaries, D65 white point
+
+      CLFtransformID: urn:aswf:ocio:transformId:1.0:OCIO:Utility:AP0_to_Linear_Rec709:1.0
+    isdata: false
+    categories: [file-io, working-space, texture]
+    encoding: scene-linear
+    allocation: uniform
+    from_scene_reference: !<GroupTransform>
+      name: AP0 to Linear Rec.709 (sRGB)
+      children:
+        - !<MatrixTransform> {matrix: [2.52168618674388, -1.13413098823972, -0.387555198504164, 0, -0.276479914229922, 1.37271908766826, -0.096239173438334, 0, -0.0153780649660342, -0.152975335867399, 1.16835340083343, 0, 0, 0, 0, 1]}
+
+  - !<ColorSpace>
+    name: Messed Up sRGB/ACEScg Texture
+    aliases: [srgb_encoded_ap1_tx, srgb_ap1]
+    family: Utility
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert ACES2065-1 to sRGB Encoded AP1 primaries, ACES ~=D60 white point
+
+      CLFtransformID: urn:aswf:ocio:transformId:1.0:OCIO:Utility:AP0_to_sRGB_Encoded_AP1-Texture:1.0
+    isdata: false
+    categories: [file-io, texture]
+    encoding: sdr-video
+    allocation: uniform
+    from_scene_reference: !<GroupTransform>
+      name: AP0 to Messed Up sRGB/ACEScg Texture
+      children:
+        - !<MatrixTransform> {matrix: [1.45143931614567, -0.23651074689374, -0.214928569251925, 0, -0.0765537733960206, 1.17622969983357, -0.0996759264375522, 0, 0.00831614842569772, -0.00603244979102102, 0.997716301365323, 0, 0, 0, 0, 1]}
+        - !<ExponentWithLinearTransform> {gamma: 2.4, offset: 0.055, direction: inverse}
+
+  - !<ColorSpace>
+    name: sRGB Texture
+    aliases: [srgb_tx, Utility - sRGB Texture, srgb_texture, Input - Generic - sRGB Texture]
+    family: Utility
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      Convert ACES2065-1 to sRGB
+
+      CLFtransformID: urn:aswf:ocio:transformId:1.0:OCIO:Utility:AP0_to_sRGB-Texture:1.0
+    isdata: false
+    categories: [file-io, texture]
+    allocation: uniform
+    from_scene_reference: !<GroupTransform>
+      name: AP0 to sRGB Rec.709
+      children:
+        - !<MatrixTransform> {matrix: [2.52168618674388, -1.13413098823972, -0.387555198504164, 0, -0.276479914229922, 1.37271908766826, -0.096239173438334, 0, -0.0153780649660342, -0.152975335867399, 1.16835340083343, 0, 0, 0, 0, 1]}
+        - !<ExponentWithLinearTransform> {gamma: 2.4, offset: 0.055, direction: inverse}
+
+  - !<ColorSpace>
+    name: Linear|Rawr
+    aliases: [Utility - Linear|Rawr]
+    family: Utility
+    equalitygroup: ""
+    bitdepth: 32f
+    description: The utility "Raw" colorspace.
+    isdata: true
+    categories: [file-io, texture]
+    allocation: uniform
+
+  - !<ColorSpace>
+    name: "EGamut"
+    bitdepth: 32f
+    family: SceneReferred
+    description: linear scene referred compositing space
+    to_reference: !<FileTransform> {src: EGamut_2_XYZ.spimtx}
+    allocation: lg2
+    allocationvars: [-10, 7, 0.0056065625]
+
+named_transforms:
+  - !<NamedTransform>
+    name: Rec.709 Curve
+    aliases: [rec1886_crv, Utility - Curve - Rec.1886, crv_rec1886]
+    description: |
+      Convert generic linear RGB to Rec.1886 encoded RGB
+
+      CLFtransformID: urn:aswf:ocio:transformId:1.0:OCIO:Utility:Linear_to_Rec1886-Curve:1.0
+    family: Utility
+    categories: [file-io]
+    encoding: sdr-video
+    inverse_transform: !<GroupTransform>
+      name: Linear to Rec.1886
+      children:
+        - !<ExponentTransform> {value: 2.4, style: pass_thru, direction: inverse}
+
