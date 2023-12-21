@@ -14,7 +14,7 @@
    ```bash
    cd ~/Documents
    git clone -c core.sshCommand='ssh -i ~/.ssh/github'git@github.com:scottdmilner/dungeon-pipeline.git
-   cd dungeon_pipe
+   cd dungeon-pipeline
    ```
 1. Configure the git repo to use the new SSH key and our git hooks
    ```bash
