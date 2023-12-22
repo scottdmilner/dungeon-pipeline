@@ -1,11 +1,9 @@
 ocio_profile_version: 2.1
 
-environment:
-  {}
 search_path: "./:./transforms/"
 strictparsing: false
 name: love_v01
-description: OCIO config for BYU Love and Dungeons, '25. Isaac Criddle, author.
+description: VERSION 1.0 OCIO config for BYU Love and Dungeons, '25. Isaac Criddle, author.
 
 roles:
   aces_interchange: ACES2065-1
@@ -34,8 +32,8 @@ file_rules:
 shared_views:
   - !<View> {name: Show Look, view_transform: Show Look, display_colorspace: <USE_DISPLAY_NAME>}
   - !<View> {name: Technical, view_transform: Technical, display_colorspace: <USE_DISPLAY_NAME>}
-  - !<View> {name: ACES 1.0 SDR Video, view_transform: ACES 1.0 SDR Video, display_colorspace: <USE_DISPLAY_NAME>}
   - !<View> {name: Linear|Rawr, colorspace: Linear|Rawr}
+  - !<View> {name: ACES 1.0 SDR Video, view_transform: ACES 1.0 SDR Video, display_colorspace: <USE_DISPLAY_NAME>}
 
 displays:
   Display Rec.709:
@@ -73,7 +71,7 @@ view_transforms:
     from_scene_reference: !<GroupTransform>
       children:
         - !<ColorSpaceTransform> {src: ACEScg, dst: ACEScct}
-        - !<CDLTransform> {slope: [1.18, 1.16, 1.17], offset: [0.01, 0.01, 0.015], power: [1.3, 1.28, 1.26]}
+        - !<CDLTransform> {slope: [1.24, 1.23, 1.23], offset: [0.02, 0.02, 0.027], power: [1.29, 1.28, 1.26], saturation: 0.85} # Creative look
         - !<ColorSpaceTransform> {src: ACEScct, dst: ACEScg}
         - !<ColorSpaceTransform> {src: EGamut, dst: ACEScg}
         - !<FileTransform> {src: EGamut_2_XYZ.spimtx, interpolation: tetrahedral, direction: inverse}
@@ -109,20 +107,8 @@ display_colorspaces:
     allocation: uniform
 
   - !<ColorSpace>
-    name: Display Linear|Rawr
-    aliases: [Display - Linear|Rawr]
-    family: Display
-    equalitygroup: ""
-    bitdepth: 32f
-    description: The utility "Raw" colorspace.
-    isdata: true
-    categories: [file-io, texture]
-    allocation: uniform
-
-  - !<ColorSpace>
     name: Display sRGB
     aliases: [srgb_display]
-    family: Display
     equalitygroup: ""
     bitdepth: 32f
     description: |
@@ -137,8 +123,8 @@ display_colorspaces:
   - !<ColorSpace>
     name: Display Rec.709
     aliases: [rec1886_rec709_display]
-    family: Display
     equalitygroup: ""
+    family: Utility
     bitdepth: 32f
     description: |
       Convert CIE XYZ (D65 white) to Rec.1886/Rec.709 (HD video)
@@ -242,7 +228,7 @@ colorspaces:
         - !<MatrixTransform> {matrix: [2.52168618674388, -1.13413098823972, -0.387555198504164, 0, -0.276479914229922, 1.37271908766826, -0.096239173438334, 0, -0.0153780649660342, -0.152975335867399, 1.16835340083343, 0, 0, 0, 0, 1]}
 
   - !<ColorSpace>
-    name: Messed Up sRGB/ACEScg Texture
+    name: Messed Up sRGB -> ACEScg Texture
     aliases: [srgb_encoded_ap1_tx, srgb_ap1]
     family: Utility
     equalitygroup: ""
@@ -294,7 +280,7 @@ colorspaces:
   - !<ColorSpace>
     name: "EGamut"
     bitdepth: 32f
-    family: SceneReferred
+    family: Utility
     description: linear scene referred compositing space
     to_reference: !<FileTransform> {src: EGamut_2_XYZ.spimtx}
     allocation: lg2
