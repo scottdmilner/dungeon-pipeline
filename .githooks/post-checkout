@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -e
+
+PROD_DIR=/groups/dungeons/pipeline
+LOCAL_DIR=$(git rev-parse --show-toplevel)
+
+#cp "${PROD_DIR}/pipe/accomplice/sg_config.py" "${LOCAL_DIR}/pipe/accomplice/sg_config.py"
