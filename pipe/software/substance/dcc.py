@@ -18,27 +18,27 @@ class SubstanceDCC(DCC):
 
     system = platform.system()
 
-    substance_env_vars = {
+    env_vars = {
         "PYTHONPATH": "",
         "OCIO": str(pipe_path / "lib/ocio/HEAD/config.ocio"),
         "QT_PLUGIN_PATH": None,
         "SUBSTANCE_PAINTER_PLUGINS_PATH": str(this_path.parent / "plugins"),
     }
 
-    substance_launch_command = ""
+    launch_command = ""
     if system == "Windows":
-        substance_launch_command = "C:\\Program Files\\Adobe\\Adobe Substance 3D Painter\\Adobe Substance 3D Painter.exe"
+        launch_command = "C:\\Program Files\\Adobe\\Adobe Substance 3D Painter\\Adobe Substance 3D Painter.exe"
     else:
         raise NotImplementedError(
             f"The operating system {system} is not a supported OS for this DCC software"
         )
 
-    substance_launch_args = []
+    launch_args = []
 
     def __init__(
         self,
-        command: str = substance_launch_command,
-        args: Optional[Sequence[str]] = substance_launch_args,
-        env_vars: Mapping[str, Optional[Union[int, str]]] = substance_env_vars,
+        command: str = launch_command,
+        args: Optional[Sequence[str]] = launch_args,
+        env_vars: Mapping[str, Optional[Union[int, str]]] = env_vars,
     ) -> None:
         super().__init__(command, args, env_vars)
