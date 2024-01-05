@@ -16,15 +16,16 @@ class MayaDCC(DCC):
     this_path = Path(__file__).resolve()
     pipe_path = this_path.parents[2]
 
+    system = platform.system()
+
     maya_env_vars = {
         "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
         "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
         "PYTHONPATH": "",
         "OCIO": str(pipe_path / "lib/ocio/HEAD/config.ocio"),
-        "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI"),
+        "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI") if system == "Linux" else None,
+        "QT_PLUGIN_PATH": None,
     }
-
-    system = platform.system()
 
     maya_launch_command = ""
     if system == "Linux":
