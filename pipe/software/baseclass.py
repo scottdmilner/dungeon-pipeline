@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 
-from typing import Optional, Sequence
+from typing import Mapping, Optional, Sequence, Union
 
 from .interface import DCCInterface
 
@@ -14,12 +14,14 @@ log = logging.getLogger(__name__)
 class DCC(DCCInterface):
     command: str = None
     args: Optional[Sequence[str]] = None
+    env_vars: Mapping[str, Optional[Union[int, str]]] = None
     processes = []
 
     def __init__(
         self,
         command: str,
         args: Optional[Sequence[str]] = [],
+        env_vars: Mapping[str, Optional[Union[int, str]]] = None,
     ) -> None:
         """Initialize DCC object.
 
@@ -30,6 +32,26 @@ class DCC(DCCInterface):
 
         self.command = command
         self.args = args
+        self.env_vars = env_vars or {}
+
+    def _set_env_vars(
+        self, env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None
+    ) -> None:
+        """(Un)Set environment variables to their associated values.
+
+        All values will be converted to strings. If a value is None,
+        that environment variable will be unset.
+        """
+        if env_vars is None:
+            env_vars = self.env_vars
+
+        log.info("(Un)setting environment vars")
+
+        for key, val in env_vars.items():
+            if val is None and key in os.environ:
+                del os.environ[key]
+            else:
+                os.environ[key] = str(val)
 
     def launch(
         self,
@@ -46,6 +68,8 @@ class DCC(DCCInterface):
             command = self.command
         if args is None:
             args = self.args
+
+        self._set_env_vars()
 
         log.info("Launching the software")
         self.processes.append(subprocess.Popen([command] + args))
