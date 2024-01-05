@@ -33,7 +33,7 @@ class HoudiniDCC(DCC):
         houdini_launch_command = "C:\\Program Files\\Side Effects Software\\Houdini 19.5.640\\bin\\houdinifx.exe"
     else:
         raise NotImplementedError(
-            f"The operating system {system} is not a supported OS"
+            f"The operating system {system} is not a supported OS for this DCC software"
         )
 
     houdini_launch_args = ["-foreground"]

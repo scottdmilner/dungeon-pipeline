@@ -30,7 +30,7 @@ class SubstanceDCC(DCC):
         substance_launch_command = "C:\\Program Files\\Adobe\\Adobe Substance 3D Painter\\Adobe Substance 3D Painter.exe"
     else:
         raise NotImplementedError(
-            f"The operating system {system} is not a supported OS"
+            f"The operating system {system} is not a supported OS for this DCC software"
         )
 
     substance_launch_args = []

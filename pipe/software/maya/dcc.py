@@ -34,7 +34,7 @@ class MayaDCC(DCC):
         maya_launch_command = "C:\\Program Files\\Autodesk\\Maya2024\\bin\\maya.exe"
     else:
         raise NotImplementedError(
-            f"The operating system {system} is not a supported OS"
+            f"The operating system {system} is not a supported OS for this DCC software"
         )
 
     maya_launch_args = []
