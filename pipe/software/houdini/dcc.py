@@ -20,8 +20,8 @@ class HoudiniDCC(DCC):
         "HOUDINI_COREDUMP": 1,  # Dump the core on crash to help debugging
         "HOUDINI_MAX_BACKUP_FILES": 20,  # Max backup files
         "HOUDINI_NO_ENV_FILE_OVERRIDES": 1,  # Prevent user envs from overriding existing values
-        "PYTHONPATH": "",
         "OCIO": str(pipe_path / "lib/ocio/HEAD/config.ocio"),
+        "PYTHONPATH": "",
     }
 
     system = platform.system()
