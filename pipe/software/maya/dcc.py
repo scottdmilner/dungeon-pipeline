@@ -22,7 +22,7 @@ class MayaDCC(DCC):
         "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
         "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
         "PYTHONPATH": "",
-        "OCIO": str(pipe_path / "lib/ocio/HEAD/config.ocio"),
+        "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
         "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI") if system == "Linux" else None,
         "QT_PLUGIN_PATH": None,
     }
