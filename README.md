@@ -21,9 +21,35 @@
    git config --add --local core.sshCommand 'ssh -i ~/.ssh/github'
    git config --local core.hooksPath .githooks/
    ```
-1. Check out your personal dev branch
+1. Check out a dev branch for the feature you are working on (or create a general dev branch (`yourname-dev`))
    ```bash
-   git checkout -B yourname-dev 
+   git checkout -B feature-name-yourname 
    # don't need -B if it already exists
-   git push --set-upstream origin yourname-dev
+   git push --set-upstream origin feature-name-yourname
    ```
+
+## Code Style
+
+For this project, we are using the Black style of Python formatting. There is a Git pre-commit hook that will automatically run the `ruff` formatter on your code whenever you make a commit. If it changes any of your formatting it will print a message that looks like this:
+
+```
+Formatting with ruff...
+3 files reformatted, 12 files left unchanged
+```
+
+After that, you can amend your commit to include the changes that `ruff` made with
+
+```bash
+git add <changed files here>
+git commit --amend
+```
+
+This should generally be avoided, but if you need to override the Black style for some reason, use the following comments to suppress `ruff`:
+
+```python
+...
+# fmt: off
+unformatted code here
+# fmt: on
+...
+```
