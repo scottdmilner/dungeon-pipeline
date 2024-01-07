@@ -32,9 +32,9 @@ def getLevelNamesMapping():
     return logging._nameToLevel.keys()
 
 
-def launch(software_name: str) -> None:
+def launch(software_name: str, is_python_shell: bool = False) -> None:
     software = find_implementation(DCCInterface, f"software.{software_name}")
-    software().launch()
+    software(is_python_shell).launch()
 
 
 if __name__ == "__main__":
@@ -52,6 +52,12 @@ if __name__ == "__main__":
         type=str.upper,
         metavar="LEVEL",
     )
+    parser.add_argument(
+        "-p",
+        "--python",
+        help="Open a Python shell in this DCC instead of launching the GUI",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -60,6 +66,6 @@ if __name__ == "__main__":
         format="%(asctime)s %(processName)s(%(process)s) %(threadName)s [%(name)s(%(lineno)s)] [%(levelname)s] %(message)s",
     )
 
-    launch(args.software)
+    launch(args.software, args.python)
 
     log.info("Exiting")

@@ -72,4 +72,5 @@ class DCC(DCCInterface):
         self._set_env_vars()
 
         log.info("Launching the software")
-        self.processes.append(subprocess.Popen([command] + args))
+        log.debug(f"Command: {command}, Args: {args}")
+        self.processes.append(subprocess.call([command] + args))
