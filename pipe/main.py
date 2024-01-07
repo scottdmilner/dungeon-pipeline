@@ -15,7 +15,7 @@ import os
 from argparse import ArgumentParser
 
 from lib.util import find_implementation
-from software.baseclass import DCC
+from software.interface import DCCInterface
 
 pipe_true_root = os.path.realpath(os.path.dirname(__file__))
 
@@ -33,7 +33,7 @@ def getLevelNamesMapping():
 
 
 def launch(software_name: str) -> None:
-    software = find_implementation(DCC, f"software.{software_name}")
+    software = find_implementation(DCCInterface, f"software.{software_name}")
     software().launch()
 
 
