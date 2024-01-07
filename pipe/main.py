@@ -15,7 +15,7 @@ import os
 from argparse import ArgumentParser
 
 from lib.util import find_implementation
-from software.baseclass import DCC
+from software.interface import DCCInterface
 
 pipe_true_root = os.path.realpath(os.path.dirname(__file__))
 
@@ -32,9 +32,9 @@ def getLevelNamesMapping():
     return logging._nameToLevel.keys()
 
 
-def launch(software_name: str) -> None:
-    software = find_implementation(DCC, f"software.{software_name}")
-    software().launch()
+def launch(software_name: str, is_python_shell: bool = False) -> None:
+    software = find_implementation(DCCInterface, f"software.{software_name}")
+    software(is_python_shell).launch()
 
 
 if __name__ == "__main__":
@@ -52,6 +52,12 @@ if __name__ == "__main__":
         type=str.upper,
         metavar="LEVEL",
     )
+    parser.add_argument(
+        "-p",
+        "--python",
+        help="Open a Python shell in this DCC instead of launching the GUI",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -60,6 +66,6 @@ if __name__ == "__main__":
         format="%(asctime)s %(processName)s(%(process)s) %(threadName)s [%(name)s(%(lineno)s)] [%(levelname)s] %(message)s",
     )
 
-    launch(args.software)
+    launch(args.software, args.python)
 
     log.info("Exiting")
