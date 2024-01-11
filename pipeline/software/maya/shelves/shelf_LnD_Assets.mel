@@ -14,7 +14,7 @@ global proc shelf_LnD_Assets () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Publish an asset to the Student Accomplice pipeline" 
+        -annotation "Temporary tool for L&D asset publishing" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
@@ -33,7 +33,7 @@ global proc shelf_LnD_Assets () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "print('hello world')" 
+        -command "from pipe.asset import publish; publish();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
