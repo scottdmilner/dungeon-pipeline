@@ -4,5 +4,12 @@ set -e
 
 PROD_DIR=/groups/dungeons/pipeline
 LOCAL_DIR=$(git rev-parse --show-toplevel)
-
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 #cp "${PROD_DIR}/pipe/accomplice/sg_config.py" "${LOCAL_DIR}/pipe/accomplice/sg_config.py"
+
+# make shelves read-only if this is prod
+if [ "prod" = "${BRANCH}" ]; then
+    chmod -R -w pipe/software/maya/shelves/
+else
+    chmod -R +w pipe/software/maya/shelves/
+fi
