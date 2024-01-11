@@ -9,7 +9,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # make shelves read-only if this is prod
 if [ "prod" = "${BRANCH}" ]; then
-    chmod -R -w pipe/software/maya/shelves/
+    chmod -R -w pipeline/software/maya/shelves/
 else
-    chmod -R +w pipe/software/maya/shelves/
+    chmod -R +w pipeline/software/maya/shelves/
 fi
