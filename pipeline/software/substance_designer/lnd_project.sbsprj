@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<settingsinfo>
+		<version>2</version>
+	</settingsinfo>
+	<projectinfo>
+		<label>LnD Project</label>
+	</projectinfo>
+	<preferences>
+		<view3d>
+			<statesavefileurl>$(PROJECT_DIR)://user_view3d_settings.sbsscn</statesavefileurl>
+			<ispointlight2enable>false</ispointlight2enable>
+			<ispointlight1enable>false</ispointlight1enable>
+			<isambientlightenable>true</isambientlightenable>
+			<defaultshaderurl>sd-3dview-shaders://adobe_standard_material.glslfx</defaultshaderurl>
+			<defaultenvironmentmapurl>sd-3dview-maps://panorama_map.hdr</defaultenvironmentmapurl>
+		</view3d>
+		<versioncontrol>
+			<settingsinfo>
+				<version>2</version>
+			</settingsinfo>
+		</versioncontrol>
+		<ocioenv>
+			<ociofloatbitmapcolorspace>ACEScg</ociofloatbitmapcolorspace>
+			<ociodefaultview>Technical</ociodefaultview>
+			<ociodefaultdisplay>Display Rec.709</ociodefaultdisplay>
+			<ociocolormanagegraphthumbnails>true</ociocolormanagegraphthumbnails>
+			<ocioautodetectcolorspacefromfilenamemethod>parse_filename</ocioautodetectcolorspacefromfilenamemethod>
+			<ocio8bitbitmapcolorspace>ACEScg</ocio8bitbitmapcolorspace>
+			<ocio16bitbitmapcolorspace>ACEScg</ocio16bitbitmapcolorspace>
+		</ocioenv>
+		<library>
+			<settingsinfo>
+				<version>2</version>
+			</settingsinfo>
+		</library>
+		<colormanagement>
+			<colormanagementengine>ocio</colormanagementengine>
+		</colormanagement>
+		<ace>
+			<aceuseembeddedprofiles>true</aceuseembeddedprofiles>
+			<acerenderingintent>relative-colorimetric</acerenderingintent>
+			<acefloatbitmapcolorspace>Raw</acefloatbitmapcolorspace>
+			<acedefaultworkingspace>srgb</acedefaultworkingspace>
+			<acedefaultdisplayspace>sRGB IEC61966-2.1</acedefaultdisplayspace>
+			<acecolormanagegraphthumbnails>false</acecolormanagegraphthumbnails>
+			<ace8bitbitmapcolorspace>sRGB IEC61966-2.1</ace8bitbitmapcolorspace>
+			<ace16bitbitmapcolorspace>sRGB IEC61966-2.1</ace16bitbitmapcolorspace>
+		</ace>
+	</preferences>
+	<isvisible>true</isvisible>
+</root>

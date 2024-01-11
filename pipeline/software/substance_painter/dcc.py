@@ -9,7 +9,7 @@ from ..baseclass import DCC
 log = logging.getLogger(__name__)
 
 
-class SubstanceDCC(DCC):
+class SubstancePainterDCC(DCC):
     """Substance Painter DCC class"""
 
     def __init__(
