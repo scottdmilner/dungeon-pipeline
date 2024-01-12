@@ -1,7 +1,9 @@
+import platform
 import importlib
 import importlib.util
 
 from inspect import getmembers, isabstract, isclass
+from pathlib import Path
 from typing import Optional
 
 
@@ -35,3 +37,23 @@ def find_implementation(cls: type, module: str, package: Optional[str] = None) -
 
     else:
         raise ValueError(f"could not find module '{module}'")
+
+
+def get_pipe_path() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def get_production_path() -> Path:
+    system = platform.system()
+    if system == "Linux":
+        return Path("/groups/dungeons/production")
+    elif system == "Windows":
+        return Path("G:/dungeons/production")
+    else:
+        raise NotImplementedError(
+            "Production path is not defined for this operating system"
+        )
+
+
+def get_asset_path() -> Path:
+    return get_production_path() / "asset"
