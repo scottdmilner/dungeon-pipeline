@@ -1,9 +1,15 @@
+import os
+import platform
+import shutil
+
 import maya.cmds as mc
 
 import pipe
 
 
 def publish() -> None:
+    system = platform.system()
+
     dialog = mc.promptDialog(
         message="Please type the name of the asset",
         title="Asset Export",
@@ -21,8 +27,11 @@ def publish() -> None:
     publish_dir.mkdir(exist_ok=True)
 
     publish_path = str(publish_dir / asset_name) + ".usd"
+    temp_publish_path = os.getenv("TEMP") + asset_name + ".usd"
+
+    # save the file
     mc.file(
-        publish_path,
+        publish_path if system == "Linux" else temp_publish_path,
         options=";".join(
             [
                 "",
@@ -42,7 +51,7 @@ def publish() -> None:
                 "frameStride=1",
                 "frameSample=0.0",
                 "defaultUSDFormat=usdc",
-                "parentScope=",
+                "parentScope=" + asset_name,
                 "shadingMode=useRegistry",
                 "convertMaterialsTo=[UsdPreviewSurface]",
                 "exportInstances=1",
@@ -56,6 +65,11 @@ def publish() -> None:
         preserveReferences=True,
         exportSelected=True,
     )
+
+    # if on Windows, work around this bug: https://github.com/PixarAnimationStudios/OpenUSD/issues/849
+    # TODO: check if this is still needed in Maya 2025
+    if system == "Windows":
+        shutil.move(temp_publish_path, publish_path)
 
     mc.confirmDialog(
         message=f"The selected objects have been exported to {publish_path}"

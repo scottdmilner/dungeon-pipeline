@@ -18,17 +18,19 @@ class HoudiniDCC(DCC):
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
 
+        system = platform.system()
+
         env_vars = {
             "HOUDINI_BACKUP_DIR": "./.backup",  # Backup directory
             "HOUDINI_COREDUMP": 1,  # Dump the core on crash to help debugging
             "HOUDINI_MAX_BACKUP_FILES": 20,  # Max backup files
             "HOUDINI_NO_ENV_FILE_OVERRIDES": 1,  # Prevent user envs from overriding existing values
-            "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            # TODO: revert to project OCIO with R26
+            # "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            "OCIO": str(Path("/opt/pixar" if system == "Linux" else "C:\\Program Files\\Pixar").resolve() / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"),
             "PYTHONPATH": "",
-            "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
+            # "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
         }
-
-        system = platform.system()
 
         launch_command = ""
         if system == "Linux":
