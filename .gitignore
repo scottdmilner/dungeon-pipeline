@@ -1,5 +1,3 @@
-/production
-
 # Ignore IDE files
 **/.idea/
 **/.vscode/
@@ -8,13 +6,16 @@
 **/__pycache__/
 **/__private/
 **.ruff_cache/
+**.backup/
 *.pyc
 *.swp
 *.bak
 *_bak*.hdanc
 
 # Ignore large binary files
+*.bgeo.sc
+*.tex
 *.usd
 *.usdc
 *.vdb
-*.bgeo.sc
+
