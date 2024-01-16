@@ -27,7 +27,7 @@ def publish() -> None:
     publish_dir.mkdir(exist_ok=True)
 
     publish_path = str(publish_dir / asset_name) + ".usd"
-    temp_publish_path = os.getenv("TEMP") + asset_name + ".usd"
+    temp_publish_path = os.getenv("TEMP", "") + asset_name + ".usd"
 
     # save the file
     mc.file(
