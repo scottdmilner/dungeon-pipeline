@@ -13,7 +13,9 @@
 *_bak*.hdanc
 
 # Ignore large binary files
+*.bgeo.sc
+*.tex
 *.usd
 *.usdc
 *.vdb
-*.bgeo.sc
+
