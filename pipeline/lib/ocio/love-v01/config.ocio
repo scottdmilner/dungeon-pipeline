@@ -12,7 +12,7 @@ roles:
   color_timing: ACEScct
   compositing_log: ACEScct
   default: ACEScg
-  data: Linear|Rawr
+  data: Linear-Rawr
   matte_paint: sRGB Texture
   scene_linear: ACEScg
   texture_paint: sRGB Texture
@@ -32,17 +32,17 @@ file_rules:
 shared_views:
   - !<View> {name: Show Look, view_transform: Show Look, display_colorspace: <USE_DISPLAY_NAME>}
   - !<View> {name: Technical, view_transform: Technical, display_colorspace: <USE_DISPLAY_NAME>}
-  - !<View> {name: Linear|Rawr, colorspace: Linear|Rawr}
+  - !<View> {name: Linear-Rawr, colorspace: Linear-Rawr}
   - !<View> {name: ACES 1.0 SDR Video, view_transform: ACES 1.0 SDR Video, display_colorspace: <USE_DISPLAY_NAME>}
 
 displays:
   Display Rec.709:
-    - !<Views> [Show Look, Technical, Linear|Rawr]
+    - !<Views> [Show Look, Technical, Linear-Rawr]
   Display sRGB:
     - !<Views> [Technical]
 
 active_displays: [Display Rec.709]
-active_views: [Show Look, Show Look Test, Technical, Linear|Rawr, ACES 1.0 SDR Video]
+active_views: [Show Look, Show Look Test, Technical, Linear-Rawr, ACES 1.0 SDR Video]
 inactive_colorspaces: [CIE-XYZ-D65, Display sRGB]
 
 looks:
@@ -267,8 +267,8 @@ colorspaces:
         - !<ExponentWithLinearTransform> {gamma: 2.4, offset: 0.055, direction: inverse}
 
   - !<ColorSpace>
-    name: Linear|Rawr
-    aliases: [Utility - Linear|Rawr]
+    name: Linear-Rawr
+    aliases: [Utility - Linear-Rawr]
     family: Utility
     equalitygroup: ""
     bitdepth: 32f
