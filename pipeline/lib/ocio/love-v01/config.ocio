@@ -1,4 +1,4 @@
-ocio_profile_version: 2.1
+ocio_profile_version: 2.0
 
 search_path: "./:./transforms/"
 strictparsing: false
@@ -45,21 +45,7 @@ active_displays: [Display Rec.709]
 active_views: [Show Look, Show Look Test, Technical, Linear-Rawr, ACES 1.0 SDR Video]
 inactive_colorspaces: [CIE-XYZ-D65, Display sRGB]
 
-looks:
-  - !<Look>
-    name: ACES 1.3 Reference Gamut Compression
-    process_space: ACES2065-1
-    description: |
-      LMT (applied in ACES2065-1) to compress scene-referred values from common cameras into the AP1 gamut
-
-      ACEStransformID: urn:ampas:aces:transformId:v1.5:LMT.Academy.ReferenceGamutCompress.a1.v1.0
-
-      AMF Components
-      --------------
-      ACEStransformID: urn:ampas:aces:transformId:v1.5:InvLMT.Academy.ReferenceGamutCompress.a1.v1.0
-    transform: !<BuiltinTransform> {style: ACES-LMT - ACES 1.3 Reference Gamut Compression}
-
-default_view_transform: Show Look
+default_view_transform: Technical
 
 view_transforms:
   - !<ViewTransform>

@@ -43,15 +43,15 @@ class HoudiniDCC(DCC):
             # Project-specific preference overrides
             "HSITE": str(this_path.parent / "hsite"),
             # TODO: revert to project OCIO with R26
-            # "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
-            "OCIO": str(
-                Path(
-                    "/opt/pixar" if system == "Linux" else "C:\\Program Files\\Pixar"
-                ).resolve()
-                / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"
-            ),
+            "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            # "OCIO": str(
+            #     Path(
+            #         "/opt/pixar" if system == "Linux" else "C:\\Program Files\\Pixar"
+            #     ).resolve()
+            #     / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"
+            # ),
             "PYTHONPATH": "",
-            # "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
+            "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
         }
 
         launch_command = ""
