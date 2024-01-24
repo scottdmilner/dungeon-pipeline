@@ -40,6 +40,8 @@ class HoudiniDCC(DCC):
             "HOUDINI_MAX_BACKUP_FILES": 20,
             # Prevent user envs from overriding existing values
             "HOUDINI_NO_ENV_FILE_OVERRIDES": 1,
+            # Package loading debug logging
+            "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
             # Project-specific preference overrides
             "HSITE": str(this_path.parent / "hsite"),
             # TODO: revert to project OCIO with R26
@@ -50,6 +52,7 @@ class HoudiniDCC(DCC):
                 ).resolve()
                 / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"
             ),
+            "PIPE_PATH": str(pipe_path),
             "PYTHONPATH": "",
             # "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
         }
