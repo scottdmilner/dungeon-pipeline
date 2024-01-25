@@ -48,8 +48,9 @@ class DCC(DCCInterface):
         log.info("(Un)setting environment vars")
 
         for key, val in env_vars.items():
-            if val is None and key in os.environ:
-                del os.environ[key]
+            if val is None:
+                if key in os.environ:
+                    del os.environ[key]
             else:
                 os.environ[key] = str(val)
 
