@@ -4,7 +4,7 @@ import importlib.util
 
 from inspect import getmembers, isabstract, isclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 
 def find_implementation(cls: type, module: str, package: Optional[str] = None) -> type:
@@ -57,3 +57,20 @@ def get_production_path() -> Path:
 
 def get_asset_path() -> Path:
     return get_production_path() / "asset"
+
+
+def resolve_mapped_path(path: Union[str, Path]) -> Path:
+    """Windows mapped drive workaround. Adapated from: https://bugs.python.org/msg309160"""
+    path = Path(path).resolve()
+
+    if platform.system() != "Windows":
+        return path
+
+    mapped_paths = []
+    for drive in "ZYXWVUTSRQPONMLKJIHGFEDCBA":
+        root = Path("{}:/".format(drive))
+        try:
+            mapped_paths.append(root / path.relative_to(root.resolve()))
+        except (ValueError, OSError):
+            pass
+    return min(mapped_paths, key=lambda x: len(str(x)), default=path)

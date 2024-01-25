@@ -3,6 +3,8 @@ import platform
 
 from pathlib import Path
 
+from shared.util import resolve_mapped_path
+
 from ..baseclass import DCC
 
 log = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ class HoudiniDCC(DCC):
             # Package loading debug logging
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
             # Project-specific preference overrides
-            "HSITE": str(this_path.parent / "hsite"),
+            "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
             # TODO: revert to project OCIO with R26
             # "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "OCIO": str(
