@@ -2,7 +2,7 @@ import platform
 import importlib
 import importlib.util
 
-from inspect import getmembers, isabstract, isclass
+from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
 from typing import Optional
 
