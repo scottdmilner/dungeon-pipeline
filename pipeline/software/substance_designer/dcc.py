@@ -24,7 +24,7 @@ class SubstanceDesignerDCC(DCC):
         env_vars = {
             "PYTHONPATH": "",
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
-            "QT_PLUGIN_PATH": None,
+            "QT_PLUGIN_PATH": "",
         }
 
         if is_python_shell:
