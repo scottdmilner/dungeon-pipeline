@@ -26,23 +26,63 @@ class JsonSerializable:
         data = json.loads(json_data)
         return cls(data)
 
-    def to_json(self):
+    def to_json(self) -> str:
         return json.dumps(vars(self), default=lambda o: o.__dict__, indent=4)
 
 
-class Asset(JsonSerializable):
-    name = None
-    _path = None
-    version = None
-    variants: Iterable[str] = None
-    id = None
+class AssetStub(JsonSerializable):
+    """Represent "stubs" that come from ShotGrid
+    Stubs are JSON objects with 3 fields: id, name, and type (which is always Asset in this case)
+    """
 
-    def __init__(
-        self, name: str, path: Optional[str] = None, id: Optional[int] = None
-    ) -> None:
-        self.name = name
-        self._path = path
+    disp_name: str
+    id: int
+
+    def __init__(self, disp_name: str, id: int) -> None:
+        self.disp_name = disp_name
         self.id = id
 
-    def fromSG(sg_asset: object) -> "Asset":
-        return Asset(sg_asset["code"], "", sg_asset["id"])
+    def from_sg(sg_stub: object) -> "AssetStub":
+        return AssetStub(sg_stub["name"], sg_stub["id"])
+
+
+class Asset(JsonSerializable):
+    name: str
+    disp_name: str
+    id: int
+    parent: Optional[AssetStub]
+    path: str
+    version = None
+    variants: Optional[Iterable[AssetStub]]
+
+    def __init__(
+        self,
+        name: str,
+        disp_name: Optional[str],
+        path: Optional[str] = None,
+        id: Optional[int] = None,
+        variants: Optional[Iterable[object]] = None,
+        parent: Optional[object] = None,
+    ) -> None:
+        self.name = name
+        self.disp_name = disp_name
+        self.path = path
+        self.id = id
+        self.variants = [AssetStub.from_sg(v) for v in variants] if variants else None
+        # at least for now, assume only 0 or 1 parents per asset
+        self.parent = AssetStub.from_sg(parent[0]) if parent else None
+
+    def from_sg(sg_asset: object) -> "Asset":
+        return Asset(
+            *[
+                sg_asset.get(key)
+                for key in [
+                    "sg_pipe_name",
+                    "code",
+                    "sg_path",
+                    "id",
+                    "assets",
+                    "parents",
+                ]
+            ]
+        )

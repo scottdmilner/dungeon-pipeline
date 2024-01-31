@@ -23,7 +23,7 @@ class DBInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_assets(self, names: Iterable[str]) -> Set[Asset]:
+    def get_assets_by_name(self, names: Iterable[str]) -> Set[Asset]:
         """Get multiple Asset objects"""
         raise NotImplementedError
 

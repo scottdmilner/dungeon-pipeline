@@ -13,7 +13,7 @@
 1. Make a local copy of the git repo
    ```bash
    cd ~/Documents
-   git clone -c core.sshCommand='ssh -i ~/.ssh/github'git@github.com:scottdmilner/dungeon-pipeline.git
+   git clone --recurse-submodules -c core.sshCommand='ssh -i ~/.ssh/github' git@github.com:scottdmilner/dungeon-pipeline.git
    cd dungeon-pipeline
    ```
 1. Configure the git repo to use the new SSH key and our git hooks
