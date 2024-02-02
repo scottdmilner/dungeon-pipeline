@@ -1,0 +1,1 @@
+{"ninja":{"trx":-300.0,"try":40.0,"trz":80.0,"rotx":1.0,"roty":0.0,"rotz":0.0},"kitsune":{"trx":-400.0,"try":45.0,"trz":95.0,"rotx":1.0,"roty":0.0,"rotz":0.0}}

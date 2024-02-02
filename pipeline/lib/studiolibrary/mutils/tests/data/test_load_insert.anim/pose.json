@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "mayaSceneFile": "C:/Users/hovel/Dropbox/git/site-packages/studiolibrary/packages/mutils/tests/data/test_anim.ma", 
+    "angularUnit": "deg", 
+    "ctime": "1518341545", 
+    "endFrame": 10, 
+    "linearUnit": "cm", 
+    "version": "1.0.0", 
+    "user": "Hovel", 
+    "startFrame": 1, 
+    "timeUnit": "film", 
+    "mayaVersion": "2017"
+  }
+,
+  "objects": {
+    "srcSphere:offset": {
+      "attrs": {}
+    }, 
+    "srcSphere:sphere": {
+      "attrs": {
+        "testInteger": {
+          "curve": "CURVE1", 
+          "type": "long", 
+          "value": 5
+        }, 
+        "testProxy": {
+          "type": "double", 
+          "value": 1.0
+        }, 
+        "scaleY": {
+          "type": "double", 
+          "value": 4.66
+        }, 
+        "testLimit": {
+          "type": "double", 
+          "value": 10.0
+        }, 
+        "testConnect": {
+          "type": "double", 
+          "value": 8.0
+        }, 
+        "testEnum": {
+          "curve": "CURVE2", 
+          "type": "enum", 
+          "value": 1
+        }, 
+        "scaleX": {
+          "curve": "CURVE3", 
+          "type": "double", 
+          "value": 0.25
+        }, 
+        "testString": {
+          "type": "string", 
+          "value": "Hello world"
+        }, 
+        "scaleZ": {
+          "curve": "CURVE4", 
+          "type": "double", 
+          "value": 0.5
+        }, 
+        "rotateX": {
+          "curve": "CURVE5", 
+          "type": "doubleAngle", 
+          "value": 45.0
+        }, 
+        "rotateY": {
+          "type": "doubleAngle", 
+          "value": 50.0
+        }, 
+        "rotateZ": {
+          "curve": "CURVE6", 
+          "type": "doubleAngle", 
+          "value": 90.0
+        }, 
+        "testStatic": {
+          "type": "double", 
+          "value": 0.0
+        }, 
+        "translateX": {
+          "curve": "CURVE7", 
+          "type": "doubleLinear", 
+          "value": 0.0
+        }, 
+        "translateY": {
+          "curve": "CURVE8", 
+          "type": "doubleLinear", 
+          "value": 8.0
+        }, 
+        "translateZ": {
+          "curve": "CURVE9", 
+          "type": "doubleLinear", 
+          "value": -12.0
+        }, 
+        "visibility": {
+          "curve": "CURVE10", 
+          "type": "bool", 
+          "value": true
+        }, 
+        "testFloat": {
+          "curve": "CURVE11", 
+          "type": "double", 
+          "value": 0.666
+        }, 
+        "testAnimated": {
+          "curve": "CURVE12", 
+          "type": "double", 
+          "value": 0.0
+        }, 
+        "testVectorX": {
+          "curve": "CURVE13", 
+          "type": "double", 
+          "value": 0.2
+        }, 
+        "testVectorY": {
+          "curve": "CURVE14", 
+          "type": "double", 
+          "value": 1.4
+        }, 
+        "testVectorZ": {
+          "curve": "CURVE15", 
+          "type": "double", 
+          "value": 2.6
+        }, 
+        "testBoolean": {
+          "curve": "CURVE16", 
+          "type": "bool", 
+          "value": true
+        }
+      }
+    }, 
+    "srcSphere:lockedNode": {
+      "attrs": {
+        "translateX": {
+          "type": "doubleLinear", 
+          "value": 0.0
+        }, 
+        "translateY": {
+          "type": "doubleLinear", 
+          "value": 5.0
+        }, 
+        "translateZ": {
+          "curve": "CURVE18", 
+          "type": "doubleLinear", 
+          "value": 0.0
+        }, 
+        "scaleX": {
+          "type": "double", 
+          "value": 1.0
+        }, 
+        "scaleY": {
+          "type": "double", 
+          "value": 1.0
+        }, 
+        "visibility": {
+          "type": "bool", 
+          "value": true
+        }, 
+        "rotateX": {
+          "type": "doubleAngle", 
+          "value": 0.0
+        }, 
+        "rotateY": {
+          "type": "doubleAngle", 
+          "value": 0.0
+        }, 
+        "rotateZ": {
+          "type": "doubleAngle", 
+          "value": 0.0
+        }, 
+        "scaleZ": {
+          "type": "double", 
+          "value": 1.0
+        }
+      }
+    }
+  }
+}

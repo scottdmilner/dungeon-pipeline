@@ -1,0 +1,61 @@
+// This is the default config file and should NOT be changed.
+//
+// There are two ways to create a custom config.
+//
+// 1. You can create a "config.json" at repo/config/config.json.
+// This file will override any keys in this default.json file
+// and will be ignored by git.
+//
+// 2. The other way is to create an environment variable with the name
+// STUDIO_LIBRARY_CONFIG_PATH. The value of this variable should be the
+// full path to your config.json file.
+//
+// 3. Or you could use code to modify the config before loading the window.
+// import studiolibrary
+// studiolibrary.config.set("recursiveSearchDepth", 6)
+// studiolibrary.main()
+
+{
+  // The database path is used for caching the library items.
+  // You can use environment variables within the path. eg: {HOME}
+  "databasePath": "{root}/.studiolibrary/database.json",
+
+  // The temp location used for saving out items and thumbnails
+  "tempPath": "{temp}/StudioLibrary/{user}",
+
+  // The metadata path used for each item. Used for tags, item color etc
+  // eg: /library/data/animation/nemo/.metadata
+  "metadataPath": "{path}/.studiolibrary/metadata.json",
+
+  // Used for saving persistent user data
+  "settingsPath": "{local}/StudioLibrary/LibraryWidget.json",
+
+  // The maximum walking depth from the root directory
+  "recursiveSearchDepth": 5,
+
+  // A list of paths to ignore when walking the root directory
+  "ignorePaths": ["/."],
+
+  // The command used to show a path in the file explorer
+  //"showInFolderCmd": "konqueror \"{path}\"&",
+
+  // Enables the scale factor option in the setting dialog
+  // This might be useful when using high-DPI devices like a 4k monitor
+  "scaleFactorEnabled": true,
+
+  // Check if there are any new versions available on start up
+  "checkForUpdatesEnabled": true,
+
+  // A list of the default item plugins
+  "itemRegistry": [
+    // This is an example item for development
+    // "studiolibrarymaya.exampleitem.ExampleItem",
+    // The maya file item is in development
+    // "studiolibrarymaya.mayafileitem.MayaFileItem",
+    "studiolibrarymaya.poseitem.PoseItem",
+    "studiolibrarymaya.animitem.AnimItem",
+    "studiolibrarymaya.mirroritem.MirrorItem",
+    "studiolibrarymaya.setsitem.SetsItem",
+    "studiolibrary.folderitem.FolderItem"
+  ]
+}

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.9
 
-r"""Launch the BYU 2025 Capstone pipeline ("Love & Dungeons")
+r"""Launch the BYU 2024 Capstone pipeline ("Y24")
 
-With much credit to Matthew Minson and the 2024 Capstone team.
+With much credit to Matthew Minson and the 2024 Capstone team that we took it from and also our little pipe team.
 
 When run as a script, parse the pipe and software from the command line
 arguments, then run launch(). If pipe is not specified, use the value in

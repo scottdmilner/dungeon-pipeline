@@ -31,6 +31,10 @@ class MayaDCC(DCC):
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI") if system == "Linux" else None,
             "QT_PLUGIN_PATH": None,
+            "MAYA_PLUG_IN_PATH": os.pathsep.join([
+                str(this_path.parent / "plug-ins"),
+                "C:\\Program Files\\Side Effects Software\\Houdini 19.5.640\\engine\\maya\\maya2023"
+            ])
         }
 
         launch_command = ""
