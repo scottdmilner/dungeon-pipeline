@@ -48,12 +48,6 @@ class HoudiniDCC(DCC):
             "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
             # TODO: revert to project OCIO with R26
             # "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
-            "OCIO": str(
-                Path(
-                    "/opt/pixar" if system == "Linux" else "C:\\Program Files\\Pixar"
-                ).resolve()
-                / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"
-            ),
             "PIPE_PATH": str(pipe_path),
             "PYTHONPATH": "",
             # "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
