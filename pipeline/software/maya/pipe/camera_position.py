@@ -2,12 +2,10 @@ import maya.cmds as cmds
 import json
 
 config_file = "G:\\shrineflow\\pipeline\\pipeline\\software\\maya\\pipe\\camera_location_config.txt"
-ninja_cam_name = "cam_ninja"
-kitsune_cam_name = "cam_kitsune"
+ninja_cam_name = "cam_ninja1"
+kitsune_cam_name = "cam_kitsune1"
 
 # TODO:
-# - Grab existing camera if there is one (doesn't work)
-# - Figure out why it's so freakin far away?
 # - 
 
 # move the camera to transform (and lock everything)
@@ -25,7 +23,7 @@ def check_camera(nk):
 
 def create_camera(camera_name):
     # Create a new perspective camera
-    new_camera = cmds.camera(name=camera_name, position=(0, 0, 0), rotation=(0, 0, 0))
+    new_camera = cmds.camera(name=camera_name, position=(0, 0, 0), rotation=(0, 0, 0), horizontalFieldOfView=90.0)
 
     # # Set the camera as the active view
     # cmds.lookThru(new_camera)
@@ -47,8 +45,7 @@ def lock_camera(nk, camera_name):
     cmds.setAttr(f'{camera_name}.scaleY', lock=True)
     cmds.setAttr(f'{camera_name}.scaleZ', lock=True)
 
-def move_camera(nk, camera_name):
-    # camera_name = ninja_cam_name if nk else kitsune_cam_name
+def import_data(nk):
     imported_data = None
     try:
         with open(config_file, "r") as file:
@@ -71,6 +68,14 @@ def move_camera(nk, camera_name):
         print("Error: Data not found for the specified character.")
         return
 
+    return data
+
+def move_camera(nk, camera_name, height=0, scale=1):
+    # camera_name = ninja_cam_name if nk else kitsune_cam_name
+    data = import_data(nk)
+
+    
+
     # # Get the active 3D view panel
     # active_panel = cmds.getPanel(withFocus=True)
     # if cmds.getPanel(typeOf=active_panel) != "modelPanel":
@@ -88,8 +93,9 @@ def move_camera(nk, camera_name):
     #     return
 
     # Set the target coordinates
-    target_coordinates = (data.get("trx", 0), data.get("try", 0), data.get("trz", 0))
-    target_rotation = (data.get("rotx", 0), data.get("roty", 0), data.get("rotz", 0))
+    target_coordinates = (-data.get("try", 0) * scale, (data.get("trz", 0) * scale) + (height / 2), data.get("trx", 0) * scale)
+    # target_coordinates = (data.get("trx", 0), data.get("try", 0), data.get("trz", 0))
+    target_rotation = (data.get("roty", 0), data.get("rotz", 0) + 180.0, data.get("rotx", 0))
 
     # Move the camera to the specified coordinates
     cmds.xform(camera_name, translation=target_coordinates, rotation=target_rotation, worldSpace=True)
@@ -97,10 +103,25 @@ def move_camera(nk, camera_name):
 
 # move_active_camera_to_coordinates(True)
 
+def get_scale_and_height(nk):
+    # THIS IS ASSUMING THAT THE NINJA OR KITSUNE RIG IS ALREADY IN THE EDITOR
+    data = import_data(nk)
+    rig_name = None
+    rig_name = "Ninja_Rig" if nk else "Kitsune_Rig"
+    # float[]	xmin, ymin, zmin, xmax, ymax, zmax.
+    bb = cmds.exactWorldBoundingBox(rig_name)
+    height = bb[4]
+    # height = bb[4] - bb[1] # uhhh i guess the character will always be on the floor, so just max y should be fine?
+    scale = height / data.get("height")
+    return scale, height
+
+
+
 def run(nk):
-    # cam_name = ninja_cam_name if nk else kitsune_cam_name
+    # cam_name = ninja_cam_name if nk else kitsune_cam_name  
+    scale, height = get_scale_and_height(nk)
     camera_name = check_camera(nk)
-    move_camera(nk,camera_name)
+    move_camera(nk,camera_name, height, scale)
     lock_camera(nk, camera_name)
 
     # check for existing camera (depending)
