@@ -1,4 +1,4 @@
-# dungeon-pipeline
+# y24-pipeline
 
 
 ## Setting up a dev environment in the labs
@@ -13,8 +13,8 @@
 1. Make a local copy of the git repo
    ```bash
    cd ~/Documents
-   git clone -c core.sshCommand='ssh -i ~/.ssh/github'git@github.com:scottdmilner/dungeon-pipeline.git
-   cd dungeon-pipeline
+   git clone -c core.sshCommand='ssh -i ~/.ssh/github'git@github.com:sofia-i/y24-pipeline.git
+   cd y24-pipeline
    ```
 1. Configure the git repo to use the new SSH key and our git hooks
    ```bash

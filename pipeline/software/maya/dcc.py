@@ -28,7 +28,6 @@ class MayaDCC(DCC):
                     str(pipe_path),
                 ]
             ),
-            "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI") if system == "Linux" else None,
             "QT_PLUGIN_PATH": None,
             "MAYA_PLUG_IN_PATH": os.pathsep.join([
