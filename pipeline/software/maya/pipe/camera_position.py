@@ -4,6 +4,10 @@ import json
 config_file = "G:\\shrineflow\\pipeline\\pipeline\\software\\maya\\pipe\\camera_location_config.txt"
 ninja_cam_name = "cam_ninja1"
 kitsune_cam_name = "cam_kitsune1"
+ninja_rig_name = "Ninja_Rig"
+# ninja_rig_name = "Ninja_Rig"
+kitsune_rig_name = "Kitsune_Rig"
+# kitsune_rig_name = "Kitsune_Rig"
 
 # TODO:
 # - 
@@ -107,7 +111,7 @@ def get_scale_and_height(nk):
     # THIS IS ASSUMING THAT THE NINJA OR KITSUNE RIG IS ALREADY IN THE EDITOR
     data = import_data(nk)
     rig_name = None
-    rig_name = "Ninja_Rig" if nk else "Kitsune_Rig"
+    rig_name = ninja_rig_name if nk else kitsune_rig_name
     # float[]	xmin, ymin, zmin, xmax, ymax, zmax.
     bb = cmds.exactWorldBoundingBox(rig_name)
     height = bb[4]
