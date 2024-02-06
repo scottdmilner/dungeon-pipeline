@@ -4,6 +4,13 @@ import json
 config_file = "G:\\shrineflow\\pipeline\\pipeline\\software\\maya\\pipe\\camera_location_config.txt"
 ninja_cam_name = "cam_ninja1"
 kitsune_cam_name = "cam_kitsune1"
+ninja_rig_name = "Ninja_Rig:Ninja_Rig"
+# ninja_rig_name = "Ninja_Rig"
+kitsune_rig_name = "Kitsune_Rig:Kitsune_Rig"
+# kitsune_rig_name = "Kitsune_Rig"
+
+# TODO:
+# - 
 
 # move the camera to transform (and lock everything)
 def check_camera(nk):
@@ -104,7 +111,7 @@ def get_scale_and_height(nk):
     # THIS IS ASSUMING THAT THE NINJA OR KITSUNE RIG IS ALREADY IN THE EDITOR
     data = import_data(nk)
     rig_name = None
-    rig_name = "Ninja_Rig" if nk else "Kitsune_Rig"
+    rig_name = ninja_rig_name if nk else kitsune_rig_name
     # float[]	xmin, ymin, zmin, xmax, ymax, zmax.
     bb = cmds.exactWorldBoundingBox(rig_name)
     height = bb[4]
@@ -117,10 +124,6 @@ def get_scale_and_height(nk):
 def run(nk):
     # cam_name = ninja_cam_name if nk else kitsune_cam_name  
     scale, height = get_scale_and_height(nk)
-    print("scale:")
-    print(scale)
-    print("height: ")
-    print(height)
     camera_name = check_camera(nk)
     move_camera(nk,camera_name, height, scale)
     lock_camera(nk, camera_name)
