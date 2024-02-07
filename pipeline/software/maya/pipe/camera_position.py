@@ -7,6 +7,7 @@ kitsune_cam_name = "cam_kitsune1"
 ninja_rig_name = "Ninja_Rig:Ninja_Rig"
 # ninja_rig_name = "Ninja_Rig"
 kitsune_rig_name = "Kitsune_Rig:Kitsune_Rig"
+
 # kitsune_rig_name = "Kitsune_Rig"
 
 # TODO:
