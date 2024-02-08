@@ -6,7 +6,7 @@ import subprocess
 
 from typing import Mapping, Optional, Sequence, Union
 
-from .interface import DCCInterface
+from .interface import DCCInterface, DCCLocalizerInterface
 
 log = logging.getLogger(__name__)
 
@@ -75,3 +75,10 @@ class DCC(DCCInterface):
         log.info("Launching the software")
         log.debug(f"Command: {command}, Args: {args}")
         self.processes.append(subprocess.call([command] + args))
+
+
+class DCCLocalizer(DCCLocalizerInterface):
+    id: str
+
+    def __init__(self, id: str) -> None:
+        self.id = id
