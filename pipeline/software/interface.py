@@ -1,6 +1,8 @@
 """Interfaces for interacting with DCCs"""
 
 from abc import ABCMeta, abstractmethod
+from typing import Optional, Type
+from PySide2 import QtWidgets
 
 
 class DCCInterface(metaclass=ABCMeta):
@@ -21,12 +23,12 @@ class DCCLocalizerInterface(metaclass=ABCMeta):
     """interface for functions that need to be localized to the DCC"""
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the pipe instance"""
         raise NotImplementedError
 
     @abstractmethod
-    def get_main_qt_window(self):
+    def get_main_qt_window(self) -> Optional[Type["QtWidgets.QWidget"]]:
         """Get the QT object representing the main application window.
         Use for the parent of other QT popups"""
         raise NotImplementedError

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Callable, Iterable, List, Sequence, Set, Type
+from typing import Any, Callable, Iterable, List, Sequence, Type
 
 from shared.struct import Asset, AssetStub
 
