@@ -1,7 +1,8 @@
 import logging
-from datetime import datetime, timedelta
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Callable, Iterable, List, Sequence, Type
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, TypeVar
 
 from shared.struct import Asset, AssetStub
 
@@ -9,6 +10,8 @@ from .baseclass import DB
 from .typing import Filter
 
 from . import shotgun_api3
+
+RT = TypeVar("RT")  # return type
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +23,9 @@ class SGaaDB(DB):
     _id: int
     _sg_asset_list: List[object]
     _sg_asset_list_utime: datetime
+    # MAGIC NUMBER: cache expiry time
     _sg_asset_list_exp: timedelta = timedelta(minutes=2)
+    _force_expire: bool
 
     def __init__(self, *args) -> None:
         # unpack SG_Config object if we're passed one
@@ -40,7 +45,7 @@ class SGaaDB(DB):
         self._id = id
 
         self._load_sg_asset_list()
-        # TODO: some sort of timeout/expiration
+        self._force_expire = False
         super().__init__()
 
     def _load_sg_asset_list(self) -> None:
@@ -49,16 +54,22 @@ class SGaaDB(DB):
         self._sg_asset_list = query.exec(self._sg)
         self._sg_asset_list_utime = datetime.now()
 
-    def _asset_uptodate(func: Callable) -> Callable:
+    def _asset_uptodate(func: Callable[..., RT]) -> Callable[..., RT]:
         """Check if the asset list has expired before making calls"""
 
-        def inner(self, *args, **kwargs) -> Any:
-            if self._sg_asset_list_utime + self._sg_asset_list_exp < datetime.now():
+        def inner(self: Type[DB], *args, **kwargs) -> RT:
+            if (
+                self._sg_asset_list_utime + self._sg_asset_list_exp < datetime.now()
+            ) or self._force_expire:
                 log.debug("Asset cache expired, refreshing list")
+                self._force_expire = False
                 self._load_sg_asset_list()
             return func(self, *args, **kwargs)
 
         return inner
+
+    def expire_cache(self) -> None:
+        self._force_expire = True
 
     @_asset_uptodate
     def get_asset_by_name(self, name: str) -> Asset:
@@ -76,11 +87,27 @@ class SGaaDB(DB):
         return [Asset.from_sg(a) for a in self._sg_asset_list if a["id"] in ids]
 
     @_asset_uptodate
-    def get_asset_name_list(self, include_children: bool = False) -> Sequence[str]:
-        if include_children:
-            return [a["code"] for a in self._sg_asset_list]
+    def get_asset_name_list(
+        self,
+        child_mode: Optional[Type[DB.ChildQueryMode]] = DB.ChildQueryMode.LEAVES,
+        sorted: Optional[bool] = False,
+    ) -> Sequence[str]:
+        if child_mode == DB.ChildQueryMode.ALL:
+            arr = [a["code"] for a in self._sg_asset_list]
+        elif child_mode == DB.ChildQueryMode.CHILDREN:
+            arr = [a["code"] for a in self._sg_asset_list if a["parents"]]
+        elif child_mode == DB.ChildQueryMode.ROOTS:
+            arr = [a["code"] for a in self._sg_asset_list if not a["parents"]]
+        elif child_mode == DB.ChildQueryMode.PARENTS:
+            arr = [a["code"] for a in self._sg_asset_list if a["assets"]]
+        elif child_mode == DB.ChildQueryMode.LEAVES:
+            arr = [a["code"] for a in self._sg_asset_list if not a["assets"]]
         else:
-            return [a["code"] for a in self._sg_asset_list if not a["parents"]]
+            raise IndexError("Not a valid ChildQueryMode", child_mode)
+
+        if sorted:
+            arr.sort()
+        return arr
 
     @_asset_uptodate
     def get_assets_by_name(self, names: Iterable[str]) -> List[Asset]:

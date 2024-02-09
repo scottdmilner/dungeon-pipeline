@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class DialogButtons:
-    buttons: Type["QtWidgets.QDialogButtonBox"]
+    buttons: Type[QtWidgets.QDialogButtonBox]
 
     def _init_buttons(
         self,
@@ -33,10 +33,56 @@ class DialogButtons:
             self.buttons.rejected.connect(self.reject)
 
 
+class DialogFilteredList:
+    filtered_list: Type[QtWidgets.QVBoxLayout]
+    _filter_field: Type[QtWidgets.QLineEdit]
+    _list_label: Type[QtWidgets.QLineEdit]
+    _list_widget: Type[QtWidgets.QListWidget]
+
+    def _init_filtered_list(
+        self,
+        items: Sequence[str],
+        list_label: Optional[str] = None,
+        include_filter_field: Optional[bool] = True,
+    ) -> None:
+        self.filtered_list = QtWidgets.QVBoxLayout()
+
+        if list_label is not None:
+            assert isinstance(list_label, str)
+            self._list_label = QtWidgets.QLabel(list_label)
+            self.filtered_list.addWidget(self._list_label)
+
+        if include_filter_field:
+            self._filter_field = QtWidgets.QLineEdit()
+            self._filter_field.setPlaceholderText("Type here to filter...")
+            self._filter_field.textChanged.connect(self._filter_items)
+            self.filtered_list.addWidget(self._filter_field)
+
+        self._list_widget = QtWidgets.QListWidget()
+        self._list_widget.addItems(items)
+        self.filtered_list.addWidget(self._list_widget)
+
+    def _filter_items(self) -> None:
+        filter_text = self._filter_field.text().lower()
+        for row in range(self._list_widget.count()):
+            item = self._list_widget.item(row)
+            item_text = item.text().lower()
+            if all(char in item_text for char in filter_text):
+                item.setHidden(False)
+            else:
+                item.setHidden(True)
+
+    def get_selected_item(self) -> Optional[str]:
+        selected_items = self._list_widget.selectedItems()
+        if selected_items:
+            return selected_items[0].text()
+        return None
+
+
 class MessageDialog(QtWidgets.QDialog, DialogButtons):
     def __init__(
         self,
-        parent: Type["QtWidgets.QDialog"],
+        parent: Type[QtWidgets.QDialog],
         message: str,
         title: Optional[str] = "Message",
         has_cancel_button: Optional[bool] = False,
@@ -57,15 +103,14 @@ class MessageDialog(QtWidgets.QDialog, DialogButtons):
         self.setLayout(layout)
 
 
-class FilteredListDialog(QtWidgets.QDialog, DialogButtons):
-    buttons: Type["QtWidgets.QDialogButtonBox"]
-    filter_field: Type["QtWidgets.QLineEdit"]
-    list_label: Type["QtWidgets.QLabel"]
-    list_widget: Type["QtWidgets.QListWidget"]
+class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
+    filter_field: Type[QtWidgets.QLineEdit]
+    list_label: Type[QtWidgets.QLabel]
+    list_widget: Type[QtWidgets.QListWidget]
 
     def __init__(
         self,
-        parent: Type["QtWidgets.QDialog"],
+        parent: Type[QtWidgets.QDialog],
         items: Sequence[str],
         title: Optional[str] = "Filtered List",
         list_label: Optional[str] = None,
@@ -75,6 +120,7 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons):
     ) -> None:
         super(FilteredListDialog, self).__init__(parent)
         self._init_buttons(True, accept_button_name, reject_button_name)
+        self._init_filtered_list(items, list_label, include_filter_field)
 
         self.setParent(parent)
         self.setWindowTitle(title)
@@ -82,41 +128,8 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons):
         self.resize(500, 600)
 
         layout = QtWidgets.QVBoxLayout(self)
-
-        if list_label is not None:
-            assert isinstance(list_label, str)
-            self.list_label = QtWidgets.QLabel(list_label)
-            layout.addWidget(self.list_label)
-
-        if include_filter_field:
-            self.filter_field = QtWidgets.QLineEdit()
-            self.filter_field.setPlaceholderText("Type here to filter...")
-            layout.addWidget(self.filter_field)
-
-        self.list_widget = QtWidgets.QListWidget()
-        self.list_widget.addItems(items)
-        layout.addWidget(self.list_widget)
-
+        layout.addLayout(self.filtered_list)
         layout.addWidget(self.buttons)
-
-        if include_filter_field:
-            self.filter_field.textChanged.connect(self._filter_items)
-
-    def _filter_items(self) -> None:
-        filter_text = self.filter_field.text().lower()
-        for row in range(self.list_widget.count()):
-            item = self.list_widget.item(row)
-            item_text = item.text().lower()
-            if all(char in item_text for char in filter_text):
-                item.setHidden(False)
-            else:
-                item.setHidden(True)
-
-    def get_selected_item(self) -> Optional[str]:
-        selected_items = self.list_widget.selectedItems()
-        if selected_items:
-            return selected_items[0].text()
-        return None
 
 
 # class DialogFactory:

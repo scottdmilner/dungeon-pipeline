@@ -33,7 +33,7 @@ global proc shelf_LnD_Assets () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.asset import publish; publish();" 
+        -command "from pipe.asset import IOManager; IOManager().publish_asset();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

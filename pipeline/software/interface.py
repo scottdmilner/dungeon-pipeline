@@ -28,7 +28,7 @@ class DCCLocalizerInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_main_qt_window(self) -> Optional[Type["QtWidgets.QWidget"]]:
+    def get_main_qt_window(self) -> Optional[Type[QtWidgets.QWidget]]:
         """Get the QT object representing the main application window.
         Use for the parent of other QT popups"""
         raise NotImplementedError

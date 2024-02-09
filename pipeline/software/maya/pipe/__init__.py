@@ -1,7 +1,8 @@
 # import shared scripts
-from shared.util import get_pipe_path as _gpp
+from pathlib import Path
+import shared as _shared
 
-__path__.append(str(_gpp() / "shared"))
+__path__.append(str(Path(_shared.__file__).parent))
 
 # import universal pipe functions that need localization
 from .localizer import MayaLocalizer as _ML
