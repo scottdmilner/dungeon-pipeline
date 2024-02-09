@@ -19,3 +19,5 @@
 *.usdc
 *.vdb
 
+# Ignore keys
+env.py

@@ -45,7 +45,7 @@ active_displays: [Display Rec.709]
 active_views: [Show Look, Show Look Test, Technical, Linear-Rawr, ACES 1.0 SDR Video]
 inactive_colorspaces: [CIE-XYZ-D65, Display sRGB]
 
-default_view_transform: Show Look
+default_view_transform: Technical
 
 view_transforms:
   - !<ViewTransform>

@@ -2,9 +2,29 @@ import platform
 import importlib
 import importlib.util
 
-from inspect import getmembers, isabstract, isclass
+from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
 from typing import Optional, Union
+
+
+def check_methods(cls: type, subclass: type) -> bool:
+    """Check if a class implements another class's methods."""
+    # Get the names of the class's methods
+    methods: list = [member[0] for member in getmembers(cls, isfunction)]
+
+    # Get the subclass's method resolution order (MRO)
+    mro = subclass.__mro__
+
+    # Check if the subclass's MRO contains every method
+    for method in methods:
+        for entry in mro:
+            if method in entry.__dict__:
+                if entry.__dict__[method] is None:
+                    return NotImplemented
+                break
+        else:
+            return NotImplemented
+    return True
 
 
 def find_implementation(cls: type, module: str, package: Optional[str] = None) -> type:
