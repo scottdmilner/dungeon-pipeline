@@ -19,6 +19,7 @@ class MayaDCC(DCC):
         system = platform.system()
 
         env_vars = {
+            # "MAYA_SCRIPT_PATH": str(this_path.parent / "scripts"),
             "MAYA_SHELF_PATH": str(this_path.parent / "shelves"),
             "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
             "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
@@ -26,6 +27,7 @@ class MayaDCC(DCC):
                 [
                     str(this_path.parent),
                     str(pipe_path),
+                    str(this_path.parent / "scripts"),
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
