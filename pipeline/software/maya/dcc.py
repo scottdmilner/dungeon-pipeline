@@ -19,17 +19,13 @@ class MayaDCC(DCC):
         system = platform.system()
 
         env_vars = {
-            # "MAYA_SCRIPT_PATH": str(this_path.parent / "scripts"),
             "MAYA_SHELF_PATH": str(this_path.parent / "shelves"),
             "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
             "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(pipe_path),
-<<<<<<< HEAD
                     str(this_path.parent),
-=======
->>>>>>> ebf09900a736f00e3c803232884b9bbfded46c76
                     str(this_path.parent / "scripts"),
                 ]
             ),
