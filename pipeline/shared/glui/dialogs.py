@@ -11,7 +11,7 @@ from shared.util import get_pipe_path
 log = logging.getLogger(__name__)
 
 
-class DialogButtons:
+class ButtonPair:
     buttons: Type[QtWidgets.QDialogButtonBox]
 
     def _init_buttons(
@@ -26,10 +26,17 @@ class DialogButtons:
         )
 
         self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setText(ok_name)
-        self.buttons.accepted.connect(self.accept)
 
         if has_cancel_button:
             self.buttons.button(QtWidgets.QDialogButtonBox.Cancel).setText(cancel_name)
+
+
+class DialogButtons(ButtonPair):
+    def _init_buttons(self, has_cancel_button: bool, *args) -> None:
+        super(DialogButtons, self)._init_buttons(has_cancel_button, *args)
+
+        self.buttons.accepted.connect(self.accept)
+        if has_cancel_button:
             self.buttons.rejected.connect(self.reject)
 
 

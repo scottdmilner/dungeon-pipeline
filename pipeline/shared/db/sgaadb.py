@@ -87,11 +87,22 @@ class SGaaDB(DB):
         return [Asset.from_sg(a) for a in self._sg_asset_list if a["id"] in ids]
 
     @_asset_uptodate
-    def get_asset_name_list(
+    def get_asset_attr_list(
         self,
+        attr: str,
         child_mode: Optional[Type[DB.ChildQueryMode]] = DB.ChildQueryMode.LEAVES,
         sorted: Optional[bool] = False,
     ) -> Sequence[str]:
+        """Get a list of a single attribute on the asset list
+        Valid attrs: name, code, sg_path, sg_pipe_name, id
+        """
+        if attr == "name":
+            attr = "sg_pipe_name"
+        if attr == "path":
+            attr = "sg_path"
+        if attr == "disp_name":
+            attr = "code"
+
         if child_mode == DB.ChildQueryMode.ALL:
             arr = [a["code"] for a in self._sg_asset_list]
         elif child_mode == DB.ChildQueryMode.CHILDREN:
@@ -108,6 +119,14 @@ class SGaaDB(DB):
         if sorted:
             arr.sort()
         return arr
+
+    @_asset_uptodate
+    def get_asset_name_list(
+        self,
+        child_mode: Optional[Type[DB.ChildQueryMode]] = DB.ChildQueryMode.LEAVES,
+        sorted: Optional[bool] = False,
+    ) -> Sequence[str]:
+        return self.get_asset_attr_list("disp_name", child_mode, sorted)
 
     @_asset_uptodate
     def get_assets_by_name(self, names: Iterable[str]) -> List[Asset]:

@@ -22,8 +22,13 @@ class SubstancePainterDCC(DCC):
         system = platform.system()
 
         env_vars = {
-            "PYTHONPATH": "",
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(this_path.parent),
+                    str(pipe_path),
+                ]
+            ),
             "QT_PLUGIN_PATH": "",
             "SUBSTANCE_PAINTER_PLUGINS_PATH": str(this_path.parent / "plugins"),
         }

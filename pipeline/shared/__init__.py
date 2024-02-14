@@ -1,4 +1,4 @@
 from . import db
-from . import ui
+from . import glui
 
-__all__ = ["db", "struct", "ui", "util"]
+__all__ = ["db", "struct", "glui", "util"]
