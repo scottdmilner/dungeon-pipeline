@@ -99,6 +99,7 @@ class MessageDialog(QtWidgets.QDialog, DialogButtons):
 
         self.setParent(parent)
         self.setWindowTitle(title)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
 
         layout = QtWidgets.QVBoxLayout(self)
 
@@ -131,6 +132,7 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 
         self.setParent(parent)
         self.setWindowTitle(title)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
 
         self.resize(500, 600)
 

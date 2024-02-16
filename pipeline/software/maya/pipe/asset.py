@@ -11,7 +11,7 @@ import pipe
 import pipe.util
 from pipe.db import DB
 from pipe.struct import Asset
-from pipe.ui.dialogs import FilteredListDialog, MessageDialog
+from pipe.glui.dialogs import FilteredListDialog, MessageDialog
 from env import SG_Config
 
 log = logging.getLogger(__name__)

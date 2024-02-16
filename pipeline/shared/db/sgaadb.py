@@ -2,7 +2,17 @@ import logging
 from abc import ABC, abstractmethod, abstractproperty
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from shared.struct import Asset, AssetStub
 
@@ -49,13 +59,13 @@ class SGaaDB(DB):
         super().__init__()
 
     def _load_sg_asset_list(self) -> None:
-        """Loads the list of assets from SG"""
+        """Loads the list of assets from SG to local cache"""
         query = self._AssetListQuery(self._id)
         self._sg_asset_list = query.exec(self._sg)
         self._sg_asset_list_utime = datetime.now()
 
     def _asset_uptodate(func: Callable[..., RT]) -> Callable[..., RT]:
-        """Check if the asset list has expired before making calls"""
+        """Decorator to check if the asset list has expired before making calls"""
 
         def inner(self: Type[DB], *args, **kwargs) -> RT:
             if (
@@ -72,10 +82,16 @@ class SGaaDB(DB):
         self._force_expire = True
 
     @_asset_uptodate
-    def get_asset_by_name(self, name: str) -> Asset:
+    def get_asset_by_attr(self, attr: str, attr_val: Union[str, int]) -> Asset:
         return Asset.from_sg(
-            next((a for a in self._sg_asset_list if a["code"] == name), None)
+            next((a for a in self._sg_asset_list if a[attr] == attr_val), None)
         )
+
+    def get_asset_by_name(self, name: str) -> Asset:
+        return self.get_asset_by_attr("code", name)
+
+    def get_asset_by_id(self, id: int) -> Asset:
+        return self.get_asset_by_attr("id", id)
 
     @_asset_uptodate
     def get_asset_by_stub(self, stub: AssetStub) -> Asset:
@@ -104,15 +120,15 @@ class SGaaDB(DB):
             attr = "code"
 
         if child_mode == DB.ChildQueryMode.ALL:
-            arr = [a["code"] for a in self._sg_asset_list]
+            arr = [a[attr] for a in self._sg_asset_list]
         elif child_mode == DB.ChildQueryMode.CHILDREN:
-            arr = [a["code"] for a in self._sg_asset_list if a["parents"]]
+            arr = [a[attr] for a in self._sg_asset_list if a["parents"]]
         elif child_mode == DB.ChildQueryMode.ROOTS:
-            arr = [a["code"] for a in self._sg_asset_list if not a["parents"]]
+            arr = [a[attr] for a in self._sg_asset_list if not a["parents"]]
         elif child_mode == DB.ChildQueryMode.PARENTS:
-            arr = [a["code"] for a in self._sg_asset_list if a["assets"]]
+            arr = [a[attr] for a in self._sg_asset_list if a["assets"]]
         elif child_mode == DB.ChildQueryMode.LEAVES:
-            arr = [a["code"] for a in self._sg_asset_list if not a["assets"]]
+            arr = [a[attr] for a in self._sg_asset_list if not a["assets"]]
         else:
             raise IndexError("Not a valid ChildQueryMode", child_mode)
 
@@ -120,7 +136,6 @@ class SGaaDB(DB):
             arr.sort()
         return arr
 
-    @_asset_uptodate
     def get_asset_name_list(
         self,
         child_mode: Optional[Type[DB.ChildQueryMode]] = DB.ChildQueryMode.LEAVES,

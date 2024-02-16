@@ -1,10 +1,19 @@
-import platform
 import importlib
 import importlib.util
+import platform
+import subprocess
 
 from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
 from typing import Optional, Union
+
+
+class dotdict(dict):
+    """dot notation access to dictionary attributes"""
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 def check_methods(cls: type, subclass: type) -> bool:
@@ -94,3 +103,22 @@ def resolve_mapped_path(path: Union[str, Path]) -> Path:
         except (ValueError, OSError):
             pass
     return min(mapped_paths, key=lambda x: len(str(x)), default=path)
+
+
+try:
+
+    def silent_startupinfo() -> Optional[subprocess.STARTUPINFO]:
+        """Returns a Windows-only object to make sure tasks launched through
+        subprocess don't open a cmd window.
+
+        Returns:
+            subprocess.STARTUPINFO -- the properly configured object if we are on
+                                    Windows, otherwise None
+        """
+        startupinfo = None
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        return startupinfo
+except:
+    pass

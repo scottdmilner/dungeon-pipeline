@@ -10,6 +10,6 @@ from .localizer import SubstancePainterLocalizer as _SPL
 local = _SPL()
 
 # import subtance painter-specific scripts
-from . import asset
 from . import channels
+from . import export
 from . import metadata

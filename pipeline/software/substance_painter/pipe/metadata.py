@@ -12,6 +12,31 @@ class MetadataUpdater:
     def __init__(self) -> None:
         self.conn = DB(SG_Config)
 
+    def check(self) -> bool:
+        data = sp.project.Metadata("LnD")
+        return data.get("asset_id") in self.conn.get_asset_attr_list("id")
+
+    def prompt_update(self) -> bool:
+        if self.check():
+            return True
+
+        update = MessageDialog(
+            pipe.local.get_main_qt_window(),
+            "It looks like this file is not associated with an asset in ShotGrid. Would you like to associate it now?",
+            "Associate Asset with ShotGrid?",
+            has_cancel_button=True,
+        ).exec_()
+
+        if not update:
+            MessageDialog(
+                pipe.local.get_main_qt_window(),
+                "Warning! You will need to associate this asset with ShotGrid before exporting textures.",
+                "No asset selected",
+            ).exec_()
+            return False
+
+        return self.do_update()
+
     def do_update(self) -> bool:
         fld = FilteredListDialog(
             pipe.local.get_main_qt_window(),
@@ -20,7 +45,8 @@ class MetadataUpdater:
             "Select an asset to associate this Substance Painter file with",
             accept_button_name="Associate",
         )
-        fld.exec_()
+        if not fld.exec_():
+            return False
         item = fld.get_selected_item()
 
         if item is None:

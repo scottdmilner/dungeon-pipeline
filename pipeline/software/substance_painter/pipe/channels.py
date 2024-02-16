@@ -11,14 +11,14 @@ class sRGBChecker:
     def __init__(self) -> None:
         self.srgb_channels = []
 
-    def do_srgb_check(self) -> None:
+    def check(self) -> bool:
         for ts in sp.textureset.all_texture_sets():
             try:
                 stack = ts.get_stack()
             except:
                 MessageDialog(
                     pipe.local.get_main_qt_window(),
-                    "Warning! Could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
+                    "Warning! sRGB Checker could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
                 ).exec_()
                 return
 
@@ -29,10 +29,9 @@ class sRGBChecker:
                 ]:
                     self.srgb_channels.append(ch)
 
-        if self.srgb_channels:
-            self.do_srgb_fix()
+        return not bool(self.srgb_channels)
 
-    def do_srgb_fix(self) -> None:
+    def prompt_srgb_fix(self) -> bool:
         fix_channels = MessageDialog(
             pipe.local.get_main_qt_window(),
             "Warning! Some of your color channels do not have a high enough bit depth for this color space! (sRGB8, RGB8). Would you like to convert them to RGB16 now?",
@@ -41,7 +40,7 @@ class sRGBChecker:
         ).exec_()
 
         if not fix_channels:
-            return
+            return False
 
         for ch in self.srgb_channels:
             ch.edit(sp.textureset.ChannelFormat.RGB16)
@@ -49,3 +48,4 @@ class sRGBChecker:
         MessageDialog(
             pipe.local.get_main_qt_window(), "Color bit depth has been updated."
         ).exec_()
+        return True

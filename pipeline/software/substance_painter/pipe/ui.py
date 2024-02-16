@@ -1,19 +1,11 @@
-from enum import Enum
 from PySide2 import QtCore, QtWidgets
 from typing import List, Mapping, Optional, Type
 
 import substance_painter as sp
 
 import pipe
-from pipe.glui.dialogs import ButtonPair
-
-
-class MaterialType(Enum):
-    GENERAL = 0
-    METAL = 1
-    GLASS = 2
-    CLOTH = 3
-    SKIN = 4
+from pipe.glui.dialogs import ButtonPair, MessageDialog
+from pipe.export import Exporter, MaterialType
 
 
 class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
@@ -75,8 +67,41 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
             )
         )
 
-    def do_export(self):
-        pass
+    def _preflight(self) -> bool:
+        """Check for asset metadata and correct channel types before running
+        the export"""
+        metaUpdater = pipe.metadata.MetadataUpdater()
+        srgbChecker = pipe.channels.sRGBChecker()
+        meta = metaUpdater.check() or metaUpdater.do_update()
+        srgb = srgbChecker.check() or srgbChecker.prompt_srgb_fix()
+        return meta and srgb
+
+    def do_export(self) -> None:
+        if not self._preflight():
+            MessageDialog(
+                pipe.local.get_main_qt_window(),
+                "Your file has failed preflight checks. Please follow the instructions to fix them when you press Export.",
+                "Preflight failed.",
+            ).exec_()
+            return
+
+        print("Exporting!")
+        exporter = Exporter()
+        if all(
+            exporter.export(ts, widget.get())
+            for ts, widget in self.tex_set_dict.items()
+        ):
+            MessageDialog(
+                pipe.local.get_main_qt_window(),
+                "Textures successfully exported!",
+            ).exec_()
+        else:
+            MessageDialog(
+                pipe.local.get_main_qt_window(),
+                "An error occured while exporting textures. Please check the console for more information",
+            ).exec_()
+
+        self.close()
 
 
 class TexSetWidget(QtWidgets.QWidget):
