@@ -5,6 +5,7 @@ import platform
 from pathlib import Path
 
 from ..baseclass import DCC
+from env import Executables
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class SubstancePainterDCC(DCC):
 
         env_vars = {
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            "PIPE_LOG_LEVEL": log.getEffectiveLevel(),
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(this_path.parent),
@@ -36,10 +38,8 @@ class SubstancePainterDCC(DCC):
         if is_python_shell:
             raise NotImplementedError("Python shell is not supported for this DCC")
 
-        launch_command = ""
-        if system == "Windows":
-            launch_command = "C:\\Program Files\\Adobe\\Adobe Substance 3D Painter\\Adobe Substance 3D Painter.exe"
-        else:
+        launch_command = str(Executables.substance_painter)
+        if not launch_command:
             raise NotImplementedError(
                 f"The operating system {system} is not a supported OS for this DCC software"
             )

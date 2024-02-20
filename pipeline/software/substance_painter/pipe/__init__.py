@@ -1,3 +1,6 @@
+import logging as _l
+from os import environ as _e
+
 # import shared scripts
 from pathlib import Path
 import shared as _shared
@@ -13,3 +16,10 @@ local = _SPL()
 from . import channels
 from . import export
 from . import metadata
+
+# configure logging
+_log = _l.getLogger(__name__)
+_l.basicConfig(
+    level=int(_e.get("PIPE_LOG_LEVEL")),
+    format="%(asctime)s %(processName)s(%(process)s) %(threadName)s [%(name)s(%(lineno)s)] [%(levelname)s] %(message)s",
+)

@@ -1,20 +1,30 @@
 import substance_painter as sp
 
+import logging
+import os
+import re
 import subprocess
 from enum import Enum
+from math import ceil, floor, sqrt
 from pathlib import Path
+from typing import Callable, Dict, Iterable, List, Type, TypeVar
 
 import pipe
 from pipe.db import DB
 from pipe.struct import Asset
 from pipe.glui.dialogs import MessageDialog
 from pipe.util import get_production_path, resolve_mapped_path, silent_startupinfo
-from env import SG_Config
+from env import Executables, SG_Config
+
+RT = TypeVar("RT")  # return type
 
 lib_path = resolve_mapped_path(Path(__file__).parents[1] / "lib")
+log = logging.getLogger(__name__)
 
 
 class MaterialType(Enum):
+    """Helper enum for tracking material types"""
+
     GENERAL = 0
     METAL = 1
     GLASS = 2
@@ -23,24 +33,48 @@ class MaterialType(Enum):
 
 
 class Exporter:
+    """Class to manage exporting and converting textures"""
+
     conn: DB
     asset: Asset
     out_path: Path
     src_path: Path
+    tex_path: Path
+    preview_path: Path
+    export_result: sp.export.TextureExportResult
 
     def __init__(self) -> None:
         self.conn = DB(SG_Config)
         id = sp.project.Metadata("LnD").get("asset_id")
         self.asset = self.conn.get_asset_by_id(id)
+
+        # initialize paths, pulling from SG database
         self.out_path = resolve_mapped_path(get_production_path() / self.asset.tex_path)
         self.src_path = self.out_path / "src"
+        self.tex_path = self.out_path / "tex"
+        self.preview_path = self.out_path / "preview"
 
-    def export(
-        self, tex_set: sp.textureset.TextureSet, material_type: MaterialType
-    ) -> bool:
+        # create paths if not exist
+        self.src_path.mkdir(parents=True, exist_ok=True)
+        self.tex_path.mkdir(parents=True, exist_ok=True)
+        self.preview_path.mkdir(parents=True, exist_ok=True)
+
+    def _debug_out(self, func: Callable[..., RT]) -> Callable[..., RT]:
+        """Decorator to debug print the output of the function"""
+
+        def inner(self: Type[Exporter], *args, **kwargs) -> RT:
+            ret = func(self, *args, **kwargs)
+            log.debug(ret)
+            return ret
+
+        return inner
+
+    def export(self, tex_sets: Dict[sp.textureset.TextureSet, MaterialType]) -> bool:
+        """Export all the textures of the given Texture Sets"""
+        # TODO: multiple material types
         self.src_path.mkdir(parents=True, exist_ok=True)
         try:
-            stack = tex_set.get_stack()
+            [ts.get_stack() for ts in tex_sets.keys()]
         except:
             MessageDialog(
                 pipe.local.get_main_qt_window(),
@@ -48,40 +82,49 @@ class Exporter:
             ).exec_()
             return
 
-        config = general_config(self.src_path, stack)
+        config = general_config(
+            self.src_path, (ts.get_stack() for ts in tex_sets.keys())
+        )
 
         try:
-            sp.export.export_project_textures(config)
+            self.export_result = sp.export.export_project_textures(config)
         except Exception as e:
             print(e)
             return False
 
-        return self.convert_tex(
-            self.src_path, self.out_path / "tex"
-        ) and self.convert_previewsurface(self.src_path, self.out_path / "preview")
+        tex_success = self.convert_tex()
+        pvw_success = self.convert_previewsurface()
 
-    def convert_tex(self, src: Path, out: Path) -> bool:
-        hoiiotool = "C:\\Program Files\\Side Effects Software\\Houdini 19.5.640\\bin\\hoiiotool.exe"
-        txmake = "C:\\Program Files\\Pixar\\RenderManProServer-25.2\\bin\\txmake.exe"
+        return tex_success and pvw_success
 
-        def tex_cmd(img: Path, out_dir: Path) -> list[str]:
-            # currently using hoiiotool so txmake doesn't freak out at the color space
+    def convert_tex(self) -> bool:
+        """Convert all .png textures in the most recent export to .tex"""
+
+        if not self.export_result:
+            raise AssertionError(
+                "The export() function has not been called yet, there are no textures to convert"
+            )
+
+        @self._debug_out
+        def tex_cmd(img: Path) -> list[str]:
+            # currently using oiiotool so txmake doesn't freak out at the color space
             # TODO: switch back to txmake for color in R26
             # fmt: off
             return [
-                hoiiotool,
+                str(Executables.oiiotool),
                 str(img),
                 "--compression", "lossless",
                 "--planarconfig", "separate",
                 "-otex:fileformatname=tx:wrap=clamp:resize=1:prman_options=1",
-                str(out_dir / img.stem) + ".tex"
+                f"{str(self.tex_path / img.stem)}.tex",
             ]
             # fmt: on
 
-        def b2r_cmd(img: Path, out_dir: Path) -> list[str]:
+        @self._debug_out
+        def b2r_cmd(img: Path) -> list[str]:
             # fmt: off
             return [
-                txmake,
+                str(Executables.txmake),
                 "-resize", "round-",
                 "-mode", "periodic",
                 "-filter", "box",
@@ -89,33 +132,107 @@ class Exporter:
                 "-bumprough", "2", "0", "1", "0", "0", "1",
                 "-newer",
                 str(img),
-                str(out_dir / img.stem) + ".b2r"
+                f"{str(self.tex_path / img.stem)}.b2r",
             ]
             # fmt: on
 
-        out.mkdir(parents=True, exist_ok=True)
-
         procs = [
             subprocess.Popen(
-                (b2r_cmd if "Normal" in img.name else tex_cmd)(img, out),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                (b2r_cmd if "Normal" in img.name else tex_cmd)(img),
+                env=os.environ,
                 startupinfo=silent_startupinfo(),
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
             )
-            for img in src.iterdir()
+            for imgs in self.export_result.textures.values()
+            for img in (Path(i) for i in imgs)
             if img.suffix == ".png"
         ]
 
         for p in procs:
             p.wait()
 
+            if log.isEnabledFor(logging.DEBUG):
+                if stdout := p.stdout.read().decode("utf-8"):
+                    log.debug(stdout)
+                if stderr := p.stderr.read().decode("utf-8"):
+                    log.debug(stderr)
+
         return True
 
-    def convert_previewsurface(self, src: Path, out: Path) -> bool:
+    def convert_previewsurface(self) -> bool:
+        """Compile all .jpeg textures in the most recent export to UDIM-less tiles"""
+
+        if not self.export_result:
+            raise AssertionError(
+                "The export() function has not been called yet, there are no textures to convert"
+            )
+
+        @self._debug_out
+        def jpeg_cmd(root: Path, imgs: List[str]) -> list[str]:
+            img_info = subprocess.check_output(
+                [
+                    str(Executables.oiiotool),
+                    "--info",
+                    imgs[0],
+                ],
+                startupinfo=silent_startupinfo(),
+            ).decode("utf-8")
+            img_dims = re.search(r"^.* : (\d+) x (\d+), .*$", img_info)
+            dimx, dimy = img_dims.group(1, 2)
+
+            img_name = re.search(r"^(.*_)(.+)$", root.name)
+            name_base, color_space = img_name.group(1, 2)
+
+            count = len(imgs)
+            grid_height = int(floor(sqrt(count)))
+            grid_base = int(grid_height + ceil(count / grid_height - grid_height))
+
+            # fmt: off
+            return [
+                str(Executables.oiiotool), 
+                *imgs,
+                "--mosaic", f"{grid_base}x{grid_height}",
+                "--resize", f"{dimx}x{dimy}",
+                *(["--colorconvert", "ACEScg", "srgb_tx"] if color_space == "ACEScg" else []),
+                "-o", f"{str(self.preview_path / name_base)}{'sRGB' if color_space == 'ACEScg' else 'Linear'}.jpeg",
+            ]
+            # fmt: on
+
+        # construct list of grouped images
+        img_list: Dict[str, List[str]] = {}
+        for imgs in self.export_result.textures.values():
+            for img in imgs:
+                if img.endswith(".jpeg"):
+                    key = re.search(r"^(.*)\.\d{4}\.jpeg$", img).group(1)
+                    if not key in img_list:
+                        img_list[key] = []
+                    img_list[key].append(img)
+
+        procs = [
+            subprocess.Popen(
+                jpeg_cmd(Path(root), imgs),
+                env=os.environ,
+                startupinfo=silent_startupinfo(),
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+            )
+            for root, imgs in img_list.items()
+        ]
+
+        for p in procs:
+            p.wait()
+
+            if log.isEnabledFor(logging.DEBUG):
+                if stdout := p.stdout.read().decode("utf-8"):
+                    log.debug(stdout)
+                if stderr := p.stderr.read().decode("utf-8"):
+                    log.debug(stderr)
+
         return True
 
 
-def general_config(asset_path: Path, stack: sp.textureset.Stack) -> dict:
+def general_config(asset_path: Path, stacks: Iterable[sp.textureset.Stack]) -> dict:
     return {
         "exportPath": str(asset_path),
         "exportShaderParams": True,
@@ -313,7 +430,7 @@ def general_config(asset_path: Path, stack: sp.textureset.Stack) -> dict:
                 ],
             },
         ],
-        "exportList": [{"rootPath": str(stack)}],
+        "exportList": [{"rootPath": str(stack)} for stack in stacks],
         "exportParameters": [
             {
                 "parameters": {
