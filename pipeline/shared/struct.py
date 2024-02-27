@@ -1,6 +1,17 @@
 import json
 
+from enum import IntEnum
 from typing import Iterable, Optional, Type, Union
+
+
+class MaterialType(IntEnum):
+    """Helper enum for tracking material types"""
+
+    GENERAL = 0
+    METAL = 1
+    GLASS = 2
+    CLOTH = 3
+    SKIN = 4
 
 
 class JsonSerializable:

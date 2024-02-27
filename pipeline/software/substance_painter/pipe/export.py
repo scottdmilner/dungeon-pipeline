@@ -1,17 +1,17 @@
 import substance_painter as sp
 
+import json
 import logging
 import os
 import re
 import subprocess
-from enum import Enum
 from math import ceil, floor, sqrt
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Type, TypeVar
 
 import pipe
 from pipe.db import DB
-from pipe.struct import Asset
+from pipe.struct import Asset, MaterialType
 from pipe.glui.dialogs import MessageDialog
 from pipe.util import get_production_path, resolve_mapped_path, silent_startupinfo
 from env import Executables, SG_Config
@@ -20,16 +20,6 @@ RT = TypeVar("RT")  # return type
 
 lib_path = resolve_mapped_path(Path(__file__).parents[1] / "lib")
 log = logging.getLogger(__name__)
-
-
-class MaterialType(Enum):
-    """Helper enum for tracking material types"""
-
-    GENERAL = 0
-    METAL = 1
-    GLASS = 2
-    CLOTH = 3
-    SKIN = 4
 
 
 class Exporter:
@@ -92,10 +82,26 @@ class Exporter:
             print(e)
             return False
 
+        self.write_mat_info(tex_sets)
         tex_success = self.convert_tex()
         pvw_success = self.convert_previewsurface()
 
         return tex_success and pvw_success
+
+    def write_mat_info(
+        self, tex_sets: Dict[sp.textureset.TextureSet, MaterialType]
+    ) -> bool:
+        """Write out JSON file with information about the texturesets"""
+        info = [
+            {
+                "name": ts.name(),
+                "has_udims": ts.has_uv_tiles(),
+                "material_type": mt,
+            }
+            for ts, mt in tex_sets.items()
+        ]
+        with open(str(self.out_path / "mat.json"), "w", encoding="utf-8") as f:
+            json.dump(info, f, ensure_ascii=False, indent=4)
 
     def convert_tex(self) -> bool:
         """Convert all .png textures in the most recent export to .tex"""
@@ -136,18 +142,34 @@ class Exporter:
             ]
             # fmt: on
 
-        procs = [
-            subprocess.Popen(
-                (b2r_cmd if "Normal" in img.name else tex_cmd)(img),
-                env=os.environ,
-                startupinfo=silent_startupinfo(),
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-            )
-            for imgs in self.export_result.textures.values()
-            for img in (Path(i) for i in imgs)
-            if img.suffix == ".png"
-        ]
+        # procs = [
+        #     subprocess.Popen(
+        #         (b2r_cmd if "Normal" in img.name else tex_cmd)(img),
+        #         env=os.environ,
+        #         startupinfo=silent_startupinfo(),
+        #         stderr=subprocess.PIPE,
+        #         stdout=subprocess.PIPE,
+        #     )
+        #     for imgs in self.export_result.textures.values()
+        #     for img in (Path(i) for i in imgs)
+        #     if img.suffix == ".png"
+        # ]
+
+        procs = []
+        for imgs in self.export_result.textures.values():
+            log.debug(imgs)
+            for img in (Path(i) for i in imgs):
+                if img.suffix == ".png":
+                    log.debug(f"        {str(img)}")
+                    procs.append(
+                        subprocess.Popen(
+                            (b2r_cmd if "Normal" in img.name else tex_cmd)(img),
+                            env=os.environ,
+                            startupinfo=silent_startupinfo(),
+                            stderr=subprocess.PIPE,
+                            stdout=subprocess.PIPE,
+                        )
+                    )
 
         for p in procs:
             p.wait()
@@ -243,13 +265,13 @@ def general_config(asset_path: Path, stacks: Iterable[sp.textureset.Stack]) -> d
                 "maps": [
                     # RenderMan
                     {
-                        "fileName": "$textureSet_DiffuseColor(_$colorSpace)(.$udim)",
+                        "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
                         "channels": [
                             {
                                 "destChannel": ch,
                                 "srcChannel": ch,
-                                "srcMapType": "virtualMap",
-                                "srcMapName": "Diffuse",
+                                "srcMapType": "documentMap",
+                                "srcMapName": "baseColor",
                             }
                             for ch in "RGB"
                         ],
@@ -259,18 +281,32 @@ def general_config(asset_path: Path, stacks: Iterable[sp.textureset.Stack]) -> d
                         },
                     },
                     {
-                        "fileName": "$textureSet_SpecularFaceColor(_$colorSpace)(.$udim)",
+                        "fileName": "$textureSet_Metallic(_$colorSpace)(.$udim)",
                         "channels": [
                             {
-                                "destChannel": ch,
-                                "srcChannel": ch,
-                                "srcMapType": "virtualMap",
-                                "srcMapName": "Specular",
-                            }
-                            for ch in "RGB"
+                                "destChannel": "L",
+                                "srcChannel": "L",
+                                "srcMapType": "documentMap",
+                                "srcMapName": "metallic",
+                            },
                         ],
                         "parameters": {
-                            "bitDepth": "16",
+                            "bitDepth": "8",
+                            "fileFormat": "png",
+                        },
+                    },
+                    {
+                        "fileName": "$textureSet_Specular(_$colorSpace)(.$udim)",
+                        "channels": [
+                            {
+                                "destChannel": "L",
+                                "srcChannel": "L",
+                                "srcMapType": "documentMap",
+                                "srcMapName": "specular",
+                            },
+                        ],
+                        "parameters": {
+                            "bitDepth": "8",
                             "fileFormat": "png",
                         },
                     },
@@ -353,13 +389,13 @@ def general_config(asset_path: Path, stacks: Iterable[sp.textureset.Stack]) -> d
                     },
                     # USD Preview Surface
                     {
-                        "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
+                        "fileName": "$textureSet_DiffuseColor(_$colorSpace)(.$udim)",
                         "channels": [
                             {
                                 "destChannel": ch,
                                 "srcChannel": ch,
-                                "srcMapType": "documentMap",
-                                "srcMapName": "basecolor",
+                                "srcMapType": "virtualMap",
+                                "srcMapName": "Diffuse",
                             }
                             for ch in "RGB"
                         ],
@@ -412,7 +448,7 @@ def general_config(asset_path: Path, stacks: Iterable[sp.textureset.Stack]) -> d
                         },
                     },
                     {
-                        "fileName": "$textureSet_NormalUE(_$colorSpace)(.$udim)",
+                        "fileName": "$textureSet_NormalDX(_$colorSpace)(.$udim)",
                         "channels": [
                             {
                                 "destChannel": ch,

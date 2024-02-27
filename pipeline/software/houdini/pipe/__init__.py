@@ -8,14 +8,12 @@ import shared as _shared
 __path__.append(str(Path(_shared.__file__).parent))
 
 # import universal pipe functions that need localization
-from .localizer import SubstancePainterLocalizer as _SPL
+from .localizer import HoudiniLocalizer as _HL
 
-local = _SPL()
+local = _HL()
 
-# import substance painter-specific scripts
-from . import channels
-from . import export
-from . import metadata
+# import subtance painter-specific scripts
+from . import shading
 
 # configure logging
 _log = _l.getLogger(__name__)

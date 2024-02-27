@@ -87,7 +87,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 
         print("Exporting!")
         exporter = Exporter()
-        if exporter.export(self.tex_set_dict):
+        if exporter.export({k: v.get() for k, v in self.tex_set_dict.items()}):
             # TODO: not using tex_set_dict.values.get() and passing separate material types
             MessageDialog(
                 pipe.local.get_main_qt_window(),

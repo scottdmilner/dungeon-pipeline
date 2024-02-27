@@ -1,4 +1,5 @@
 import logging
+import os
 
 from pathlib import Path
 
@@ -41,8 +42,14 @@ class HoudiniDCC(DCC):
             #     ).resolve()
             #     / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"
             # ),
+            "PIPE_LOG_LEVEL": log.getEffectiveLevel(),
             "PIPE_PATH": str(pipe_path),
-            "PYTHONPATH": "",
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(this_path.parent),
+                    str(pipe_path),
+                ]
+            ),
             # "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
         }
 
