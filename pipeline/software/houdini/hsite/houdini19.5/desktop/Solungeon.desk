@@ -36,7 +36,7 @@ root {
         }
     }
 }
-shelfdock -o 1 -l icon_and_text -G "0.50 0.50" add solaris_1 solaris_2
+shelfdock -o 1 -l icon_and_text -G "0.50 0.50" add solaris_lnd solaris_2
 viewerstow -x open -b stow -l open -m hide -c open -d open ${DESKNAME}.pane1.solaris
 viewerstow -b stow -x open -l open -m hide -c open -d open ${DESKNAME}.pane1.solaris
 vieweroption -r 'View: Mantra' ${DESKNAME}.pane1.solaris
