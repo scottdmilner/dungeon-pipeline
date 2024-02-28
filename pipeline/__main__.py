@@ -4,9 +4,8 @@ r"""Launch the BYU 2025 Capstone pipeline ("Love & Dungeons")
 
 With much credit to Matthew Minson and the 2024 Capstone team.
 
-When run as a script, parse the pipe and software from the command line
-arguments, then run launch(). If pipe is not specified, use the value in
-the BYU_FILM_PIPE environment variable.
+When run as a script, parse the software from the command line
+arguments, then run launch().
 """
 
 import logging

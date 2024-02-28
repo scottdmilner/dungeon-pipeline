@@ -1,6 +1,17 @@
 import json
 
+from enum import IntEnum
 from typing import Iterable, Optional, Type, Union
+
+
+class MaterialType(IntEnum):
+    """Helper enum for tracking material types"""
+
+    GENERAL = 0
+    METAL = 1
+    GLASS = 2
+    CLOTH = 3
+    SKIN = 4
 
 
 class JsonSerializable:
@@ -71,6 +82,20 @@ class Asset(JsonSerializable):
         self.variants = [AssetStub.from_sg(v) for v in variants] if variants else None
         # at least for now, assume only 0 or 1 parents per asset
         self.parent = AssetStub.from_sg(parent[0]) if parent else None
+
+    @property
+    def is_variant(self) -> bool:
+        return "_" in self.name
+
+    @property
+    def variant_name(self) -> Optional[str]:
+        if not self.is_variant:
+            return None
+        return self.name.split("_")[1]
+
+    @property
+    def tex_path(self) -> Optional[str]:
+        return f"{self.path}/tex/" + (self.variant_name or "main")
 
     def from_sg(sg_asset: object) -> "Asset":
         return Asset(
