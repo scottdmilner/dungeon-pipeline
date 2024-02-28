@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 import hou
 import json
 
 import pipe
 from pipe.db import DB
-from pipe.struct import Asset, AssetStub, MaterialType
+from pipe.struct import Asset, AssetStub
 from pipe.glui.dialogs import MessageDialog
 
 from env import SG_Config
@@ -23,56 +23,51 @@ class MatlibManager:
 
     @property
     def _asset(self) -> Asset:
-        return self._conn.get_asset_by_attr("sg_pipe_name", self._hip.parent.name)
+        """Get asset based off of the path of the current hipfile"""
+        return self._conn.get_asset_by_attr("sg_pipe_name", self._hip.name)
 
     @property
     def _hip(self) -> Path:
-        return Path(hou.hipFile.path())
+        """Get $HIP variable as a Path object"""
+        return Path(hou.hscriptExpression("$HIP"))
 
     @property
-    def matlib(self) -> hou.LopNode:
-        return hou.node(f"./{MATLIB_NAME}")
+    def _hsite(self) -> Path:
+        """Get $HSITE variable as a Path object"""
+        return Path(hou.hscriptExpression("$HSITE"))
 
     @property
-    def node(self) -> hou.LopNode:
-        return hou.node("./")
-
-    @property
-    def hsite(self) -> str:
-        return hou.hscriptExpression("$HSITE")
-
-    @property
-    def variant_id(self) -> int:
-        return self.node.parm("variant_id").evalAsInt()
-
-    @variant_id.setter
-    def variant_id(self, id) -> None:
-        self.node.parm("variant_id").set(id)
-
-    @property
-    def mat_info(self) -> List:
+    def mat_info(self) -> Optional[List[Dict[str, Any]]]:
+        """Attempt to get mat.json file for selected variant"""
         try:
             variant = self._conn.get_asset_by_id(self.variant_id)
-            with open(
-                self._hip.parent / f"tex/{variant.variant_name}/mat.json", "r"
-            ) as f:
+            with open(self._hip / "tex" / variant.variant_name / "mat.json", "r") as f:
                 return json.load(f)
         except:
             return None
 
-    def import_matnets(self) -> None:
-        if not (mat_info := self.mat_info):
-            MessageDialog(
-                pipe.local.get_main_qt_window(),
-                "Error! Could not get material info. Make sure that textures have been exported.",
-            ).exec_()
+    @property
+    def matlib(self) -> hou.LopNode:
+        """Get Material Library node inside of current node"""
+        return hou.node(f"./{MATLIB_NAME}")
 
-        for sg in mat_info:
-            name = sg["name"]
-            nodes = self._load_items_from_file(
-                self.matlib, f"{self.hsite}/matl/general.matl"
-            )
-            self._rename_matnet(nodes, name)
+    @property
+    def node(self) -> hou.LopNode:
+        """Get current node (the HDA)"""
+        return hou.node("./")
+
+    @property
+    def variant_id(self) -> int:
+        if (node_val := self.node.parm("variant_id").evalAsInt()) == -1:
+            ## if it hasn't been set yet, set it to the default value
+            default = int(self.get_variant_list()[0])
+            self.node.parm("variant_id").set(default)
+            return default
+        return node_val
+
+    @variant_id.setter
+    def variant_id(self, id: int) -> None:
+        self.node.parm("variant_id").set(id)
 
     def _load_items_from_file(
         self, dest_node: hou.LopNode, file_path: str
@@ -83,9 +78,6 @@ class MatlibManager:
         after = dest_node.allItems()
 
         return list(set(after) - set(before))
-
-    def get_variant_list(self) -> Dict[int, str]:
-        return {v.id: v.disp_name for v in self._asset.variants}
 
     def _rename_matnet(
         self,
@@ -103,3 +95,24 @@ class MatlibManager:
                 if item.name() == f"CONTROLS_{name}":
                     node = hou.node(item.path())
                     node.parm("name").set(name)
+
+    def get_variant_list(self) -> List[str]:
+        """Gets list of variants in the way that the HDA interface expects:
+        [id1, label1, id2, label2, ...]"""
+        return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
+
+    def import_matnets(self) -> None:
+        """Import a material network for each shading group in the export"""
+        if not (mat_info := self.mat_info):
+            MessageDialog(
+                pipe.local.get_main_qt_window(),
+                "Error! Could not get material info. Make sure that textures have been exported for the currently selected variant.",
+            ).exec_()
+            return
+
+        for sg in mat_info:
+            name = sg["name"]
+            nodes = self._load_items_from_file(
+                self.matlib, str(self._hsite / "matl/general.matl")
+            )
+            self._rename_matnet(nodes, name)
