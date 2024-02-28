@@ -1,3 +1,4 @@
 exclude = [
     "shotgun_api3",
+    "rjg",
 ]

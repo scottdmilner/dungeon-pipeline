@@ -24,8 +24,9 @@ class MayaDCC(DCC):
             "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
             "PYTHONPATH": os.pathsep.join(
                 [
-                    str(this_path.parent),
                     str(pipe_path),
+                    str(this_path.parent),
+                    str(this_path.parent / "scripts"),
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
