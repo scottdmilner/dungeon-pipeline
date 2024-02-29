@@ -2,6 +2,7 @@ import logging
 import os
 
 from pathlib import Path
+from typing import List, Mapping, Optional, Union
 
 from shared.util import resolve_mapped_path
 
@@ -21,6 +22,7 @@ class HoudiniDCC(DCC):
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
 
+        env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
             # Backup directory
             "HOUDINI_BACKUP_DIR": "./.backup",
@@ -34,14 +36,9 @@ class HoudiniDCC(DCC):
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
             # Project-specific preference overrides
             "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
-            # TODO: revert to project OCIO with R26
+            # Set project OCIO config
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
-            # "OCIO": str(
-            #     Path(
-            #         "/opt/pixar" if system == "Linux" else "C:\\Program Files\\Pixar"
-            #     ).resolve()
-            #     / "RenderManProServer-25.2/lib/ocio/ACES-1.2/config.ocio"
-            # ),
+            # Pass log level defined on commandline
             "PIPE_LOG_LEVEL": log.getEffectiveLevel(),
             "PIPE_PATH": str(pipe_path),
             "PYTHONPATH": os.pathsep.join(
@@ -59,6 +56,6 @@ class HoudiniDCC(DCC):
         else:
             launch_command = str(Executables.houdini)
 
-        launch_args = [] if is_python_shell else ["-foreground"]
+        launch_args: List[str] = [] if is_python_shell else ["-foreground"]
 
         super().__init__(launch_command, launch_args, env_vars)

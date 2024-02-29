@@ -36,9 +36,11 @@ class Exporter:
     def __init__(self) -> None:
         self.conn = DB(SG_Config)
         id = sp.project.Metadata("LnD").get("asset_id")
-        self.asset = self.conn.get_asset_by_id(id)
+        assert (a := self.conn.get_asset_by_id(id)) is not None
+        self.asset = a
 
         # initialize paths, pulling from SG database
+        assert self.asset.tex_path is not None
         self.out_path = resolve_mapped_path(get_production_path() / self.asset.tex_path)
         self.src_path = self.out_path / "src"
         self.tex_path = self.out_path / "tex"
@@ -70,7 +72,7 @@ class Exporter:
                 pipe.local.get_main_qt_window(),
                 "Warning! Exporter could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
             ).exec_()
-            return
+            return False
 
         config = general_config(
             self.src_path, (ts.get_stack() for ts in tex_sets.keys())
@@ -102,6 +104,7 @@ class Exporter:
         ]
         with open(str(self.out_path / "mat.json"), "w", encoding="utf-8") as f:
             json.dump(info, f, ensure_ascii=False, indent=4)
+            return True
 
     def convert_tex(self) -> bool:
         """Convert all .png textures in the most recent export to .tex"""
@@ -142,20 +145,7 @@ class Exporter:
             ]
             # fmt: on
 
-        # procs = [
-        #     subprocess.Popen(
-        #         (b2r_cmd if "Normal" in img.name else tex_cmd)(img),
-        #         env=os.environ,
-        #         startupinfo=silent_startupinfo(),
-        #         stderr=subprocess.PIPE,
-        #         stdout=subprocess.PIPE,
-        #     )
-        #     for imgs in self.export_result.textures.values()
-        #     for img in (Path(i) for i in imgs)
-        #     if img.suffix == ".png"
-        # ]
-
-        procs = []
+        procs: List[subprocess.Popen] = []
         for imgs in self.export_result.textures.values():
             log.debug(imgs)
             for img in (Path(i) for i in imgs):
@@ -173,11 +163,10 @@ class Exporter:
 
         for p in procs:
             p.wait()
-
             if log.isEnabledFor(logging.DEBUG):
-                if stdout := p.stdout.read().decode("utf-8"):
+                if p.stdout and (stdout := p.stdout.read().decode("utf-8")):
                     log.debug(stdout)
-                if stderr := p.stderr.read().decode("utf-8"):
+                if p.stderr and (stderr := p.stderr.read().decode("utf-8")):
                     log.debug(stderr)
 
         return True
@@ -201,9 +190,12 @@ class Exporter:
                 startupinfo=silent_startupinfo(),
             ).decode("utf-8")
             img_dims = re.search(r"^.* : (\d+) x (\d+), .*$", img_info)
+
+            assert img_dims is not None
             dimx, dimy = img_dims.group(1, 2)
 
             img_name = re.search(r"^(.*_)(.+)$", root.name)
+            assert img_name is not None
             name_base, color_space = img_name.group(1, 2)
 
             count = len(imgs)
@@ -226,7 +218,12 @@ class Exporter:
         for imgs in self.export_result.textures.values():
             for img in imgs:
                 if img.endswith(".jpeg"):
-                    key = re.search(r"^(.*)\.\d{4}\.jpeg$", img).group(1)
+                    key_search = re.search(r"^(.*)\.\d{4}\.jpeg$", img)
+                    if not key_search:  # no UDIMs
+                        key_search = re.search(r"^(.*)\.jpeg$", img)
+                        assert key_search is not None
+
+                    key = key_search.group(1)
                     if not key in img_list:
                         img_list[key] = []
                     img_list[key].append(img)
@@ -246,9 +243,9 @@ class Exporter:
             p.wait()
 
             if log.isEnabledFor(logging.DEBUG):
-                if stdout := p.stdout.read().decode("utf-8"):
+                if p.stdout and (stdout := p.stdout.read().decode("utf-8")):
                     log.debug(stdout)
-                if stderr := p.stderr.read().decode("utf-8"):
+                if p.stderr and (stderr := p.stderr.read().decode("utf-8")):
                     log.debug(stderr)
 
         return True

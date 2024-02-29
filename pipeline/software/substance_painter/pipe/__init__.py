@@ -20,6 +20,6 @@ from . import metadata
 # configure logging
 _log = _l.getLogger(__name__)
 _l.basicConfig(
-    level=int(_e.get("PIPE_LOG_LEVEL")),
+    level=int(_e.get("PIPE_LOG_LEVEL") or 0),
     format="%(asctime)s %(processName)s(%(process)s) %(threadName)s [%(name)s(%(lineno)s)] [%(levelname)s] %(message)s",
 )

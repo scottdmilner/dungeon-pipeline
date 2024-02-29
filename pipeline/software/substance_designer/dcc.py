@@ -5,6 +5,7 @@ import platform
 from pathlib import Path
 
 from ..baseclass import DCC
+from env import Executables
 
 log = logging.getLogger(__name__)
 
@@ -30,10 +31,8 @@ class SubstanceDesignerDCC(DCC):
         if is_python_shell:
             raise NotImplementedError("Python shell is not supported for this DCC")
 
-        launch_command = ""
-        if system == "Windows":
-            launch_command = "C:\\Program Files\\Adobe\\Adobe Substance 3D Designer\\Adobe Substance 3D Designer.exe"
-        else:
+        launch_command = str(Executables.substance_painter)
+        if not launch_command:
             raise NotImplementedError(
                 f"The operating system {system} is not a supported OS for this DCC software"
             )

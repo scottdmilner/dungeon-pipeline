@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 
-from typing import Mapping, Optional, Sequence, Union
+from typing import List, Mapping, Optional, Sequence, Union
 
 from .interface import DCCInterface, DCCLocalizerInterface
 
@@ -12,16 +12,15 @@ log = logging.getLogger(__name__)
 
 
 class DCC(DCCInterface):
-    command: str = None
-    args: Optional[Sequence[str]] = None
-    env_vars: Mapping[str, Optional[Union[int, str]]] = None
-    processes = []
+    command: str
+    args: Optional[List[str]]
+    env_vars: Mapping[str, Optional[Union[int, str]]]
 
     def __init__(
         self,
         command: str,
-        args: Optional[Sequence[str]] = [],
-        env_vars: Mapping[str, Optional[Union[int, str]]] = None,
+        args: Optional[List[str]] = [],
+        env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None,
     ) -> None:
         """Initialize DCC object.
 
@@ -57,7 +56,7 @@ class DCC(DCCInterface):
     def launch(
         self,
         command: Optional[str] = None,
-        args: Optional[Sequence[str]] = None,
+        args: Optional[List[str]] = None,
     ) -> None:
         """Launch the software with the specified arguments.
 
@@ -74,7 +73,7 @@ class DCC(DCCInterface):
 
         log.info("Launching the software")
         log.debug(f"Command: {command}, Args: {args}")
-        self.processes.append(subprocess.call([command] + args))
+        subprocess.call([command] + (args or []))
 
 
 class DCCLocalizer(DCCLocalizerInterface):

@@ -12,8 +12,8 @@ class dotdict(dict):
     """dot notation access to dictionary attributes"""
 
     __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+    __setattr__ = dict.__setitem__  # type: ignore[assignment]
+    __delattr__ = dict.__delitem__  # type: ignore[assignment]
 
 
 def check_methods(cls: type, subclass: type) -> bool:
@@ -107,7 +107,7 @@ def resolve_mapped_path(path: Union[str, Path]) -> Path:
 
 try:
 
-    def silent_startupinfo() -> Optional[subprocess.STARTUPINFO]:
+    def silent_startupinfo() -> Optional[subprocess.STARTUPINFO]:  # type: ignore[name-defined]
         """Returns a Windows-only object to make sure tasks launched through
         subprocess don't open a cmd window.
 
@@ -117,8 +117,8 @@ try:
         """
         startupinfo = None
         if platform.system() == "Windows":
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo = subprocess.STARTUPINFO()  # type: ignore[attr-defined]
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # type: ignore[attr-defined]
         return startupinfo
 except:
     pass

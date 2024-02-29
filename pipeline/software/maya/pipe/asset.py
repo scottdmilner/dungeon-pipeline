@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class IOManager:
-    conn: Type[DB]
+    conn: DB
     system: str
     window: Type[QWidget]
 
@@ -47,10 +47,12 @@ class IOManager:
             error.exec_()
             return
 
-        asset: Asset = self.conn.get_asset_by_name(asset_display_name)
+        asset = self.conn.get_asset_by_name(asset_display_name)
+        assert asset is not None
 
         log.debug(asset)
 
+        assert asset.path is not None
         publish_dir = pipe.util.get_production_path() / asset.path
         publish_dir.mkdir(parents=True, exist_ok=True)
 

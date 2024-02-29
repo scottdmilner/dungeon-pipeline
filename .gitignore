@@ -1,6 +1,7 @@
 # Ignore IDE files
 **/.idea/
 **/.vscode/
+**/venv/
 
 # Ignore temporary files
 **/__pycache__/

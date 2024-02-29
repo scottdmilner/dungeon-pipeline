@@ -1,7 +1,7 @@
 import json
 
 from enum import IntEnum
-from typing import Iterable, Optional, Type, Union
+from typing import Dict, Iterable, List, Optional, Type, Union
 
 
 class MaterialType(IntEnum):
@@ -32,10 +32,10 @@ class JsonSerializable:
 
     @classmethod
     def from_json(
-        cls: "Type[JsonSerializable]", json_data: Union[str, bytes, bytearray]
+        cls: Type["JsonSerializable"], json_data: Union[str, bytes, bytearray]
     ):
         data = json.loads(json_data)
-        return cls(data)
+        return cls(**data)
 
     def to_json(self) -> str:
         return json.dumps(vars(self), default=lambda o: o.__dict__, indent=4)
@@ -53,18 +53,19 @@ class AssetStub(JsonSerializable):
         self.disp_name = disp_name
         self.id = id
 
-    def from_sg(sg_stub: object) -> "AssetStub":
+    @staticmethod
+    def from_sg(sg_stub: Dict) -> "AssetStub":
         return AssetStub(sg_stub["name"], sg_stub["id"])
 
 
 class Asset(JsonSerializable):
     name: str
-    disp_name: str
-    id: int
+    disp_name: Optional[str]
+    id: Optional[int]
     parent: Optional[AssetStub]
-    path: str
+    path: Optional[str]
     version = None
-    variants: Optional[Iterable[AssetStub]]
+    variants: Iterable[AssetStub]
 
     def __init__(
         self,
@@ -72,14 +73,14 @@ class Asset(JsonSerializable):
         disp_name: Optional[str],
         path: Optional[str] = None,
         id: Optional[int] = None,
-        variants: Optional[Iterable[object]] = None,
-        parent: Optional[object] = None,
+        variants: Optional[Iterable[Dict]] = None,
+        parent: Optional[List[Dict]] = None,
     ) -> None:
         self.name = name
         self.disp_name = disp_name
         self.path = path
         self.id = id
-        self.variants = [AssetStub.from_sg(v) for v in variants] if variants else None
+        self.variants = [AssetStub.from_sg(v) for v in variants] if variants else []
         # at least for now, assume only 0 or 1 parents per asset
         self.parent = AssetStub.from_sg(parent[0]) if parent else None
 
@@ -97,9 +98,12 @@ class Asset(JsonSerializable):
     def tex_path(self) -> Optional[str]:
         return f"{self.path}/tex/" + (self.variant_name or "main")
 
-    def from_sg(sg_asset: object) -> "Asset":
+    @staticmethod
+    def from_sg(sg_asset: Optional[Dict]) -> Optional["Asset"]:
+        if not sg_asset:
+            return None
         return Asset(
-            *[
+            *[  # type: ignore[arg-type]
                 sg_asset.get(key)
                 for key in [
                     "sg_pipe_name",

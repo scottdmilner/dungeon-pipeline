@@ -58,6 +58,7 @@ class MetadataUpdater:
             return False
 
         asset = self.conn.get_asset_by_name(item)
+        assert asset is not None
         data = sp.project.Metadata("LnD")
         data.set("asset_id", asset.id)
 

@@ -6,7 +6,7 @@ import json
 
 import pipe
 from pipe.db import DB
-from pipe.struct import Asset, AssetStub
+from pipe.struct import Asset
 from pipe.glui.dialogs import MessageDialog
 
 from env import SG_Config
@@ -24,7 +24,9 @@ class MatlibManager:
     @property
     def _asset(self) -> Asset:
         """Get asset based off of the path of the current hipfile"""
-        return self._conn.get_asset_by_attr("sg_pipe_name", self._hip.name)
+        a = self._conn.get_asset_by_attr("sg_pipe_name", self._hip.name)
+        assert a is not None
+        return a
 
     @property
     def _hip(self) -> Path:
@@ -41,6 +43,8 @@ class MatlibManager:
         """Attempt to get mat.json file for selected variant"""
         try:
             variant = self._conn.get_asset_by_id(self.variant_id)
+            assert variant is not None
+            assert variant.variant_name is not None
             with open(self._hip / "tex" / variant.variant_name / "mat.json", "r") as f:
                 return json.load(f)
         except:
