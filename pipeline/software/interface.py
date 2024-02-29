@@ -1,8 +1,7 @@
 """Interfaces for interacting with DCCs"""
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Type
-from PySide2 import QtWidgets
+from typing import Any
 
 
 class DCCInterface(metaclass=ABCMeta):
@@ -28,7 +27,7 @@ class DCCLocalizerInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_main_qt_window(self) -> Optional[Type[QtWidgets.QWidget]]:
+    def get_main_qt_window(self) -> Any:
         """Get the QT object representing the main application window.
         Use for the parent of other QT popups"""
         raise NotImplementedError

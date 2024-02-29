@@ -60,7 +60,18 @@ class FileManager:
             return
 
         asset_name = asset_names[asset_response[0]]
-        asset: Asset = self._conn.get_asset_by_name(asset_name)
+        asset = self._conn.get_asset_by_name(asset_name)
+        try:
+            assert asset is not None
+            assert asset.path is not None
+        except:
+            hou.ui.displayMessage(
+                "The asset you are trying to load does not have a path set in ShotGrid. Please let a Lead know",
+                buttons=("OK"),
+                severity=hou.severityType.ImportantMessage,
+            )
+            return
+
         asset_path = pipe.util.get_production_path() / asset.path
 
         if not self._prompt_create_if_not_exist(asset_path):
@@ -80,5 +91,5 @@ class FileManager:
         # TODO: create starting nodes
         pass
 
-    def open_shot_file() -> None:
+    def open_shot_file(self) -> None:
         pass

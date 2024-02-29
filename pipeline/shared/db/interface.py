@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, Set, Sequence
+from typing import Iterable, List, Optional, Sequence
 
 from shared.util import check_methods
 from shared.struct import Asset
@@ -18,12 +18,12 @@ class DBInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_asset_by_name(self, name: str) -> Asset:
+    def get_asset_by_name(self, name: str) -> Optional[Asset]:
         """Get an Asset object"""
         raise NotImplementedError
 
     @abstractmethod
-    def get_assets_by_name(self, names: Iterable[str]) -> Set[Asset]:
+    def get_assets_by_name(self, names: Iterable[str]) -> List[Asset]:
         """Get multiple Asset objects"""
         raise NotImplementedError
 

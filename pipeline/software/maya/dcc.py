@@ -3,8 +3,10 @@ import os
 import platform
 
 from pathlib import Path
+from typing import List, Mapping, Optional, Union
 
 from ..baseclass import DCC
+from env import Executables
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class MayaDCC(DCC):
 
         system = platform.system()
 
+        env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
             "MAYA_SHELF_PATH": str(this_path.parent / "shelves"),
             "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
@@ -35,23 +38,11 @@ class MayaDCC(DCC):
         }
 
         launch_command = ""
-        if system == "Linux":
-            if is_python_shell:
-                launch_command = "/usr/autodesk/maya2024/bin/mayapy"
-            else:
-                launch_command = "/usr/local/bin/maya"
-        elif system == "Windows":
-            if is_python_shell:
-                launch_command = (
-                    "C:\\Program Files\\Autodesk\\Maya2024\\bin\\mayapy.exe"
-                )
-            else:
-                launch_command = "C:\\Program Files\\Autodesk\\Maya2024\\bin\\maya.exe"
+        if is_python_shell:
+            launch_command = str(Executables.mayapy)
         else:
-            raise NotImplementedError(
-                f"The operating system {system} is not a supported OS for this DCC software"
-            )
+            launch_command = str(Executables.maya)
 
-        launch_args = []
+        launch_args: List[str] = []
 
         super().__init__(launch_command, launch_args, env_vars)

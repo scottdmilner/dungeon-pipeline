@@ -1,5 +1,5 @@
 from PySide2 import QtCore, QtWidgets
-from typing import List, Mapping, Optional, Type
+from typing import List, Mapping, Optional
 
 import substance_painter as sp
 
@@ -11,8 +11,8 @@ from pipe.export import Exporter, MaterialType
 class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
     central_widget: QtWidgets.QWidget
     main_layout: QtWidgets.QLayout
-    tex_set_widgets: List[Type["TexSetWidget"]]
-    tex_set_dict: Mapping[sp.textureset.TextureSet, Type["TexSetWidget"]]
+    tex_set_widgets: List["TexSetWidget"]
+    tex_set_dict: Mapping[sp.textureset.TextureSet, "TexSetWidget"]
     title: QtWidgets.QLabel
 
     def __init__(
@@ -21,7 +21,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
     ) -> None:
         super(SubstanceExportWindow, self).__init__(pipe.local.get_main_qt_window())
 
-        self.tex_set_dict = dict.fromkeys(sp.textureset.all_texture_sets(), None)
+        self.tex_set_dict = {}
 
         self._setup_ui()
 
@@ -46,7 +46,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         self.title.setFont(font)
         self.main_layout.addWidget(self.title, 0)
 
-        for ts in self.tex_set_dict:
+        for ts in sp.textureset.all_texture_sets():
             widget = TexSetWidget(self, ts.name())
             self.tex_set_dict[ts] = widget
             self.main_layout.addWidget(widget)

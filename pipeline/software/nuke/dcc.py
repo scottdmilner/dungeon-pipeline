@@ -5,6 +5,7 @@ import platform
 from pathlib import Path
 
 from ..baseclass import DCC
+from env import Executables
 
 log = logging.getLogger(__name__)
 
@@ -30,20 +31,10 @@ class NukeDCC(DCC):
         }
 
         launch_command = ""
-        if system == "Linux":
-            if is_python_shell:
-                launch_command = "/opt/Nuke14.0v5/python3"
-            else:
-                launch_command = "/opt/Nuke14.0v5/Nuke14.0"
-        elif system == "Windows":
-            if is_python_shell:
-                launch_command = "C:\\Program Files\\Nuke14.0v5\\python.exe"
-            else:
-                launch_command = "C:\\Program Files\\Nuke14.0v5\\Nuke14.0.exe"
+        if is_python_shell:
+            launch_command = str(Executables.nuke_python)
         else:
-            raise NotImplementedError(
-                f"The operating system {system} is not a supported OS for this DCC software"
-            )
+            launch_command = str(Executables.nuke)
 
         if is_python_shell:
             launch_args = []

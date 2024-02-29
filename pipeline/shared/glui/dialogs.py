@@ -32,7 +32,7 @@ class ButtonPair:
 
 
 class DialogButtons(ButtonPair):
-    def _init_buttons(self, has_cancel_button: bool, *args) -> None:
+    def _init_buttons(self: QtWidgets.QDialog, has_cancel_button: bool, *args) -> None:
         super(DialogButtons, self)._init_buttons(has_cancel_button, *args)
 
         self.buttons.accepted.connect(self.accept)
@@ -92,7 +92,7 @@ class MessageDialog(QtWidgets.QDialog, DialogButtons):
         parent: Type[QtWidgets.QDialog],
         message: str,
         title: Optional[str] = "Message",
-        has_cancel_button: Optional[bool] = False,
+        has_cancel_button: bool = False,
     ) -> None:
         super(MessageDialog, self).__init__(parent)
         self._init_buttons(has_cancel_button)
