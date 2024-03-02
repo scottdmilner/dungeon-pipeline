@@ -80,5 +80,6 @@ def rig_publish_UI():
 
     mc.showWindow()
 
+
 def run():
     rig_publish_UI()
