@@ -1,4 +1,4 @@
-global proc shelf_LnD_Animation () {
+global proc shelf_LnD_Rigging () {
     global string $gBuffStr;
     global string $gBuffStr0;
     global string $gBuffStr1;
@@ -33,7 +33,7 @@ global proc shelf_LnD_Animation () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "import pipe.rig_publish;" 
+        -command "import pipe.rig_publish; pipe.rig_publish.run();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
