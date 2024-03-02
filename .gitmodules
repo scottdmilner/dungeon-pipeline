@@ -4,3 +4,6 @@
 [submodule "pipeline/software/maya/scripts/rjg"]
 	path = pipeline/software/maya/scripts/rjg
 	url = https://github.com/jgashler/rjg
+[submodule "pipeline/software/maya/scripts/dwpicker"]
+	path = pipeline/software/maya/scripts/dwpicker
+	url = https://github.com/DreamWall-Animation/dwpicker.git
