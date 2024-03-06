@@ -1,13 +1,14 @@
 import maya.cmds as mc
 import os
+import pipe.util
 
 
 def publish(file_name):
-    dir_path = f"/groups/dungeons/character/Rigging/{file_name}/RigVersions"
-    link_dir_path = "/groups/dungeons/anim/rigs"
+    dir_path = pipe.util.get_rigging_path() / file_name / "RigVersions"
+    link_dir_path = pipe.util.get_anim_path() / "rigs"
 
     # search directory for all versions and determine new version number
-    ls_dir = os.listdir(dir_path)
+    ls_dir = dir_path.iterdir()
     latest_version = 0
 
     for item in ls_dir:
@@ -18,7 +19,7 @@ def publish(file_name):
     v_string = str(latest_version + 1).zfill(3)
 
     # save file to path
-    full_name = f"{dir_path}/{file_name}.{v_string}.mb"
+    full_name = dir_path / f"{file_name}.{v_string}.mb"
     mc.file(rename=full_name)
     saved = mc.file(s=True, f=True, typ="mayaBinary")
 
