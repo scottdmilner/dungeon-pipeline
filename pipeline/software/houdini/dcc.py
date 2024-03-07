@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
@@ -28,6 +29,8 @@ class HoudiniDCC(DCC):
             "HOUDINI_BACKUP_DIR": "./.backup",
             # Dump the core on crash to help debugging
             "HOUDINI_COREDUMP": 1,
+            # Compiled Houdini files debug
+            "HOUDINI_DSO_ERROR": 2 if log.isEnabledFor(logging.DEBUG) else None,
             # Max backup files
             "HOUDINI_MAX_BACKUP_FILES": 20,
             # Prevent user envs from overriding existing values
@@ -36,6 +39,10 @@ class HoudiniDCC(DCC):
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
             # Project-specific preference overrides
             "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
+            # Manually set LD_LIBRARY_PATH to integrated Houdini libraries (for Axiom)
+            "LD_LIBRARY_PATH": str(Executables.hfs / "dsolib")
+            if platform.system() == "Linux"
+            else None,
             # Set project OCIO config
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             # Pass log level defined on commandline
