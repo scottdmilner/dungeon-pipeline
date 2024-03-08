@@ -158,7 +158,6 @@ class SGaaDB(DB):
         """Helper class for making queries to a SG connection instance"""
 
         _untracked_asset_types = [
-            "Character",
             "FX",
             "Graphic",
             "Matte Painting",
