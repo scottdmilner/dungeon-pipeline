@@ -4,7 +4,7 @@ import pipe.util
 
 
 def publish(file_name):
-    dir_path = pipe.util.get_rigging_path() / file_name / "RigVersions"
+    dir_path = pipe.util.get_rigging_path() / "Rigs" / file_name / "RigVersions"
     link_dir_path = pipe.util.get_anim_path() / "rigs"
 
     # search directory for all versions and determine new version number
@@ -12,7 +12,7 @@ def publish(file_name):
     latest_version = 0
 
     for item in ls_dir:
-        version = int(item.split(".")[-2])
+        version = int(str(item).split(".")[-2])
         if version > latest_version:
             latest_version = version
 
@@ -49,11 +49,13 @@ def rig_publish_UI():
 
     rigs = [
         (0, "Robin"),
-        (1, "Rayden"),
-        (2, "Crossbow"),
-        (3, "Loot Bag"),
-        (4, "Door"),
-        (5, "test"),
+        (1, "RobinFace"),
+        (2, "Rayden"),
+        (3, "RaydenFace"),
+        (4, "Crossbow"),
+        (5, "LootBag"),
+        (6, "Door"),
+        (7, "test"),
     ]
 
     mc.columnLayout()
