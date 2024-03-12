@@ -44,8 +44,11 @@ class MatlibManager:
         try:
             variant = self._conn.get_asset_by_id(self.variant_id)
             assert variant is not None
-            assert variant.variant_name is not None
-            with open(self._hip / "tex" / variant.variant_name / "mat.json", "r") as f:
+
+            if not (variant_name := variant.variant_name):
+                variant_name = "main"
+            
+            with open(self._hip / "tex" / variant_name / "mat.json", "r") as f:
                 return json.load(f)
         except:
             return None
@@ -76,14 +79,23 @@ class MatlibManager:
         self.node.parm("variant_id").set(id)
         asset = self._conn.get_asset_by_id(id)
         assert asset is not None
-        self.node.parm("variant_name").set(asset.variant_name)
+        if asset.variants:
+            self.node.parm("variant_name").set(asset.variant_name)
+        else:
+            self.node.parm("variant_name").set("main")
 
     @property
     def variant_name(self) -> str:
         if (node_val := self.node.parm("variant_name").evalAsString()) == "none":
-            var1 = self._conn.get_asset_by_stub(self._asset.variants[0])
-            assert var1 is not None
-            self.node.parm("variant_name").set(var1.variant_name)
+            variants = self._asset.variants
+            variant_name: str
+            if variants:
+                var1 = self._conn.get_asset_by_stub(variants[0])
+                assert var1 is not None
+                variant_name = var1.variant_name
+            else:
+                variant_name = "main"
+            self.node.parm("variant_name").set(variant_name)
             return var1.variant_name
         return node_val
 
@@ -117,7 +129,10 @@ class MatlibManager:
     def get_variant_list(self) -> List[str]:
         """Gets list of variants in the way that the HDA interface expects:
         [id1, label1, id2, label2, ...]"""
-        return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
+        if len(self._asset.variants):
+            return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
+        else:
+            return [str(self._asset.id), "Main"]
 
     def import_matnets(self) -> None:
         """Import a material network for each shading group in the export"""
@@ -139,7 +154,13 @@ class MatlibManager:
         """Initialize values on the HDA instance.
         Note that self.node does not work before initialization, so
         node is passed in as an arg"""
-        var = self._conn.get_asset_by_stub(self._asset.variants[0])
-        assert var is not None
-        node.parm("variant_name").set(var.variant_name)
-        node.parm("variant_id").set(var.id)
+        variants = self._asset.variants
+        if not variants:
+            node.parm("variant_name").set("main")
+            node.parm("variant_id").set(self._asset.id)
+            return
+        
+        var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
+        assert var2 is not None
+        node.parm("variant_name").set(var2.variant_name)
+        node.parm("variant_id").set(var2.id)
