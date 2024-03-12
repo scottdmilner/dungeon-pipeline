@@ -62,6 +62,7 @@ class MatlibManager:
 
     @property
     def variant_id(self) -> int:
+        """Get the id of the current variant"""
         if (node_val := self.node.parm("variant_id").evalAsInt()) == -1:
             ## if it hasn't been set yet, set it to the default value
             default = int(self.get_variant_list()[0])
@@ -71,7 +72,20 @@ class MatlibManager:
 
     @variant_id.setter
     def variant_id(self, id: int) -> None:
+        """Set the variant ID and update the variant name"""
         self.node.parm("variant_id").set(id)
+        asset = self._conn.get_asset_by_id(id)
+        assert asset is not None
+        self.node.parm("variant_name").set(asset.variant_name)
+
+    @property
+    def variant_name(self) -> str:
+        if (node_val := self.node.parm("variant_name").evalAsString()) == "none":
+            var1 = self._conn.get_asset_by_stub(self._asset.variants[0])
+            assert var1 is not None
+            self.node.parm("variant_name").set(var1.variant_name)
+            return var1.variant_name
+        return node_val
 
     def _load_items_from_file(
         self, dest_node: hou.LopNode, file_path: str
@@ -95,8 +109,8 @@ class MatlibManager:
                 new_name = item.name().replace(name_placeholder, name)
                 item.setName(new_name)
 
-                # update control null
-                if item.name() == f"CONTROLS_{name}":
+                # update "Shading Group Name" on control null
+                if new_name == f"CONTROLS_{name}":
                     node = hou.node(item.path())
                     node.parm("name").set(name)
 
@@ -114,9 +128,18 @@ class MatlibManager:
             ).exec_()
             return
 
-        for sg in mat_info:
-            name = sg["name"]
+        for shading_group in mat_info:
+            name = shading_group["name"]
             nodes = self._load_items_from_file(
                 self.matlib, str(self._hsite / "matl/general.matl")
             )
             self._rename_matnet(nodes, name)
+
+    def init_hda(self, node: hou.LopNode) -> None:
+        """Initialize values on the HDA instance.
+        Note that self.node does not work before initialization, so
+        node is passed in as an arg"""
+        var = self._conn.get_asset_by_stub(self._asset.variants[0])
+        assert var is not None
+        node.parm("variant_name").set(var.variant_name)
+        node.parm("variant_id").set(var.id)
