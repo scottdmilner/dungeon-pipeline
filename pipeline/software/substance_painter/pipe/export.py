@@ -230,7 +230,7 @@ class Exporter:
 
         procs = [
             subprocess.Popen(
-                jpeg_cmd(Path(root), imgs),
+                jpeg_cmd(Path(root), sorted(imgs)),
                 env=os.environ,
                 startupinfo=silent_startupinfo(),
                 stderr=subprocess.PIPE,
