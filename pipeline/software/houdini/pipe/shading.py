@@ -79,7 +79,7 @@ class MatlibManager:
         self.node.parm("variant_id").set(id)
         asset = self._conn.get_asset_by_id(id)
         assert asset is not None
-        if asset.variants:
+        if self._asset.variants:
             self.node.parm("variant_name").set(asset.variant_name)
         else:
             self.node.parm("variant_name").set("main")
