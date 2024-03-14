@@ -47,7 +47,7 @@ class MatlibManager:
 
             if not (variant_name := variant.variant_name):
                 variant_name = "main"
-            
+
             with open(self._hip / "tex" / variant_name / "mat.json", "r") as f:
                 return json.load(f)
         except:
@@ -159,7 +159,7 @@ class MatlibManager:
             node.parm("variant_name").set("main")
             node.parm("variant_id").set(self._asset.id)
             return
-        
+
         var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
         assert var2 is not None
         node.parm("variant_name").set(var2.variant_name)

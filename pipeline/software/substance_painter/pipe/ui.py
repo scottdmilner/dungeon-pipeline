@@ -1,11 +1,15 @@
+import logging
 from PySide2 import QtCore, QtWidgets
-from typing import List, Mapping, Optional
+from re import findall
+from typing import Callable, List, Mapping, Optional, Set
 
 import substance_painter as sp
 
 import pipe
 from pipe.glui.dialogs import ButtonPair, MessageDialog
-from pipe.export import Exporter, MaterialType
+from pipe.export import Exporter, MaterialType, TexSetExportSettings, DefaultChannels
+
+log = logging.getLogger(__name__)
 
 
 class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
@@ -47,7 +51,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         self.main_layout.addWidget(self.title, 0)
 
         for ts in sp.textureset.all_texture_sets():
-            widget = TexSetWidget(self, ts.name())
+            widget = TexSetWidget(self, ts)
             self.tex_set_dict[ts] = widget
             self.main_layout.addWidget(widget)
 
@@ -87,7 +91,12 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 
         print("Exporting!")
         exporter = Exporter()
-        if exporter.export({k: v.get() for k, v in self.tex_set_dict.items()}):
+        if exporter.export(
+            [
+                TexSetExportSettings(ts, wgt.mat_type, wgt.extra_channels)
+                for ts, wgt in self.tex_set_dict.items()
+            ]
+        ):
             # TODO: not using tex_set_dict.values.get() and passing separate material types
             MessageDialog(
                 pipe.local.get_main_qt_window(),
@@ -103,49 +112,107 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 
 
 class TexSetWidget(QtWidgets.QWidget):
-    name: str
+    tex_set: sp.textureset.TextureSet
     layout: QtWidgets.QLayout
     button_layout: QtWidgets.QLayout
     radio_buttons: Mapping[MaterialType, QtWidgets.QRadioButton]
+    extra_channels: Set[sp.textureset.ChannelType]
 
     MaterialTypeNames = {
         MaterialType.GENERAL: "General",
-        MaterialType.METAL: "Metal (not implemented)",
-        MaterialType.GLASS: "Glass (not implemented)",
-        MaterialType.CLOTH: "Cloth (not implemented)",
-        MaterialType.SKIN: "Skin (not implemented)",
+        # MaterialType.METAL: "Metal (not implemented)",
+        # MaterialType.GLASS: "Glass (not implemented)",
+        # MaterialType.CLOTH: "Cloth (not implemented)",
+        # MaterialType.SKIN: "Skin (not implemented)",
     }
 
     def __init__(
         self,
         parent: QtWidgets.QWidget,
-        name: str,
+        tex_set: sp.textureset.TextureSet,
         flags: Optional[QtCore.Qt.WindowFlags] = None,
     ) -> None:
         super().__init__(parent)
         self.setParent(parent)
-        self.name = name
+        self.tex_set = tex_set
         self.radio_buttons = {}
+        self.extra_channels = set()
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.layout = QtWidgets.QVBoxLayout()
         self.button_layout = QtWidgets.QHBoxLayout()
 
-        self.label = QtWidgets.QLabel(f"Texture Set: {self.name}")
+        self.label = QtWidgets.QLabel(f"Texture Set: {self.tex_set.name()}")
         self.layout.addWidget(self.label)
 
         for mtype, name in self.MaterialTypeNames.items():
             radio = QtWidgets.QRadioButton(name)
             radio.setChecked(False)
             radio.toggled.connect(self.parentWidget().radio_callback)
+            radio.toggled.connect(self._setup_extra_channel_layout)
             self.button_layout.addWidget(radio)
             self.radio_buttons[mtype] = radio
 
         self.layout.addLayout(self.button_layout)
+
+        self.extra_channel_layout = QtWidgets.QHBoxLayout()
+        self._setup_extra_channel_layout()
+
+        self.layout.addLayout(self.extra_channel_layout)
+
         self.setLayout(self.layout)
 
-    def get(self) -> MaterialType:
+    def _setup_extra_channel_layout(self) -> None:
+        # clear out layout
+        for i in reversed(range(self.extra_channel_layout.count())):
+            widget_to_remove = self.extra_channel_layout.itemAt(i).widget()
+            self.extra_channel_layout.removeWidget(widget_to_remove)
+            widget_to_remove.setParent(None)
+
+        # clear out channel list
+        self.extra_channels.clear()
+
+        stack: sp.textureset.Stack
+        try:
+            stack = self.tex_set.get_stack()
+        except:
+            MessageDialog(
+                pipe.local.get_main_qt_window(),
+                "Warning! Could not get material stacks! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
+            ).exec_()
+            return
+
+        current_mt = self.mat_type
+        for ct, ch in stack.all_channels().items():
+            if ct not in DefaultChannels[current_mt]:
+                name = (
+                    getattr(ch, "label", None)
+                    and ch.label().title().replace(" ", "")
+                    or ch.type().name
+                )
+                # add spaces
+                name = " ".join(
+                    findall(r"[A-Z0-9](?:[a-z0-9]+|[A-Z]*(?=[A-Z]|$))", name)
+                )
+                checkbox = QtWidgets.QCheckBox(name)
+                checkbox.setChecked(False)
+                checkbox.stateChanged.connect(self._extra_channels_updater(ct))
+                self.extra_channel_layout.addWidget(checkbox)
+
+    def _extra_channels_updater(
+        self, ct: sp.textureset.ChannelType
+    ) -> Callable[[], None]:
+        def inner() -> None:
+            if ct in self.extra_channels:
+                self.extra_channels.remove(ct)
+            else:
+                self.extra_channels.add(ct)
+
+        return inner
+
+    @property
+    def mat_type(self) -> MaterialType:
         return next(
             (mtype for mtype, radio in self.radio_buttons.items() if radio.isChecked()),
             MaterialType.GENERAL,
