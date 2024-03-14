@@ -72,6 +72,18 @@ def get_pipe_path() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def get_character_path() -> Path:
+    return get_production_path().parent / "character"
+
+
+def get_rigging_path() -> Path:
+    return get_character_path() / "Rigging"
+
+
+def get_anim_path() -> Path:
+    return get_production_path().parent / "anim"
+
+
 def get_production_path() -> Path:
     system = platform.system()
     if system == "Linux":

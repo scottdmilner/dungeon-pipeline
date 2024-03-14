@@ -10,4 +10,4 @@ from .localizer import MayaLocalizer as _ML
 local = _ML()
 
 # import maya-specific scripts
-from . import asset
+from . import asset, picker, rig_publish

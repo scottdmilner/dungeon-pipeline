@@ -44,8 +44,11 @@ class MatlibManager:
         try:
             variant = self._conn.get_asset_by_id(self.variant_id)
             assert variant is not None
-            assert variant.variant_name is not None
-            with open(self._hip / "tex" / variant.variant_name / "mat.json", "r") as f:
+
+            if not (variant_name := variant.variant_name):
+                variant_name = "main"
+
+            with open(self._hip / "tex" / variant_name / "mat.json", "r") as f:
                 return json.load(f)
         except:
             return None
@@ -62,6 +65,7 @@ class MatlibManager:
 
     @property
     def variant_id(self) -> int:
+        """Get the id of the current variant"""
         if (node_val := self.node.parm("variant_id").evalAsInt()) == -1:
             ## if it hasn't been set yet, set it to the default value
             default = int(self.get_variant_list()[0])
@@ -71,7 +75,29 @@ class MatlibManager:
 
     @variant_id.setter
     def variant_id(self, id: int) -> None:
+        """Set the variant ID and update the variant name"""
         self.node.parm("variant_id").set(id)
+        asset = self._conn.get_asset_by_id(id)
+        assert asset is not None
+        if self._asset.variants:
+            self.node.parm("variant_name").set(asset.variant_name)
+        else:
+            self.node.parm("variant_name").set("main")
+
+    @property
+    def variant_name(self) -> str:
+        if (node_val := self.node.parm("variant_name").evalAsString()) == "none":
+            variants = self._asset.variants
+            variant_name: str
+            if variants:
+                var1 = self._conn.get_asset_by_stub(variants[0])
+                assert var1 is not None
+                variant_name = var1.variant_name
+            else:
+                variant_name = "main"
+            self.node.parm("variant_name").set(variant_name)
+            return var1.variant_name
+        return node_val
 
     def _load_items_from_file(
         self, dest_node: hou.LopNode, file_path: str
@@ -95,15 +121,18 @@ class MatlibManager:
                 new_name = item.name().replace(name_placeholder, name)
                 item.setName(new_name)
 
-                # update control null
-                if item.name() == f"CONTROLS_{name}":
+                # update "Shading Group Name" on control null
+                if new_name == f"CONTROLS_{name}":
                     node = hou.node(item.path())
                     node.parm("name").set(name)
 
     def get_variant_list(self) -> List[str]:
         """Gets list of variants in the way that the HDA interface expects:
         [id1, label1, id2, label2, ...]"""
-        return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
+        if len(self._asset.variants):
+            return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
+        else:
+            return [str(self._asset.id), "Main"]
 
     def import_matnets(self) -> None:
         """Import a material network for each shading group in the export"""
@@ -114,9 +143,24 @@ class MatlibManager:
             ).exec_()
             return
 
-        for sg in mat_info:
-            name = sg["name"]
+        for shading_group in mat_info:
+            name = shading_group["name"]
             nodes = self._load_items_from_file(
                 self.matlib, str(self._hsite / "matl/general.matl")
             )
             self._rename_matnet(nodes, name)
+
+    def init_hda(self, node: hou.LopNode) -> None:
+        """Initialize values on the HDA instance.
+        Note that self.node does not work before initialization, so
+        node is passed in as an arg"""
+        variants = self._asset.variants
+        if not variants:
+            node.parm("variant_name").set("main")
+            node.parm("variant_id").set(self._asset.id)
+            return
+
+        var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
+        assert var2 is not None
+        node.parm("variant_name").set(var2.variant_name)
+        node.parm("variant_id").set(var2.id)

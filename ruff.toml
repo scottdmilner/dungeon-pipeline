@@ -1,4 +1,6 @@
 exclude = [
     "shotgun_api3",
     "rjg",
+    "dwpicker",
+    "dwpicker_git",
 ]

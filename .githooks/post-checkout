@@ -5,7 +5,16 @@ set -e
 PROD_DIR=/groups/dungeons/pipeline
 LOCAL_DIR=$(git rev-parse --show-toplevel)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-#cp "${PROD_DIR}/pipe/accomplice/sg_config.py" "${LOCAL_DIR}/pipe/accomplice/sg_config.py"
+
+# Create symlink if Axiom folder does not exist
+if [[ ! -d "${LOCAL_DIR}/pipeline/lib/axiom" ]]; then
+    ln -s "${PROD_DIR}/pipeline/lib/axiom" "${LOCAL_DIR}/pipeline/lib/axiom"
+fi
+
+# Update the env file
+if [[ "${PROD_DIR}" != "${LOCAL_DIR}" ]]; then
+    cp "${PROD_DIR}/pipeline/env.py" "${LOCAL_DIR}/pipeline/env.py"
+fi
 
 # make shelves read-only if this is prod
 #if [ "prod" = "${BRANCH}" ]; then
