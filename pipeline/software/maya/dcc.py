@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
 from ..baseclass import DCC
+from shared.util import get_rigging_path
 from env import Executables
 
 log = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class MayaDCC(DCC):
 
         env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
+            "DWPICKER_PROJECT_DIRECTORY": str(get_rigging_path() / "Pickers"),
             "MAYA_SHELF_PATH": str(this_path.parent / "shelves"),
             "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
             "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
