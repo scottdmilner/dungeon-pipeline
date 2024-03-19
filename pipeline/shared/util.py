@@ -68,6 +68,30 @@ def find_implementation(cls: type, module: str, package: Optional[str] = None) -
         raise ValueError(f"could not find module '{module}'")
 
 
+def fix_launcher_metadata() -> None:
+    if platform.system() != "Linux":
+        return
+    try:
+        procs = [
+            subprocess.Popen(
+                [
+                    "gio",
+                    "set",
+                    str(item),
+                    "metadata::caja-trusted-launcher",
+                    "true",
+                ]
+            )
+            for item in get_pipe_path().parent.iterdir()
+            if item.suffix == ".desktop"
+        ]
+        for p in procs:
+            p.wait()
+
+    except:
+        pass
+
+
 def get_pipe_path() -> Path:
     return Path(__file__).resolve().parents[1]
 
