@@ -1,0 +1,15 @@
+{
+	"env": [
+		{
+			"LYNX": "$PIPE_PATH/lib/VFX-LYNX"
+		},
+        {
+            "HOUDINI_PATH": [
+                {
+                    "value": "$LYNX/plugins/SideFX/Houdini",
+                    "method": "append"
+                }
+            ]
+        }
+	]
+}
