@@ -10,3 +10,6 @@
 [submodule "pipeline/lib/MOPS"]
 	path = pipeline/lib/MOPS
 	url = https://github.com/toadstorm/MOPS.git
+[submodule "pipeline/lib/VFX-LYNX"]
+	path = pipeline/lib/VFX-LYNX
+	url = https://github.com/LucaScheller/VFX-LYNX.git
