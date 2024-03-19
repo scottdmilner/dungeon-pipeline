@@ -7,6 +7,8 @@ from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
 from typing import Optional, Union
 
+from env import production_path as _prp
+
 
 class dotdict(dict):
     """dot notation access to dictionary attributes"""
@@ -109,15 +111,7 @@ def get_anim_path() -> Path:
 
 
 def get_production_path() -> Path:
-    system = platform.system()
-    if system == "Linux":
-        return Path("/groups/dungeons/production")
-    elif system == "Windows":
-        return Path("G:/dungeons/production")
-    else:
-        raise NotImplementedError(
-            "Production path is not defined for this operating system"
-        )
+    return _prp
 
 
 def get_asset_path() -> Path:
