@@ -7,6 +7,7 @@ import subprocess
 from typing import List, Mapping, Optional, Sequence, Union
 
 from .interface import DCCInterface, DCCLocalizerInterface
+from shared.util import fix_launcher_metadata
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +64,8 @@ class DCC(DCCInterface):
         Passing in optional parameters will override their default
         values.
         """
+
+        fix_launcher_metadata()
 
         if command is None:
             command = self.command
