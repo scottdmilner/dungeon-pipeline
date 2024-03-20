@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 
-from typing import List, Mapping, Optional, Sequence, Union
+from typing import Callable, List, Mapping, Optional, Sequence, Union
 
 from .interface import DCCInterface, DCCLocalizerInterface
 from shared.util import fix_launcher_metadata
@@ -16,12 +16,14 @@ class DCC(DCCInterface):
     command: str
     args: Optional[List[str]]
     env_vars: Mapping[str, Optional[Union[int, str]]]
+    pre_launch_tasks: Callable[[], None]
 
     def __init__(
         self,
         command: str,
         args: Optional[List[str]] = [],
         env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None,
+        pre_launch_tasks: Optional[Callable[[], None]] = None,
     ) -> None:
         """Initialize DCC object.
 
@@ -33,6 +35,7 @@ class DCC(DCCInterface):
         self.command = command
         self.args = args
         self.env_vars = env_vars or {}
+        self.pre_launch_tasks = pre_launch_tasks or (lambda: None)
 
     def _set_env_vars(
         self, env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None
@@ -54,10 +57,14 @@ class DCC(DCCInterface):
             else:
                 os.environ[key] = str(val)
 
+    def pre_launch_tasks(self, *args, **kwargs) -> None:
+        pass
+
     def launch(
         self,
         command: Optional[str] = None,
         args: Optional[List[str]] = None,
+        pre_launch_tasks: Optional[Callable[[], None]] = None,
     ) -> None:
         """Launch the software with the specified arguments.
 
@@ -65,13 +72,15 @@ class DCC(DCCInterface):
         values.
         """
 
-        fix_launcher_metadata()
-
         if command is None:
             command = self.command
         if args is None:
             args = self.args
+        if pre_launch_tasks is None:
+            pre_launch_tasks = self.pre_launch_tasks
 
+        fix_launcher_metadata()
+        pre_launch_tasks()
         self._set_env_vars()
 
         log.info("Launching the software")
