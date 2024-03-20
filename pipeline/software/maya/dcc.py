@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import shutil
 
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
@@ -15,16 +16,22 @@ log = logging.getLogger(__name__)
 class MayaDCC(DCC):
     """Maya DCC class"""
 
+    shelf_path: str
+
     def __init__(self, is_python_shell: bool = False) -> None:
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
 
         system = platform.system()
 
+        self.shelf_path = str(
+            Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve() / "shelves"
+        )
+
         env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
             "DWPICKER_PROJECT_DIRECTORY": str(get_rigging_path() / "Pickers"),
-            "MAYA_SHELF_PATH": str(this_path.parent / "shelves"),
+            "MAYA_SHELF_PATH": self.shelf_path,
             "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
             "MAYAUSD_IMPORT_PRIMARY_UV_SET_AS_MAP1": 1,
             "PYTHONPATH": os.pathsep.join(
@@ -47,4 +54,12 @@ class MayaDCC(DCC):
 
         launch_args: List[str] = []
 
-        super().__init__(launch_command, launch_args, env_vars)
+        super().__init__(
+            launch_command, launch_args, env_vars, lambda: self.set_up_shelf_path()
+        )
+
+    def set_up_shelf_path(self) -> None:
+        prod_dir = str(Path(__file__).parent / "shelves")
+        local_dir = self.shelf_path
+
+        shutil.copytree(prod_dir, local_dir, dirs_exist_ok=True)
