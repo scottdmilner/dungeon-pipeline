@@ -31,7 +31,7 @@ class SubstanceDesignerDCC(DCC):
         if is_python_shell:
             raise NotImplementedError("Python shell is not supported for this DCC")
 
-        launch_command = str(Executables.substance_painter)
+        launch_command = str(Executables.substance_designer)
         if not launch_command:
             raise NotImplementedError(
                 f"The operating system {system} is not a supported OS for this DCC software"
