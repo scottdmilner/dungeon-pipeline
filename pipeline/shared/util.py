@@ -151,4 +151,6 @@ try:
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # type: ignore[attr-defined]
         return startupinfo
 except:
-    pass
+
+    def silent_startupinfo() -> None:
+        pass
