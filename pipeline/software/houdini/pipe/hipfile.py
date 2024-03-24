@@ -52,14 +52,6 @@ class FileManager:
             sorted=True, child_mode=DB.ChildQueryMode.ROOTS
         )
 
-        # asset_response = hou.ui.selectFromList(
-        #     asset_names,
-        #     exclusive=True,
-        #     message="Select the Asset File that you'd like to open.",
-        #     title="Open Asset File",
-        #     column_header="Assets",
-        # )
-
         asset_open_dialog = FilteredListDialog(
             pipe.local.get_main_qt_window(),
             self._conn.get_asset_name_list(sorted=True),
