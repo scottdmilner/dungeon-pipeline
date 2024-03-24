@@ -57,9 +57,6 @@ class DCC(DCCInterface):
             else:
                 os.environ[key] = str(val)
 
-    def pre_launch_tasks(self, *args, **kwargs) -> None:
-        pass
-
     def launch(
         self,
         command: Optional[str] = None,

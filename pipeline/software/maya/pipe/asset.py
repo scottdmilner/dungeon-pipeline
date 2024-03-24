@@ -18,19 +18,19 @@ log = logging.getLogger(__name__)
 
 
 class IOManager:
-    conn: DB
+    _conn: DB
     system: str
     window: Type[QWidget]
 
     def __init__(self) -> None:
-        self.conn = DB(SG_Config)
+        self._conn = DB(SG_Config)
         self.system = platform.system()
         self.window = pipe.local.get_main_qt_window()
 
     def publish_asset(self) -> None:
         dialog = FilteredListDialog(
             self.window,
-            self.conn.get_asset_name_list(sorted=True),
+            self._conn.get_asset_name_list(sorted=True),
             "Publish Asset",
             "Select asset to publish",
             accept_button_name="Publish",
@@ -47,7 +47,7 @@ class IOManager:
             error.exec_()
             return
 
-        asset = self.conn.get_asset_by_name(asset_display_name)
+        asset = self._conn.get_asset_by_name(asset_display_name)
         assert asset is not None
 
         log.debug(asset)
