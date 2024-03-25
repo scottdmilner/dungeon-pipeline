@@ -5,8 +5,7 @@ import maya.OpenMayaUI as omui
 import maya.cmds as mc
 import os
 
-import pipe.util
-from env import production_path as _prp
+import pipe.util as pu
 
 rig_list = [
     "Robin",
@@ -84,7 +83,7 @@ class RigPublishUI(QtWidgets.QDialog):
         update_anim = self.anim_check.isChecked()
         update_pvis = self.pvis_check.isChecked()
 
-        dir_path = pipe.util.get_rigging_path() / "Rigs" / file_name / "RigVersions"
+        dir_path = pu.get_rigging_path() / "Rigs" / file_name / "RigVersions"
 
         # search directory for all versions and determine new version number
         ls_dir = dir_path.iterdir()
@@ -106,7 +105,7 @@ class RigPublishUI(QtWidgets.QDialog):
 
         # create symlinks
         if update_anim:
-            anim_link_dir_path = pipe.util.get_anim_path() / "Rigs"
+            anim_link_dir_path = pu.get_anim_path() / "Rigs"
             temp_name = f"/{anim_link_dir_path}/tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{anim_link_dir_path}/{file_name}.mb")
@@ -115,7 +114,7 @@ class RigPublishUI(QtWidgets.QDialog):
                 f"Link to file created or updated at '{anim_link_dir_path}/{file_name}.mb'\n"
             )
         if update_pvis:
-            pvis_link_dir_path = pipe.util.get_previs_path() / "Rigs"
+            pvis_link_dir_path = pu.get_previs_path() / "Rigs"
             temp_name = f"/{pvis_link_dir_path}/tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{pvis_link_dir_path}/{file_name}.mb")
