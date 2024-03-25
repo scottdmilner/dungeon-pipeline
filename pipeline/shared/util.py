@@ -110,6 +110,10 @@ def get_anim_path() -> Path:
     return get_production_path().parent / "anim"
 
 
+def get_previs_path() -> Path:
+    return get_production_path().parent / "previs"
+
+
 def get_production_path() -> Path:
     return _prp
 
