@@ -3,9 +3,9 @@
 	<projects>
 		<projectfiles>
 			<size>1</size>
-            <_1 prefix="_">
-                <path>lnd_project.sbsprj</path>
-            </_1>
+			<_1 prefix="_">
+				<path>lnd_project.sbsprj</path>
+			</_1>
 		</projectfiles>
 	</projects>
 	<preferences>
