@@ -15,7 +15,7 @@ pip install \
     types-opencolorio \
     types-PySide2 \
     types-substance_painter
-echo > "${LOCAL_DIR}/pipeline/lib/shotgun_api3/shotgun_api3/__init__.pyi" << EOF
+cat << 'EOF' > "${LOCAL_DIR}/pipeline/lib/shotgun_api3/shotgun_api3/__init__.pyi"
 from typing import Any
 class Shotgun(object):
     def __init__(
@@ -26,3 +26,4 @@ class Shotgun(object):
         self, entity_type, filters, fields=None, order=None, filter_operator=None, limit=0, retired_only=False, page=0, include_archived_projects=True, additional_filter_presets=None,
     ) -> list[dict[Any, Any]]: ...
 EOF
+
