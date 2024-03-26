@@ -1,7 +1,7 @@
 import json
 
 from enum import IntEnum
-from typing import Dict, Iterable, List, Optional, Type, Union
+from typing import Dict, List, Optional, Type, Union
 
 
 class MaterialType(IntEnum):
@@ -65,7 +65,7 @@ class Asset(JsonSerializable):
     parent: Optional[AssetStub]
     path: Optional[str]
     version = None
-    variants: Iterable[AssetStub]
+    variants: List[AssetStub]
 
     def __init__(
         self,
@@ -73,7 +73,7 @@ class Asset(JsonSerializable):
         disp_name: Optional[str],
         path: Optional[str] = None,
         id: Optional[int] = None,
-        variants: Optional[Iterable[Dict]] = None,
+        variants: Optional[List[Dict]] = None,
         parent: Optional[List[Dict]] = None,
     ) -> None:
         self.name = name

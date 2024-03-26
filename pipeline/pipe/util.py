@@ -5,7 +5,7 @@ import subprocess
 
 from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from env import production_path as _prp
 
@@ -156,5 +156,5 @@ try:
         return startupinfo
 except:
 
-    def silent_startupinfo() -> None:
+    def silent_startupinfo() -> Optional[Any]:
         pass

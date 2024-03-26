@@ -1,7 +1,7 @@
 import logging
 from PySide2 import QtCore, QtWidgets
 from re import findall
-from typing import Callable, List, Mapping, Optional, Set
+from typing import Callable, Dict, List, Mapping, Optional, Set
 
 import substance_painter as sp
 
@@ -116,7 +116,7 @@ class TexSetWidget(QtWidgets.QWidget):
     tex_set: sp.textureset.TextureSet
     layout: QtWidgets.QLayout
     button_layout: QtWidgets.QLayout
-    radio_buttons: Mapping[MaterialType, QtWidgets.QRadioButton]
+    radio_buttons: Dict[MaterialType, QtWidgets.QRadioButton]
     extra_channels: Set[sp.textureset.ChannelType]
 
     MaterialTypeNames = {

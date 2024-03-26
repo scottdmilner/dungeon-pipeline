@@ -19,24 +19,6 @@ rig_list = [
 
 
 class RigPublishUI(QtWidgets.QDialog):
-    pass
-
-
-rig_pub: RigPublishUI
-
-
-def run():
-    try:
-        rig_pub.close()
-        rig_pub.deleteLater()
-    except:
-        pass
-
-    rig_pub = RigPublishUI()
-    rig_pub.show()
-
-
-class RigPublishUI(QtWidgets.QDialog):
     def __init__(self, parent=get_main_qt_window()):
         super().__init__(parent)
 
@@ -127,6 +109,19 @@ class RigPublishUI(QtWidgets.QDialog):
     def on_cancel(self):
         print("Cancelled Rig Publish")
         self.close()
+
+
+rig_pub: RigPublishUI
+
+def run():
+    try:
+        rig_pub.close()
+        rig_pub.deleteLater()
+    except:
+        pass
+
+    rig_pub = RigPublishUI()
+    rig_pub.show()
 
 
 if __name__ == "__main__":

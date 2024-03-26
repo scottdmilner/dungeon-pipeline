@@ -4,6 +4,7 @@ from typing import Any, Dict, Iterable, List, Optional
 import hou
 import json
 
+from pipe.h.local import get_main_qt_window
 from pipe.db import DB
 from pipe.struct import Asset
 from pipe.glui.dialogs import MessageDialog
@@ -91,11 +92,12 @@ class MatlibManager:
             if variants:
                 var1 = self._conn.get_asset_by_stub(variants[0])
                 assert var1 is not None
+                assert var1.variant_name is not None
                 variant_name = var1.variant_name
             else:
                 variant_name = "main"
             self.node.parm("variant_name").set(variant_name)
-            return var1.variant_name
+            return variant_name
         return node_val
 
     def _load_items_from_file(
@@ -137,7 +139,7 @@ class MatlibManager:
         """Import a material network for each shading group in the export"""
         if not (mat_info := self.mat_info):
             MessageDialog(
-                h.local.get_main_qt_window(),
+                get_main_qt_window(),
                 "Error! Could not get material info. Make sure that textures have been exported for the currently selected variant.",
             ).exec_()
             return

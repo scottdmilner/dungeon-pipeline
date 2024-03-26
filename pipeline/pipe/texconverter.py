@@ -23,8 +23,8 @@ class TexConverter:
 
     def __init__(
         self,
-        tex_path: Optional[Path],
-        preview_path: Optional[Path],
+        tex_path: Path,
+        preview_path: Path,
         imgs_by_tex_set: List[List[str]],
     ) -> None:
         self.tex_path = tex_path

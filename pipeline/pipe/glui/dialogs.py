@@ -89,7 +89,7 @@ class DialogFilteredList:
 class MessageDialog(QtWidgets.QDialog, DialogButtons):
     def __init__(
         self,
-        parent: Type[QtWidgets.QDialog],
+        parent: Optional[Type[QtWidgets.QDialog]],
         message: str,
         title: Optional[str] = "Message",
         has_cancel_button: bool = False,
@@ -118,7 +118,7 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 
     def __init__(
         self,
-        parent: Type[QtWidgets.QDialog],
+        parent: Optional[Type[QtWidgets.QDialog]],
         items: Sequence[str],
         title: Optional[str] = "Filtered List",
         list_label: Optional[str] = None,
