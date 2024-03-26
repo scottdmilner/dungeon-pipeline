@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 class TexSetExportSettings:
     tex_set: sp.textureset.TextureSet
     mat_type: MaterialType
-    extra_channels: Set[sp.textureset.ChannelType]
+    extra_channels: Set[sp.textureset.Channel]
 
 
 class Exporter:
@@ -136,13 +136,13 @@ def generate_config(
                     # Extra AOVs
                     *[
                         {
-                            "fileName": f"$textureSet_{getattr(ch, 'label', None) and ch.label().replace(' ', '') or ch.name}(_$colorSpace)(.$udim)",
+                            "fileName": f"$textureSet_{getattr(ch, 'label', None) and ch.label().replace(' ', '') or ch.type().name}(_$colorSpace)(.$udim)",
                             "channels": [
                                 {
                                     "destChannel": color,
                                     "srcChannel": color,
                                     "srcMapType": "documentMap",
-                                    "srcMapName": ch.name.lower(),
+                                    "srcMapName": ch.type().name.lower(),
                                 }
                                 for color in colors
                             ],
@@ -155,7 +155,7 @@ def generate_config(
                         for colors, bit_depth in re.findall(
                             r"^s?(L|RGB)(\d{1,2}F?)$",
                             export_settings.tex_set.get_stack()
-                            .get_channel(ch)
+                            .get_channel(ch.type())
                             .format()
                             .name,
                         )

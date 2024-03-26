@@ -69,7 +69,7 @@ global proc shelf_LnD_Animation () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "import anim.createSpaceSwitch as spsw; spsw.run()" 
+        -command "import pipe.m.space_switch as spsw; spsw.run()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

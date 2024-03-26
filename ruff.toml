@@ -1,8 +1,0 @@
-exclude = [
-    "MOPS",
-    "VFX-LYNX",
-    "dwpicker",
-    "dwpicker_git",
-    "rjg",
-    "shotgun_api3",
-]

@@ -2,11 +2,8 @@
 
 import logging
 
-from pathlib import Path
-from PySide2 import QtWidgets, QtCore, QtGui
-from typing import Optional, Sequence, Type
-
-from pipe.util import get_pipe_path
+from PySide2 import QtWidgets, QtCore
+from typing import Callable, Optional, Sequence
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +29,11 @@ class ButtonPair:
 
 
 class DialogButtons(ButtonPair):
+    # stubs for attributes that will be on class this is inherited by
+    buttons: QtWidgets.QDialogButtonBox
+    accept: Callable[..., None]
+    reject: Callable[..., None]
+
     def _init_buttons(self, has_cancel_button: bool, *args) -> None:
         super(DialogButtons, self)._init_buttons(has_cancel_button, *args)
 

@@ -98,7 +98,6 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
                 for ts, wgt in self.tex_set_dict.items()
             ]
         ):
-            # TODO: not using tex_set_dict.values.get() and passing separate material types
             MessageDialog(
                 get_main_qt_window(),
                 "Textures successfully exported!",
@@ -117,7 +116,7 @@ class TexSetWidget(QtWidgets.QWidget):
     ts_layout: QtWidgets.QLayout
     button_layout: QtWidgets.QLayout
     radio_buttons: Dict[MaterialType, QtWidgets.QRadioButton]
-    extra_channels: Set[sp.textureset.ChannelType]
+    extra_channels: Set[sp.textureset.Channel]
     parent_window: SubstanceExportWindow
 
     MaterialTypeNames = {
@@ -200,17 +199,15 @@ class TexSetWidget(QtWidgets.QWidget):
                 )
                 checkbox = QtWidgets.QCheckBox(name)
                 checkbox.setChecked(False)
-                checkbox.stateChanged.connect(self._extra_channels_updater(ct))
+                checkbox.stateChanged.connect(self._extra_channels_updater(ch))
                 self.extra_channel_layout.addWidget(checkbox)
 
-    def _extra_channels_updater(
-        self, ct: sp.textureset.ChannelType
-    ) -> Callable[[], None]:
+    def _extra_channels_updater(self, ch: sp.textureset.Channel) -> Callable[[], None]:
         def inner() -> None:
-            if ct in self.extra_channels:
-                self.extra_channels.remove(ct)
+            if ch in self.extra_channels:
+                self.extra_channels.remove(ch)
             else:
-                self.extra_channels.add(ct)
+                self.extra_channels.add(ch)
 
         return inner
 

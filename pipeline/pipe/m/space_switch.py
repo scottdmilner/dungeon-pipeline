@@ -1,6 +1,7 @@
-def createSpaceSwitch():
-    import maya.cmds as mc
+import maya.cmds as mc
 
+
+def createSpaceSwitch():
     sel = mc.ls(sl=True)
     sources = sel
 
