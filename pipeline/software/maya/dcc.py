@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
 from ..baseclass import DCC
-from shared.util import get_rigging_path
+from pipe.util import get_rigging_path
 from env import Executables
 
 log = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ class MayaDCC(DCC):
 
         env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
+            "DCC": str(this_path.parent.name),
             "DWPICKER_PROJECT_DIRECTORY": str(get_rigging_path() / "Pickers"),
             "MAYA_SHELF_PATH": self.shelf_path,
             "MAYAUSD_EXPORT_MAP1_AS_PRIMARY_UV_SET": 1,
@@ -37,8 +38,8 @@ class MayaDCC(DCC):
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(pipe_path),
-                    str(this_path.parent),
                     str(this_path.parent / "scripts"),
+                    str(this_path.parent / "userSetup"),
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),

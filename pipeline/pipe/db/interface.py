@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import Iterable, List, Optional, Sequence
 
-from shared.util import check_methods
-from shared.struct import Asset
+from pipe.util import check_methods
+from pipe.struct import Asset
 
 
 class DBInterface(metaclass=ABCMeta):

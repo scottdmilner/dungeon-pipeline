@@ -9,7 +9,7 @@ import maya.OpenMayaUI as omUI
 from software.baseclass import DCCLocalizer
 
 
-class MayaLocalizer(DCCLocalizer):
+class _MayaLocalizer(DCCLocalizer):
     def __init__(self):
         super().__init__("maya")
 
@@ -23,3 +23,9 @@ class MayaLocalizer(DCCLocalizer):
     def is_headless(self) -> bool:
         pattern = re.compile("^.*mayapy(?:\.?(?:bin|exe))$")
         return bool(pattern.match(sys.executable))
+
+
+_l = _MayaLocalizer()
+
+get_main_qt_window = _l.get_main_qt_window
+is_headless = _l.is_headless

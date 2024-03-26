@@ -6,8 +6,9 @@ from typing import Callable, List, Mapping, Optional, Set
 import substance_painter as sp
 
 import pipe
+from pipe.sp.local import get_main_qt_window
 from pipe.glui.dialogs import ButtonPair, MessageDialog
-from pipe.export import Exporter, MaterialType, TexSetExportSettings, DefaultChannels
+from pipe.sp.export import Exporter, MaterialType, TexSetExportSettings, DefaultChannels
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         self,
         flags: Optional[QtCore.Qt.WindowFlags] = None,
     ) -> None:
-        super(SubstanceExportWindow, self).__init__(pipe.local.get_main_qt_window())
+        super(SubstanceExportWindow, self).__init__(get_main_qt_window())
 
         self.tex_set_dict = {}
 
@@ -74,8 +75,8 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
     def _preflight(self) -> bool:
         """Check for asset metadata and correct channel types before running
         the export"""
-        metaUpdater = pipe.metadata.MetadataUpdater()
-        srgbChecker = pipe.channels.sRGBChecker()
+        metaUpdater = pipe.sp.metadata.MetadataUpdater()
+        srgbChecker = pipe.sp.channels.sRGBChecker()
         meta = metaUpdater.check() or metaUpdater.do_update()
         srgb = srgbChecker.check() or srgbChecker.prompt_srgb_fix()
         return meta and srgb
@@ -83,7 +84,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
     def do_export(self) -> None:
         if not self._preflight():
             MessageDialog(
-                pipe.local.get_main_qt_window(),
+                get_main_qt_window(),
                 "Your file has failed preflight checks. Please follow the instructions to fix them when you press Export.",
                 "Preflight failed.",
             ).exec_()
@@ -99,12 +100,12 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         ):
             # TODO: not using tex_set_dict.values.get() and passing separate material types
             MessageDialog(
-                pipe.local.get_main_qt_window(),
+                get_main_qt_window(),
                 "Textures successfully exported!",
             ).exec_()
         else:
             MessageDialog(
-                pipe.local.get_main_qt_window(),
+                get_main_qt_window(),
                 "An error occured while exporting textures. Please check the console for more information",
             ).exec_()
 
@@ -178,7 +179,7 @@ class TexSetWidget(QtWidgets.QWidget):
             stack = self.tex_set.get_stack()
         except:
             MessageDialog(
-                pipe.local.get_main_qt_window(),
+                get_main_qt_window(),
                 "Warning! Could not get material stacks! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
             ).exec_()
             return

@@ -33,7 +33,7 @@ global proc shelf_LnD_Rigging () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "import pipe.rig_publish; pipe.rig_publish.run();" 
+        -command "import pipe.m.rig_publish; pipe.m.rig_publish.run();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

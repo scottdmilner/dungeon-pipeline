@@ -5,7 +5,7 @@ import platform
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
-from shared.util import resolve_mapped_path
+from pipe.util import resolve_mapped_path
 
 from ..baseclass import DCC
 from env import Executables
@@ -25,6 +25,7 @@ class HoudiniDCC(DCC):
 
         env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
+            "DCC": str(this_path.parent.name),
             # Backup directory
             "HOUDINI_BACKUP_DIR": "./.backup",
             # Dump the core on crash to help debugging
@@ -50,7 +51,6 @@ class HoudiniDCC(DCC):
             "PIPE_PATH": str(pipe_path),
             "PYTHONPATH": os.pathsep.join(
                 [
-                    str(this_path.parent),
                     str(pipe_path),
                 ]
             ),

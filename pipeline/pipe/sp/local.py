@@ -6,7 +6,7 @@ from PySide2 import QtWidgets
 from software.baseclass import DCCLocalizer
 
 
-class SubstancePainterLocalizer(DCCLocalizer):
+class _SubstancePainterLocalizer(DCCLocalizer):
     def __init__(self):
         super().__init__("substance_painter")
 
@@ -15,3 +15,9 @@ class SubstancePainterLocalizer(DCCLocalizer):
 
     def is_headless(self) -> bool:
         return False
+
+
+_l = _SubstancePainterLocalizer()
+
+get_main_qt_window = _l.get_main_qt_window
+is_headless = _l.is_headless

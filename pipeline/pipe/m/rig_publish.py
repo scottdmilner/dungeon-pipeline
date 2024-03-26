@@ -1,11 +1,10 @@
-from PySide2 import QtCore, QtWidgets
-from shiboken2 import wrapInstance
+from PySide2 import QtWidgets
 
-import maya.OpenMayaUI as omui
 import maya.cmds as mc
 import os
 
 import pipe.util as pu
+from pipe.m.local import get_main_qt_window
 
 rig_list = [
     "Robin",
@@ -19,9 +18,11 @@ rig_list = [
 ]
 
 
-def maya_main_window():
-    main_window_ptr = omui.MQtUtil.mainWindow()
-    return wrapInstance(int(main_window_ptr), QtWidgets.QWidget)
+class RigPublishUI(QtWidgets.QDialog):
+    pass
+
+
+rig_pub: RigPublishUI
 
 
 def run():
@@ -36,7 +37,7 @@ def run():
 
 
 class RigPublishUI(QtWidgets.QDialog):
-    def __init__(self, parent=maya_main_window()):
+    def __init__(self, parent=get_main_qt_window()):
         super().__init__(parent)
 
         self.setWindowTitle("Rig Publish")

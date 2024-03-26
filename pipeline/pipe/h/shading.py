@@ -4,7 +4,6 @@ from typing import Any, Dict, Iterable, List, Optional
 import hou
 import json
 
-import pipe
 from pipe.db import DB
 from pipe.struct import Asset
 from pipe.glui.dialogs import MessageDialog
@@ -138,7 +137,7 @@ class MatlibManager:
         """Import a material network for each shading group in the export"""
         if not (mat_info := self.mat_info):
             MessageDialog(
-                pipe.local.get_main_qt_window(),
+                h.local.get_main_qt_window(),
                 "Error! Could not get material info. Make sure that textures have been exported for the currently selected variant.",
             ).exec_()
             return

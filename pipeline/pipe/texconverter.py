@@ -26,7 +26,7 @@ class TexConverter:
         tex_path: Optional[Path],
         preview_path: Optional[Path],
         imgs_by_tex_set: List[List[str]],
-    ) -> None:  # imgs_by_tex_set -> self.export_result.textures.values()
+    ) -> None:
         self.tex_path = tex_path
         self.preview_path = preview_path
         self.imgs_by_tex_set = imgs_by_tex_set

@@ -1,7 +1,7 @@
 import substance_painter as sp
 from typing import List
 
-import pipe
+from pipe.sp.local import get_main_qt_window
 from pipe.glui.dialogs import MessageDialog
 
 
@@ -18,7 +18,7 @@ class sRGBChecker:
                 stack = ts.get_stack()
             except:
                 MessageDialog(
-                    pipe.local.get_main_qt_window(),
+                    get_main_qt_window(),
                     "Warning! sRGB Checker could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
                 ).exec_()
                 return False
@@ -35,7 +35,7 @@ class sRGBChecker:
     def prompt_srgb_fix(self) -> bool:
         """Return True if fix is successful"""
         fix_channels = MessageDialog(
-            pipe.local.get_main_qt_window(),
+            get_main_qt_window(),
             "Warning! Some of your color channels do not have a high enough bit depth for this color space! (sRGB8, RGB8). Would you like to convert them to RGB16 now?",
             "Color Bit Depth Issue",
             has_cancel_button=True,
@@ -47,7 +47,5 @@ class sRGBChecker:
         for ch in self.srgb_channels:
             ch.edit(sp.textureset.ChannelFormat.RGB16)
 
-        MessageDialog(
-            pipe.local.get_main_qt_window(), "Color bit depth has been updated."
-        ).exec_()
+        MessageDialog(get_main_qt_window(), "Color bit depth has been updated.").exec_()
         return True

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Set, TypeVar
 
-import pipe
+from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
 from pipe.struct import Asset, MaterialType
 from pipe.glui.dialogs import MessageDialog
@@ -65,7 +65,7 @@ class Exporter:
             [tss.tex_set.get_stack() for tss in exp_setting_arr]
         except:
             MessageDialog(
-                pipe.local.get_main_qt_window(),
+                get_main_qt_window(),
                 "Warning! Exporter could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",
             ).exec_()
             return False

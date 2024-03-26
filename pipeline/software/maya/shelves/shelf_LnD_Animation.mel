@@ -34,7 +34,7 @@ global proc shelf_LnD_Animation () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "import pipe.picker; pipe.picker.run()" 
+        -command "import pipe.m.picker; pipe.m.picker.run()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

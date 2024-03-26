@@ -2,9 +2,8 @@ import hou
 import logging
 from pathlib import Path
 
-import pipe.util
+import pipe.h
 from pipe.db import DB
-from pipe.struct import Asset
 from pipe.glui.dialogs import FilteredListDialog
 from env import SG_Config
 
@@ -53,8 +52,8 @@ class FileManager:
         )
 
         asset_open_dialog = FilteredListDialog(
-            pipe.local.get_main_qt_window(),
-            self._conn.get_asset_name_list(sorted=True),
+            pipe.h.local.get_main_qt_window(),
+            asset_names,
             "Open Asset File",
             "Select the Asset File that you'd like to open.",
             accept_button_name="Open",
@@ -69,8 +68,7 @@ class FileManager:
         if not asset_response:
             return
 
-        asset_name = asset_names[asset_response[0]]
-        asset = self._conn.get_asset_by_name(asset_name)
+        asset = self._conn.get_asset_by_name(asset_response)
         try:
             assert asset is not None
             assert asset.path is not None

@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide2 import QtWidgets, QtCore, QtGui
 from typing import Optional, Sequence, Type
 
-from shared.util import get_pipe_path
+from pipe.util import get_pipe_path
 
 log = logging.getLogger(__name__)
 

@@ -23,8 +23,13 @@ class SubstanceDesignerDCC(DCC):
         system = platform.system()
 
         env_vars = {
-            "PYTHONPATH": "",
+            "DCC": str(this_path.parent.name),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(pipe_path),
+                ]
+            ),
             "QT_PLUGIN_PATH": "",
         }
 

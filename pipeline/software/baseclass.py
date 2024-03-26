@@ -7,7 +7,7 @@ import subprocess
 from typing import Callable, List, Mapping, Optional, Sequence, Union
 
 from .interface import DCCInterface, DCCLocalizerInterface
-from shared.util import fix_launcher_metadata
+from pipe.util import fix_launcher_metadata
 
 log = logging.getLogger(__name__)
 

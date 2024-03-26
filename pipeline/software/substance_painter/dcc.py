@@ -25,11 +25,11 @@ class SubstancePainterDCC(DCC):
 
         env_vars: Optional[Mapping[str, Union[int, str, None]]]
         env_vars = {
+            "DCC": str(this_path.parent.name),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "PIPE_LOG_LEVEL": log.getEffectiveLevel(),
             "PYTHONPATH": os.pathsep.join(
                 [
-                    str(this_path.parent),
                     str(pipe_path),
                 ]
             ),
