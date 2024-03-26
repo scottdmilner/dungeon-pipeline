@@ -15,5 +15,7 @@ fi
 
 echo "Static type checking (mypy)..."
 mypy
+echo "Linting (ruff)..."
+ruff check "${LOCAL_DIR}"
 echo "Formatting (ruff)..."
 ruff format "${LOCAL_DIR}"
