@@ -12,13 +12,13 @@ log = logging.getLogger(__name__)
 
 
 class ButtonPair:
-    buttons: Type[QtWidgets.QDialogButtonBox]
+    buttons: QtWidgets.QDialogButtonBox
 
     def _init_buttons(
         self,
         has_cancel_button: bool,
-        ok_name: Optional[str] = "OK",
-        cancel_name: Optional[str] = "Cancel",
+        ok_name: str = "OK",
+        cancel_name: str = "Cancel",
     ) -> None:
         self.buttons = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok
@@ -32,7 +32,7 @@ class ButtonPair:
 
 
 class DialogButtons(ButtonPair):
-    def _init_buttons(self: QtWidgets.QDialog, has_cancel_button: bool, *args) -> None:
+    def _init_buttons(self, has_cancel_button: bool, *args) -> None:
         super(DialogButtons, self)._init_buttons(has_cancel_button, *args)
 
         self.buttons.accepted.connect(self.accept)
@@ -41,10 +41,10 @@ class DialogButtons(ButtonPair):
 
 
 class DialogFilteredList:
-    filtered_list: Type[QtWidgets.QVBoxLayout]
-    _filter_field: Type[QtWidgets.QLineEdit]
-    _list_label: Type[QtWidgets.QLineEdit]
-    _list_widget: Type[QtWidgets.QListWidget]
+    filtered_list: QtWidgets.QVBoxLayout
+    _filter_field: QtWidgets.QLineEdit
+    _list_label: QtWidgets.QLabel
+    _list_widget: QtWidgets.QListWidget
 
     def _init_filtered_list(
         self,
@@ -89,9 +89,9 @@ class DialogFilteredList:
 class MessageDialog(QtWidgets.QDialog, DialogButtons):
     def __init__(
         self,
-        parent: Optional[Type[QtWidgets.QDialog]],
+        parent: Optional[QtWidgets.QWidget],
         message: str,
-        title: Optional[str] = "Message",
+        title: str = "Message",
         has_cancel_button: bool = False,
     ) -> None:
         super(MessageDialog, self).__init__(parent)
@@ -112,15 +112,15 @@ class MessageDialog(QtWidgets.QDialog, DialogButtons):
 
 
 class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
-    filter_field: Type[QtWidgets.QLineEdit]
-    list_label: Type[QtWidgets.QLabel]
-    list_widget: Type[QtWidgets.QListWidget]
+    filter_field: QtWidgets.QLineEdit
+    list_label: QtWidgets.QLabel
+    list_widget: QtWidgets.QListWidget
 
     def __init__(
         self,
-        parent: Optional[Type[QtWidgets.QDialog]],
+        parent: Optional[QtWidgets.QWidget],
         items: Sequence[str],
-        title: Optional[str] = "Filtered List",
+        title: str = "Filtered List",
         list_label: Optional[str] = None,
         include_filter_field: Optional[bool] = True,
         accept_button_name: Optional[str] = "OK",

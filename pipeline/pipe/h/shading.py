@@ -31,12 +31,12 @@ class MatlibManager:
     @property
     def _hip(self) -> Path:
         """Get $HIP variable as a Path object"""
-        return Path(hou.hscriptExpression("$HIP"))
+        return Path(hou.hscriptStringExpression("$HIP"))
 
     @property
     def _hsite(self) -> Path:
         """Get $HSITE variable as a Path object"""
-        return Path(hou.hscriptExpression("$HSITE"))
+        return Path(hou.hscriptStringExpression("$HSITE"))
 
     @property
     def mat_info(self) -> Optional[List[Dict[str, Any]]]:
@@ -56,37 +56,50 @@ class MatlibManager:
     @property
     def matlib(self) -> hou.LopNode:
         """Get Material Library node inside of current node"""
-        return hou.node(f"./{MATLIB_NAME}")
+        node = hou.node(f"./{MATLIB_NAME}")
+        assert isinstance(node, hou.LopNode)
+        return node
 
     @property
     def node(self) -> hou.LopNode:
         """Get current node (the HDA)"""
-        return hou.node("./")
+        node = hou.node("./")
+        assert isinstance(node, hou.LopNode)
+        return node
 
     @property
     def variant_id(self) -> int:
         """Get the id of the current variant"""
-        if (node_val := self.node.parm("variant_id").evalAsInt()) == -1:
+        var_id = self.node.parm("variant_id")
+        assert var_id is not None
+        if (node_val := var_id.evalAsInt()) == -1:
             ## if it hasn't been set yet, set it to the default value
             default = int(self.get_variant_list()[0])
-            self.node.parm("variant_id").set(default)
+            var_id.set(default)
             return default
         return node_val
 
     @variant_id.setter
     def variant_id(self, id: int) -> None:
         """Set the variant ID and update the variant name"""
-        self.node.parm("variant_id").set(id)
+        var_id = self.node.parm("variant_id")
+        assert var_id is not None
+        var_id.set(id)
         asset = self._conn.get_asset_by_id(id)
         assert asset is not None
+        assert asset.variant_name is not None
+        var_name = self.node.parm("variant_name")
+        assert var_name is not None
         if self._asset.variants:
-            self.node.parm("variant_name").set(asset.variant_name)
+            var_name.set(asset.variant_name)
         else:
-            self.node.parm("variant_name").set("main")
+            var_name.set("main")
 
     @property
     def variant_name(self) -> str:
-        if (node_val := self.node.parm("variant_name").evalAsString()) == "none":
+        var_name = self.node.parm("variant_name")
+        assert var_name is not None
+        if (node_val := var_name.evalAsString()) == "none":
             variants = self._asset.variants
             variant_name: str
             if variants:
@@ -96,7 +109,7 @@ class MatlibManager:
                 variant_name = var1.variant_name
             else:
                 variant_name = "main"
-            self.node.parm("variant_name").set(variant_name)
+            var_name.set(variant_name)
             return variant_name
         return node_val
 
@@ -125,7 +138,10 @@ class MatlibManager:
                 # update "Shading Group Name" on control null
                 if new_name == f"CONTROLS_{name}":
                     node = hou.node(item.path())
-                    node.parm("name").set(name)
+                    assert node is not None
+                    node_name = node.parm("name")
+                    assert node_name is not None
+                    node_name.set(name)
 
     def get_variant_list(self) -> List[str]:
         """Gets list of variants in the way that the HDA interface expects:
@@ -155,13 +171,21 @@ class MatlibManager:
         """Initialize values on the HDA instance.
         Note that self.node does not work before initialization, so
         node is passed in as an arg"""
+        var_name = node.parm("variant_name")
+        assert var_name is not None
+        var_id = node.parm("variant_id")
+        assert var_id is not None
+
         variants = self._asset.variants
         if not variants:
-            node.parm("variant_name").set("main")
-            node.parm("variant_id").set(self._asset.id)
+            var_name.set("main")
+            assert self._asset.id is not None
+            var_id.set(self._asset.id)
             return
 
         var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
         assert var2 is not None
-        node.parm("variant_name").set(var2.variant_name)
-        node.parm("variant_id").set(var2.id)
+        assert var2.variant_name is not None
+        assert var2.id is not None
+        var_name.set(var2.variant_name)
+        var_id.set(var2.id)

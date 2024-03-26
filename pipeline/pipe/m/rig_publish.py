@@ -113,6 +113,7 @@ class RigPublishUI(QtWidgets.QDialog):
 
 rig_pub: RigPublishUI
 
+
 def run():
     try:
         rig_pub.close()

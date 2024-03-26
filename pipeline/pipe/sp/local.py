@@ -7,10 +7,10 @@ from software.baseclass import DCCLocalizer
 
 
 class _SubstancePainterLocalizer(DCCLocalizer):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("substance_painter")
 
-    def get_main_qt_window(self) -> Optional[Type[QtWidgets.QWidget]]:
+    def get_main_qt_window(self) -> Optional[QtWidgets.QWidget]:
         return ui.get_main_window()
 
     def is_headless(self) -> bool:

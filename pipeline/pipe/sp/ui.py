@@ -114,10 +114,11 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 
 class TexSetWidget(QtWidgets.QWidget):
     tex_set: sp.textureset.TextureSet
-    layout: QtWidgets.QLayout
+    ts_layout: QtWidgets.QLayout
     button_layout: QtWidgets.QLayout
     radio_buttons: Dict[MaterialType, QtWidgets.QRadioButton]
     extra_channels: Set[sp.textureset.ChannelType]
+    parent_window: SubstanceExportWindow
 
     MaterialTypeNames = {
         MaterialType.GENERAL: "General",
@@ -129,40 +130,41 @@ class TexSetWidget(QtWidgets.QWidget):
 
     def __init__(
         self,
-        parent: QtWidgets.QWidget,
+        parent: SubstanceExportWindow,
         tex_set: sp.textureset.TextureSet,
         flags: Optional[QtCore.Qt.WindowFlags] = None,
     ) -> None:
         super().__init__(parent)
         self.setParent(parent)
+        self.parent_window = parent
         self.tex_set = tex_set
         self.radio_buttons = {}
         self.extra_channels = set()
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        self.layout = QtWidgets.QVBoxLayout()
+        self.ts_layout = QtWidgets.QVBoxLayout()
         self.button_layout = QtWidgets.QHBoxLayout()
 
         self.label = QtWidgets.QLabel(f"Texture Set: {self.tex_set.name()}")
-        self.layout.addWidget(self.label)
+        self.ts_layout.addWidget(self.label)
 
         for mtype, name in self.MaterialTypeNames.items():
             radio = QtWidgets.QRadioButton(name)
             radio.setChecked(False)
-            radio.toggled.connect(self.parentWidget().radio_callback)
+            radio.toggled.connect(self.parent_window.radio_callback)
             radio.toggled.connect(self._setup_extra_channel_layout)
             self.button_layout.addWidget(radio)
             self.radio_buttons[mtype] = radio
 
-        self.layout.addLayout(self.button_layout)
+        self.ts_layout.addLayout(self.button_layout)
 
         self.extra_channel_layout = QtWidgets.QHBoxLayout()
         self._setup_extra_channel_layout()
 
-        self.layout.addLayout(self.extra_channel_layout)
+        self.ts_layout.addLayout(self.extra_channel_layout)
 
-        self.setLayout(self.layout)
+        self.setLayout(self.ts_layout)
 
     def _setup_extra_channel_layout(self) -> None:
         # clear out layout

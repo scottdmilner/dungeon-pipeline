@@ -5,7 +5,7 @@ import subprocess
 
 from math import ceil, floor, sqrt
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Type, TypeVar
+from typing import Callable, Dict, Iterable, List, Type, TypeVar
 
 from .util import silent_startupinfo
 
@@ -19,13 +19,13 @@ log = logging.getLogger(__name__)
 class TexConverter:
     tex_path: Path
     preview_path: Path
-    imgs_by_tex_set: List[List[str]]
+    imgs_by_tex_set: Iterable[List[str]]
 
     def __init__(
         self,
         tex_path: Path,
         preview_path: Path,
-        imgs_by_tex_set: List[List[str]],
+        imgs_by_tex_set: Iterable[List[str]],
     ) -> None:
         self.tex_path = tex_path
         self.preview_path = preview_path

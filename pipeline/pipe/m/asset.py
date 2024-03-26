@@ -2,7 +2,7 @@ import logging
 import os
 import platform
 import shutil
-from typing import Optional, Type
+from typing import Optional
 from PySide2.QtWidgets import QWidget
 
 import maya.cmds as mc
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 class IOManager:
     _conn: DB
     system: str
-    window: Optional[Type[QWidget]]
+    window: Optional[QWidget]
 
     def __init__(self) -> None:
         self._conn = DB(SG_Config)

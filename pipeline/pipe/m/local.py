@@ -10,10 +10,10 @@ from software.baseclass import DCCLocalizer
 
 
 class _MayaLocalizer(DCCLocalizer):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("maya")
 
-    def get_main_qt_window(self) -> Optional[Type[QtWidgets.QWidget]]:
+    def get_main_qt_window(self) -> Optional[QtWidgets.QWidget]:
         if not self.is_headless():
             ptr = omUI.MQtUtil.mainWindow()
             if ptr is not None:

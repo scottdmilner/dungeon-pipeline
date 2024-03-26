@@ -9,10 +9,10 @@ from software.baseclass import DCCLocalizer
 
 
 class _HoudiniLocalizer(DCCLocalizer):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("houdini")
 
-    def get_main_qt_window(self) -> Optional[Type[QtWidgets.QWidget]]:
+    def get_main_qt_window(self) -> Optional[QtWidgets.QWidget]:
         if not self.is_headless():
             return hou.qt.mainWindow()
         return None
