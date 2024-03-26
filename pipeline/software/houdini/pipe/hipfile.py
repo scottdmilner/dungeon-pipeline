@@ -1,10 +1,14 @@
 import hou
+import logging
 from pathlib import Path
 
 import pipe.util
 from pipe.db import DB
 from pipe.struct import Asset
+from pipe.glui.dialogs import FilteredListDialog
 from env import SG_Config
+
+log = logging.getLogger(__name__)
 
 
 class FileManager:
@@ -48,13 +52,19 @@ class FileManager:
             sorted=True, child_mode=DB.ChildQueryMode.ROOTS
         )
 
-        asset_response = hou.ui.selectFromList(
-            asset_names,
-            exclusive=True,
-            message="Select the Asset File that you'd like to open.",
-            title="Open Asset File",
-            column_header="Assets",
+        asset_open_dialog = FilteredListDialog(
+            pipe.local.get_main_qt_window(),
+            self._conn.get_asset_name_list(sorted=True),
+            "Open Asset File",
+            "Select the Asset File that you'd like to open.",
+            accept_button_name="Open",
         )
+
+        if not asset_open_dialog.exec_():
+            log.debug("error initializing dialog")
+            return
+
+        asset_response = asset_open_dialog.get_selected_item()
 
         if not asset_response:
             return
