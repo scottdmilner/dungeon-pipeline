@@ -16,9 +16,11 @@ if [[ "${PROD_DIR}" != "${LOCAL_DIR}" ]]; then
     cp "${PROD_DIR}/pipeline/env.py" "${LOCAL_DIR}/pipeline/env.py"
 fi
 
-# make shelves read-only if this is prod
-#if [ "prod" = "${BRANCH}" ]; then
-#    chmod -R -w pipeline/software/maya/shelves/
-#else
-#    chmod -R +w pipeline/software/maya/shelves/
-#fi
+# Set up venv if it doesn't exist
+if [[ ! -d "${LOCAL_DIR}/venv" ]]; then
+    source "${LOCAL_DIR}/.githooks/setup-venv"  
+fi
+
+if [ -z "${VIRTUAL_ENV}" ]; then
+    source "${LOCAL_DIR}/venv/bin/activate"
+fi
