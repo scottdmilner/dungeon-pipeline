@@ -2,11 +2,45 @@
 
 set -e
 
-if ! [ -f ~/.local/bin/ruff ]; then
-    python3.9 -m pip install ruff
-fi
-
 LOCAL_DIR=$(git rev-parse --show-toplevel)
 
-echo "Formatting with ruff..."
-~/.local/bin/ruff format "${LOCAL_DIR}"
+if ! [ -d "${LOCAL_DIR}/venv" ]; then
+    echo "Setting up dev venv..."
+
+    python3.9 -m venv venv
+    source "${LOCAL_DIR}/venv/bin/activate"
+    pip install --upgrade pip
+    pip install \
+        maya-stubs \
+        mypy \
+        ruff \
+        types-usd \
+        types-houdini \
+        types-katana \
+        types-mari \
+        types-nuke \
+        types-opencolorio \
+        types-PySide2 \
+        types-substance_painter
+    echo > "${LOCAL_DIR}/pipeline/lib/shotgun_api3/shotgun_api3/__init__.pyi" << EOF
+from typing import Any
+class Shotgun(object):
+    def __init__(
+        self, base_url, script_name=None, api_key=None, convert_datetimes_to_utc=True, http_proxy=None, ensure_ascii=True, connect=True, ca_certs=None, login=None, password=None, sudo_as_login=None, session_token=None, auth_token=None,
+    ) -> None: ...
+    def connect(self) -> None: ...
+    def find(
+        self, entity_type, filters, fields=None, order=None, filter_operator=None, limit=0, retired_only=False, page=0, include_archived_projects=True, additional_filter_presets=None,
+    ) -> list[dict[Any, Any]]: ...
+EOF
+
+fi
+
+if [ -z "${VIRTUAL_ENV}" ]; then
+    source "${LOCAL_DIR}/venv/bin/activate"
+fi
+
+echo "Static type checking (mypy)..."
+mypy
+echo "Formatting (ruff)..."
+ruff format "${LOCAL_DIR}"
