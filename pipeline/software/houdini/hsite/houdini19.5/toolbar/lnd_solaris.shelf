@@ -21,7 +21,7 @@
   </toolshelf>
 
   <tool name="open_asset" label="Open Asset" icon="OBJ_geo">
-    <script scriptType="python"><![CDATA[from pipe.hipfile import FileManager
+    <script scriptType="python"><![CDATA[from pipe.h.hipfile import FileManager
 fm = FileManager()
 fm.open_asset_file()]]></script>
   </tool>

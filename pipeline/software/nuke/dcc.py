@@ -23,8 +23,12 @@ class NukeDCC(DCC):
         system = platform.system()
 
         env_vars = {
-            "PYTHONPATH": "",
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(pipe_path),
+                ]
+            ),
             "QT_SCALE_FACTOR": os.getenv("NUKE_SCALE_FACTOR")
             if system == "Linux"
             else None,

@@ -4,10 +4,10 @@ import logging
 import os
 import subprocess
 
-from typing import Callable, List, Mapping, Optional, Sequence, Union
+from typing import Callable, List, Mapping, Optional, Union
 
 from .interface import DCCInterface, DCCLocalizerInterface
-from shared.util import fix_launcher_metadata
+from pipe.util import fix_launcher_metadata
 
 log = logging.getLogger(__name__)
 

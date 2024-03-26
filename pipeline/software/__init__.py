@@ -1,1 +1,8 @@
-__all__ = ["houdini", "maya", "nuke", "python", "substance", "unreal"]
+__all__ = [
+    "houdini",
+    "maya",
+    "nuke",
+    "substance_designer",
+    "substance_painter",
+    "unreal",
+]

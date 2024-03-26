@@ -2,11 +2,20 @@
 
 set -e
 
-if ! [ -f ~/.local/bin/ruff ]; then
-    python3.9 -m pip install ruff
-fi
-
 LOCAL_DIR=$(git rev-parse --show-toplevel)
 
-echo "Formatting with ruff..."
-~/.local/bin/ruff format "${LOCAL_DIR}"
+# Set up venv if it doesn't exist
+if [[ ! -d "${LOCAL_DIR}/venv" ]]; then
+    source "${LOCAL_DIR}/.githooks/setup-venv"
+fi
+
+if [ -z "${VIRTUAL_ENV}" ]; then
+    source "${LOCAL_DIR}/venv/bin/activate"
+fi
+
+echo "Static type checking (mypy)..."
+mypy
+echo "Linting (ruff)..."
+ruff check "${LOCAL_DIR}"
+echo "Formatting (ruff)..."
+ruff format "${LOCAL_DIR}"

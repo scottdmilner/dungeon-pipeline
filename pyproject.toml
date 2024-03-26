@@ -1,0 +1,26 @@
+[tool.mypy]
+exclude = [
+    'MOPS',
+    'VFX-LYNX',
+    'ae_SVG',
+    'dwpicker.*',
+    'rjg',
+    'shotgun_api3',
+]
+
+files = 'pipeline'
+
+[[tool.mypy.overrides]]
+module = "dwpicker"
+ignore_missing_imports = true
+
+[tool.ruff]
+exclude = [
+    "MOPS",
+    "VFX-LYNX",
+    "ae_SVG",
+    "dwpicker",
+    "dwpicker_git",
+    "rjg",
+    "shotgun_api3",
+]

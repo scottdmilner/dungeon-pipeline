@@ -1,11 +1,11 @@
 from typing import Sequence, Type
 
-from PySide2 import QtWidgets, QtCore
+from PySide2 import QtWidgets
 
 import substance_painter as sp
 
-import pipe
-from pipe.ui import SubstanceExportWindow
+import pipe.sp
+from pipe.sp.ui import SubstanceExportWindow
 from pipe.glui.dialogs import MessageDialog
 
 plugin_widgets: Sequence[Type[QtWidgets.QWidget]] = []
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 def launch_exporter():
     if not sp.project.is_open():
         MessageDialog(
-            pipe.local.get_main_qt_window(),
+            pipe.sp.local.get_main_qt_window(),
             "Please open a project before trying to publish",
             "No project open",
         ).exec_()

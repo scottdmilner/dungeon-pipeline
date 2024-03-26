@@ -1,11 +1,9 @@
 """Preflight checks to run on file load"""
 
 import substance_painter as sp
-from typing import List
 
-import pipe
+import pipe.sp
 from pipe.db import DB
-from pipe.glui.dialogs import MessageDialog
 from env import SG_Config
 
 conn = DB(SG_Config)
@@ -20,8 +18,8 @@ def close_plugin():
 
 
 def do_preflight(event: sp.event.Event) -> None:
-    metaUpdater = pipe.metadata.MetadataUpdater()
-    srgbChecker = pipe.channels.sRGBChecker()
+    metaUpdater = pipe.sp.metadata.MetadataUpdater()
+    srgbChecker = pipe.sp.channels.sRGBChecker()
     metaUpdater.check() or metaUpdater.prompt_update()
     srgbChecker.check() or srgbChecker.prompt_srgb_fix()
 
