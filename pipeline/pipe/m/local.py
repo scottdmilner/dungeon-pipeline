@@ -1,6 +1,6 @@
 import re
 import sys
-from typing import Optional, Type
+from typing import Optional
 
 from PySide2 import QtWidgets
 import shiboken2

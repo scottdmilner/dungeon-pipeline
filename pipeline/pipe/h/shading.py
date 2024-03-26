@@ -50,7 +50,7 @@ class MatlibManager:
 
             with open(self._hip / "tex" / variant_name / "mat.json", "r") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return None
 
     @property

@@ -32,7 +32,7 @@ def createSpaceSwitch():
     mc.select(target)
     grp = target + "_OFF_GRP"
 
-    if mc.listRelatives(grp, type="constraint") != None:
+    if mc.listRelatives(grp, type="constraint") is not None:
         constraint = mc.listRelatives(grp, type="constraint")[0]
         mc.delete(constraint)
     pc = mc.parentConstraint(sources, grp, mo=True)[0]

@@ -72,7 +72,7 @@ class FileManager:
         try:
             assert asset is not None
             assert asset.path is not None
-        except:
+        except AssertionError:
             hou.ui.displayMessage(
                 "The asset you are trying to load does not have a path set in ShotGrid. Please let a Lead know",
                 buttons=("OK"),

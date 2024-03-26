@@ -1,3 +1,6 @@
+import logging as _l
+from os import environ as _e
+
 from . import db
 from . import glui
 from . import struct
@@ -20,23 +23,19 @@ _dcc = _getenv("DCC", "")
 if _dcc == "houdini":
     from . import h
 
-    __all__.append("h")
+    __all__ += ["h"]
 
 elif _dcc == "maya":
     from . import m
 
-    __all__.append("m")
+    __all__ += ["m"]
 
 elif _dcc == "substance_painter":
     from . import sp
 
-    __all__.append("sp")
-
+    __all__ += ["sp"]
 
 # configure logging
-import logging as _l
-from os import environ as _e
-
 _log = _l.getLogger(__name__)
 _l.basicConfig(
     level=int(_e.get("PIPE_LOG_LEVEL") or 0),

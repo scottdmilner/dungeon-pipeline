@@ -2,6 +2,7 @@ from PySide2 import QtWidgets
 
 import maya.cmds as mc
 import os
+from typing import Optional
 
 import pipe.util as pu
 from pipe.m.local import get_main_qt_window
@@ -111,14 +112,16 @@ class RigPublishUI(QtWidgets.QDialog):
         self.close()
 
 
-rig_pub: RigPublishUI
+rig_pub: Optional[RigPublishUI] = None
 
 
 def run():
+    global rig_pub
     try:
+        assert rig_pub is not None
         rig_pub.close()
         rig_pub.deleteLater()
-    except:
+    except AssertionError:
         pass
 
     rig_pub = RigPublishUI()
@@ -127,9 +130,10 @@ def run():
 
 if __name__ == "__main__":
     try:
+        assert rig_pub is not None
         rig_pub.close()
         rig_pub.deleteLater()
-    except:
+    except AssertionError:
         pass
 
     rig_pub = RigPublishUI()

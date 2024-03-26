@@ -137,7 +137,7 @@ class TexConverter:
                         assert key_search is not None
 
                     key = key_search.group(1)
-                    if not key in img_list:
+                    if key not in img_list:
                         img_list[key] = []
                     img_list[key].append(img)
 

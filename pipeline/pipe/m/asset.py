@@ -9,7 +9,6 @@ import maya.cmds as mc
 
 import pipe
 from pipe.db import DB
-from pipe.struct import Asset
 from pipe.glui.dialogs import FilteredListDialog, MessageDialog
 from env import SG_Config
 

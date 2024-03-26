@@ -178,7 +178,7 @@ class TexSetWidget(QtWidgets.QWidget):
         stack: sp.textureset.Stack
         try:
             stack = self.tex_set.get_stack()
-        except:
+        except ValueError:
             MessageDialog(
                 get_main_qt_window(),
                 "Warning! Could not get material stacks! You are doing something cool with material layering. Please show this to Scott so he can fix it.",

@@ -63,7 +63,7 @@ class Exporter:
         self.src_path.mkdir(parents=True, exist_ok=True)
         try:
             [tss.tex_set.get_stack() for tss in exp_setting_arr]
-        except:
+        except ValueError:
             MessageDialog(
                 get_main_qt_window(),
                 "Warning! Exporter could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",

@@ -16,7 +16,7 @@ class sRGBChecker:
         for ts in sp.textureset.all_texture_sets():
             try:
                 stack = ts.get_stack()
-            except:
+            except ValueError:
                 MessageDialog(
                     get_main_qt_window(),
                     "Warning! sRGB Checker could not get stack! You are doing something cool with material layering. Please show this to Scott so he can fix it.",

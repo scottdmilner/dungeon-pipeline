@@ -1,5 +1,5 @@
 from substance_painter import ui
-from typing import Optional, Type
+from typing import Optional
 
 from PySide2 import QtWidgets
 

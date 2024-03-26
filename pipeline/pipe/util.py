@@ -90,7 +90,7 @@ def fix_launcher_metadata() -> None:
         for p in procs:
             p.wait()
 
-    except:
+    except Exception:
         pass
 
 
@@ -154,7 +154,7 @@ try:
             startupinfo = subprocess.STARTUPINFO()  # type: ignore[attr-defined]
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # type: ignore[attr-defined]
         return startupinfo
-except:
+except Exception:
 
     def silent_startupinfo() -> Optional[Any]:
         pass
