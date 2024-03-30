@@ -3,6 +3,7 @@
 import maya.cmds as mc
 import pipe.util
 
+
 def main():
     if "mayaUsdPlugin" not in mc.pluginInfo(q=True, listPlugins=True):
         mc.loadPlugin("mayaUsdPlugin")
