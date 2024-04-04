@@ -31,6 +31,10 @@ def createSpaceSwitch():
 
     mc.select(target)
     grp = target + "_OFF_GRP"
+    
+    if not mc.objExists(grp):
+        grp = mc.group(name=target + "_OFF_GRP", em=True, parent=mc.listRelatives(target, parent=True)[0])
+        mc.parent(target, grp)
 
     if mc.listRelatives(grp, type="constraint") is not None:
         constraint = mc.listRelatives(grp, type="constraint")[0]
