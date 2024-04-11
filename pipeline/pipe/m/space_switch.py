@@ -38,7 +38,7 @@ def createSpaceSwitch():
             em=True,
             parent=mc.listRelatives(target, parent=True)[0],
         )
-        mc.parent(target, grp)
+        mc.parentConstraint(grp, target, mo=True)
 
     if mc.listRelatives(grp, type="constraint") is not None:
         constraint = mc.listRelatives(grp, type="constraint")[0]
