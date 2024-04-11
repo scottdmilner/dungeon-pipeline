@@ -30,22 +30,26 @@ def createSpaceSwitch():
     )
 
     mc.select(target)
-    grp = target + "_OFF_GRP"
+    grp = target + "_space_switch_GRP"
+
+    parent = (mc.listRelatives(target, parent=True)[0],)
 
     if not mc.objExists(grp):
         grp = mc.group(
-            name=target + "_OFF_GRP",
+            name=target + "_space_switch_GRP",
             em=True,
-            parent=mc.listRelatives(target, parent=True)[0],
         )
-        mc.parentConstraint(grp, target, mo=True)
+        fix = mc.group(em=True, name=target + "_space_switch_TARG")
+        mc.matchTransform(fix, target)
+        mc.parent(fix, grp)
+        pc = mc.parentConstraint(fix, parent, mo=True)
 
     if mc.listRelatives(grp, type="constraint") is not None:
         constraint = mc.listRelatives(grp, type="constraint")[0]
         mc.delete(constraint)
     pc = mc.parentConstraint(sources, grp, mo=True)[0]
 
-    pcTrgs = mc.parentConstraint(pc, wal=True, q=True)
+    pcTrgs = mc.parentConstraint(pc, wal=True, q=True, mo=True)
 
     defaultCond = mc.createNode("condition", n="default_COND")
     mc.connectAttr(target + ".spaceSwitch", defaultCond + ".firstTerm")
