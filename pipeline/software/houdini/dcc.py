@@ -5,7 +5,7 @@ import platform
 from pathlib import Path
 from typing import List, Mapping, Optional, Union
 
-from pipe.util import resolve_mapped_path
+from pipe.util import get_production_path, resolve_mapped_path
 
 from ..baseclass import DCC
 from env import Executables
@@ -40,6 +40,8 @@ class HoudiniDCC(DCC):
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
             # Project-specific preference overrides
             "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
+            # Job directory
+            "JOB": str(resolve_mapped_path(get_production_path())),
             # Manually set LD_LIBRARY_PATH to integrated Houdini libraries (for Axiom)
             "LD_LIBRARY_PATH": str(Executables.hfs / "dsolib")
             if platform.system() == "Linux"
