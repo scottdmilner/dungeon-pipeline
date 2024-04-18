@@ -13,3 +13,6 @@
 [submodule "pipeline/lib/VFX-LYNX"]
 	path = pipeline/lib/VFX-LYNX
 	url = https://github.com/LucaScheller/VFX-LYNX.git
+[submodule "pipeline/software/nuke/tools/NukeSurvivalToolkit_publicRelease"]
+	path = pipeline/software/nuke/tools/NukeSurvivalToolkit_publicRelease
+	url = https://github.com/CreativeLyons/NukeSurvivalToolkit_publicRelease.git

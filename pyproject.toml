@@ -1,6 +1,7 @@
 [tool.mypy]
 exclude = [
     'MOPS',
+    "NukeSurvivalToolkit_publicRelease",
     'VFX-LYNX',
     'ae_SVG',
     'dwpicker.*',
@@ -17,6 +18,7 @@ ignore_missing_imports = true
 [tool.ruff]
 exclude = [
     "MOPS",
+    "NukeSurvivalToolkit_publicRelease",
     "VFX-LYNX",
     "ae_SVG",
     "dwpicker",
