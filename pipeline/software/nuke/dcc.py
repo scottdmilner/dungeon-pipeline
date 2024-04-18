@@ -4,6 +4,8 @@ import platform
 
 from pathlib import Path
 
+from pipe.util import resolve_mapped_path
+
 from ..baseclass import DCC
 from env import Executables
 
@@ -23,6 +25,7 @@ class NukeDCC(DCC):
         system = platform.system()
 
         env_vars = {
+            "NUKE_PATH": str(resolve_mapped_path(this_path.parent / "tools")),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "PYTHONPATH": os.pathsep.join(
                 [
