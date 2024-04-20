@@ -5,8 +5,15 @@ import pipe.util
 
 
 def main():
-    if "mayaUsdPlugin" not in mc.pluginInfo(q=True, listPlugins=True):
-        mc.loadPlugin("mayaUsdPlugin")
+    plugins = [
+        "AbcExport",
+        "mayaUsdPlugin",
+    ]
+    pluginInfo = mc.pluginInfo(q=True, listPlugins=True)
+
+    for plugin in plugins:
+        if plugin not in pluginInfo:
+            mc.loadPlugin(plugin)
 
 
 if not mc.about(batch=True):
