@@ -106,6 +106,7 @@ class RigPublishUI(QtWidgets.QDialog):
             print(
                 f"Link to file created or updated at '{pvis_link_dir_path}/{file_name}.mb'\n"
             )
+        self.close()
 
     def on_cancel(self):
         print("Cancelled Rig Publish")
