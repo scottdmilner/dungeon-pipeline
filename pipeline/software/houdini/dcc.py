@@ -28,6 +28,8 @@ class HoudiniDCC(DCC):
             "DCC": str(this_path.parent.name),
             # Backup directory
             "HOUDINI_BACKUP_DIR": "./.backup",
+            # Splash file
+            "HOUDINI_SPLASH_FILE": str(pipe_path / "software/houdini/dunginisplash19.5.png"),
             # Dump the core on crash to help debugging
             "HOUDINI_COREDUMP": 1,
             # Compiled Houdini files debug
