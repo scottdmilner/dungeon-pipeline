@@ -28,8 +28,6 @@ class HoudiniDCC(DCC):
             "DCC": str(this_path.parent.name),
             # Backup directory
             "HOUDINI_BACKUP_DIR": "./.backup",
-            # Splash file
-            "HOUDINI_SPLASH_FILE": str(pipe_path / "software/houdini/dunginisplash19.5.png"),
             # Dump the core on crash to help debugging
             "HOUDINI_COREDUMP": 1,
             # Compiled Houdini files debug
@@ -38,8 +36,12 @@ class HoudiniDCC(DCC):
             "HOUDINI_MAX_BACKUP_FILES": 20,
             # Prevent user envs from overriding existing values
             "HOUDINI_NO_ENV_FILE_OVERRIDES": 1,
+            # Disable start page splash
+            "HOUDINI_NO_START_PAGE_SPLASH": 1,
             # Package loading debug logging
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
+            # Splash file
+            "HOUDINI_SPLASH_FILE": str(pipe_path / "lib/splash/dunginisplash19.5.png"),
             # Project-specific preference overrides
             "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
             # Job directory
