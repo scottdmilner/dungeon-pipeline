@@ -12,6 +12,7 @@ rig_list = [
     "RobinFace",
     "Rayden",
     "RaydenFace",
+    "DungeonMonster",
     "Crossbow",
     "LootBag",
     "Door",
