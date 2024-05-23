@@ -8,10 +8,11 @@ class MaterialType(IntEnum):
     """Helper enum for tracking material types"""
 
     GENERAL = 0
-    METAL = 1
-    GLASS = 2
-    CLOTH = 3
-    SKIN = 4
+    SHINY = 1
+    METAL = 2
+    GLASS = 3
+    CLOTH = 4
+    SKIN = 5
 
 
 class JsonSerializable:
