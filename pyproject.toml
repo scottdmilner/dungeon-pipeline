@@ -15,6 +15,10 @@ files = 'pipeline'
 module = "dwpicker"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "substance_painter_plugins"
+ignore_missing_imports = true
+
 [tool.ruff]
 exclude = [
     "MOPS",

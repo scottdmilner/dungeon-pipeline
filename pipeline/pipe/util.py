@@ -1,13 +1,18 @@
 import importlib
 import importlib.util
+import logging
 import platform
 import subprocess
+import sys
 
 from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
+from types import ModuleType
 
 from env import production_path as _prp
+
+log = logging.getLogger(__name__)
 
 
 class dotdict(dict):
@@ -120,6 +125,21 @@ def get_production_path() -> Path:
 
 def get_asset_path() -> Path:
     return get_production_path() / "asset"
+
+
+def reload_pipe(extra_modules: List[ModuleType] = []) -> None:
+    """Reload all pipe python modules"""
+    pipe_modules = [
+        *[
+            module
+            for name, module in sys.modules.items()
+            if (name.startswith("pipe")) and ("shotgun_api3" not in name)
+        ],
+        *extra_modules,
+    ]
+    for module in pipe_modules:
+        log.info(f"Reloading {module.__name__}")
+        importlib.reload(module)
 
 
 def resolve_mapped_path(path: Union[str, Path]) -> Path:

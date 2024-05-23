@@ -26,6 +26,7 @@ class TexSetExportSettings:
     tex_set: sp.textureset.TextureSet
     mat_type: MaterialType
     extra_channels: Set[sp.textureset.Channel]
+    resolution: int
 
 
 class Exporter:
@@ -117,6 +118,15 @@ DefaultChannels = {
         sp.textureset.ChannelType.Metallic,
         sp.textureset.ChannelType.Normal,
     ],
+    MaterialType.SHINY: [
+        sp.textureset.ChannelType.BaseColor,
+        sp.textureset.ChannelType.Height,
+        sp.textureset.ChannelType.Roughness,
+        sp.textureset.ChannelType.Opacity,
+        sp.textureset.ChannelType.Emissive,
+        sp.textureset.ChannelType.Metallic,
+        sp.textureset.ChannelType.Normal,
+    ],
     # add more export defaults here
 }
 
@@ -132,7 +142,9 @@ def generate_config(
                 "name": export_settings.tex_set.name(),
                 "maps": [
                     # Default RenderMan maps
-                    *maps_by_mat_type[export_settings.mat_type],
+                    *maps_by_mat_type(
+                        export_settings.mat_type, export_settings.resolution
+                    ),
                     # Extra AOVs
                     *[
                         {
@@ -149,6 +161,7 @@ def generate_config(
                             "parameters": {
                                 "bitDepth": bit_depth.lower(),
                                 "fileFormat": "png",
+                                "sizeLog2": export_settings.resolution,
                             },
                         }
                         for ch in export_settings.extra_channels
@@ -184,133 +197,144 @@ def generate_config(
     }
 
 
-maps_by_mat_type = {
-    MaterialType.GENERAL: [
-        {
-            "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": ch,
-                    "srcChannel": ch,
-                    "srcMapType": "documentMap",
-                    "srcMapName": "baseColor",
-                }
-                for ch in "RGB"
-            ],
-            "parameters": {
-                "bitDepth": "16",
-                "fileFormat": "png",
-            },
-        },
-        {
-            "fileName": "$textureSet_Metallic(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": "L",
-                    "srcChannel": "L",
-                    "srcMapType": "documentMap",
-                    "srcMapName": "metallic",
+def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
+    if mat_type == MaterialType.GENERAL or mat_type == MaterialType.SHINY:
+        return [
+            {
+                "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": ch,
+                        "srcChannel": ch,
+                        "srcMapType": "documentMap",
+                        "srcMapName": "baseColor",
+                    }
+                    for ch in "RGB"
+                ],
+                "parameters": {
+                    "bitDepth": "16",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
                 },
-            ],
-            "parameters": {
-                "bitDepth": "8",
-                "fileFormat": "png",
             },
-        },
-        {
-            "fileName": "$textureSet_Specular(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": "L",
-                    "srcChannel": "L",
-                    "srcMapType": "documentMap",
-                    "srcMapName": "specular",
+            {
+                "fileName": "$textureSet_Metallic(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": "L",
+                        "srcChannel": "L",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "metallic",
+                    },
+                ],
+                "parameters": {
+                    "bitDepth": "8",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
                 },
-            ],
-            "parameters": {
-                "bitDepth": "8",
-                "fileFormat": "png",
             },
-        },
-        {
-            "fileName": "$textureSet_Normal(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": ch,
-                    "srcChannel": ch,
-                    "srcMapType": "virtualMap",
-                    "srcMapName": "Normal_OpenGL",
-                }
-                for ch in "RGB"
-            ],
-            "parameters": {
-                "bitDepth": "16",
-                "fileFormat": "png",
-            },
-        },
-        {
-            "fileName": "$textureSet_SpecularRoughness(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": "L",
-                    "srcChannel": "L",
-                    "srcMapType": "documentMap",
-                    "srcMapName": "roughness",
+            {
+                "fileName": "$textureSet_Specular(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": "L",
+                        "srcChannel": "L",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "specular",
+                    },
+                ],
+                "parameters": {
+                    "bitDepth": "8",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
                 },
-            ],
-            "parameters": {
-                "bitDepth": "8",
-                "fileFormat": "png",
             },
-        },
-        {
-            "fileName": "$textureSet_GlowColor(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": ch,
-                    "srcChannel": ch,
-                    "srcMapType": "documentMap",
-                    "srcMapName": "emissive",
-                }
-                for ch in "RGB"
-            ],
-            "parameters": {
-                "bitDepth": "8",
-                "fileFormat": "png",
-            },
-        },
-        {
-            "fileName": "$textureSet_Presence(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": "L",
-                    "srcChannel": "L",
-                    "srcMapType": "documentMap",
-                    "srcMapName": "opacity",
+            {
+                "fileName": "$textureSet_Normal(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": ch,
+                        "srcChannel": ch,
+                        "srcMapType": "virtualMap",
+                        "srcMapName": "Normal_OpenGL",
+                    }
+                    for ch in "RGB"
+                ],
+                "parameters": {
+                    "bitDepth": "16",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
                 },
-            ],
-            "parameters": {
-                "bitDepth": "8",
-                "fileFormat": "png",
             },
-        },
-        {
-            "fileName": "$textureSet_Displacement(_$colorSpace)(.$udim)",
-            "channels": [
-                {
-                    "destChannel": "L",
-                    "srcChannel": "L",
-                    "srcMapType": "documentMap",
-                    "srcMapName": "height",
+            {
+                "fileName": "$textureSet_SpecularRoughness(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": "L",
+                        "srcChannel": "L",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "roughness",
+                    },
+                ],
+                "parameters": {
+                    "bitDepth": "8",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
                 },
-            ],
-            "parameters": {
-                "bitDepth": "16",
-                "fileFormat": "png",
             },
-        },
-    ]
-}
+            {
+                "fileName": "$textureSet_GlowColor(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": ch,
+                        "srcChannel": ch,
+                        "srcMapType": "documentMap",
+                        "srcMapName": "emissive",
+                    }
+                    for ch in "RGB"
+                ],
+                "parameters": {
+                    "bitDepth": "8",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
+                },
+            },
+            {
+                "fileName": "$textureSet_Presence(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": "L",
+                        "srcChannel": "L",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "opacity",
+                    },
+                ],
+                "parameters": {
+                    "bitDepth": "8",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
+                },
+            },
+            {
+                "fileName": "$textureSet_Displacement(_$colorSpace)(.$udim)",
+                "channels": [
+                    {
+                        "destChannel": "L",
+                        "srcChannel": "L",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "height",
+                    },
+                ],
+                "parameters": {
+                    "bitDepth": "16",
+                    "fileFormat": "png",
+                    "sizeLog2": resolution,
+                },
+            },
+        ]
+    else:
+        raise ValueError(f"Invalid MaterialType: {mat_type}")
+
 
 preview_surface_maps = [
     {

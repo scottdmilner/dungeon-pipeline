@@ -1,4 +1,5 @@
 import logging
+from math import log2
 from PySide2 import QtCore, QtWidgets
 from re import findall
 from typing import Callable, Dict, List, Mapping, Optional, Set
@@ -8,7 +9,8 @@ import substance_painter as sp
 import pipe
 from pipe.sp.local import get_main_qt_window
 from pipe.glui.dialogs import ButtonPair, MessageDialog
-from pipe.sp.export import Exporter, MaterialType, TexSetExportSettings, DefaultChannels
+from pipe.sp.export import Exporter, TexSetExportSettings, DefaultChannels
+from pipe.struct import MaterialType
 
 log = logging.getLogger(__name__)
 
@@ -46,10 +48,13 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 
         self.title = QtWidgets.QLabel("Publish Textures")
         self.title.setAlignment(QtCore.Qt.AlignCenter)
-        font = self.title.font()
-        font.setPointSize(48)
-        self.title.setFont(font)
         self.main_layout.addWidget(self.title, 0)
+        # title_font = self.title.font()
+        # font.setPointSize(100)
+        # title_font = QtGui.QFont()
+        # title_font.setPointSize(100)
+        # title_font.setWeight(18)
+        # self.title.setFont(title_font)
 
         for ts in sp.textureset.all_texture_sets():
             widget = TexSetWidget(self, ts)
@@ -59,18 +64,9 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         # Buttons
         self._init_buttons(has_cancel_button=True, ok_name="Export")
         self.buttons.rejected.connect(self.close)
-        self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
+        # self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
         self.buttons.accepted.connect(self.do_export)
         self.main_layout.addWidget(self.buttons)
-
-    def radio_callback(self):
-        """Enable export button when all texture sets accounted for"""
-        self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(
-            all(
-                any(button.isChecked() for button in widget.radio_buttons.values())
-                for widget in self.tex_set_dict.values()
-            )
-        )
 
     def _preflight(self) -> bool:
         """Check for asset metadata and correct channel types before running
@@ -94,8 +90,11 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         exporter = Exporter()
         if exporter.export(
             [
-                TexSetExportSettings(ts, wgt.mat_type, wgt.extra_channels)
+                TexSetExportSettings(
+                    ts, wgt.mat_type, wgt.extra_channels, wgt.resolution
+                )
                 for ts, wgt in self.tex_set_dict.items()
+                if wgt.enabled
             ]
         ):
             MessageDialog(
@@ -114,13 +113,18 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 class TexSetWidget(QtWidgets.QWidget):
     tex_set: sp.textureset.TextureSet
     ts_layout: QtWidgets.QLayout
+    ts_channels_layout: QtWidgets.QLayout
     button_layout: QtWidgets.QLayout
     radio_buttons: Dict[MaterialType, QtWidgets.QRadioButton]
     extra_channels: Set[sp.textureset.Channel]
     parent_window: SubstanceExportWindow
+    enabled_checkbox: QtWidgets.QCheckBox
+    ts_container: QtWidgets.QWidget
+    resolution_dropdown: QtWidgets.QComboBox
 
     MaterialTypeNames = {
         MaterialType.GENERAL: "General",
+        MaterialType.SHINY: "Shiny (not implemented)",
         # MaterialType.METAL: "Metal (not implemented)",
         # MaterialType.GLASS: "Glass (not implemented)",
         # MaterialType.CLOTH: "Cloth (not implemented)",
@@ -142,28 +146,55 @@ class TexSetWidget(QtWidgets.QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        self.ts_layout = QtWidgets.QVBoxLayout()
+        self.ts_layout = QtWidgets.QHBoxLayout()
+        self.ts_layout.setContentsMargins(0, 0, 0, 0)
+        self.ts_layout.setSpacing(0)
+
+        # Enable/disable checkbox
+        self.enabled_checkbox = QtWidgets.QCheckBox()
+        self.enabled_checkbox.setChecked(True)
+        self.enabled_checkbox.resize(24, 24)
+        self.enabled_checkbox.toggled.connect(self._enabled_checkbox_callback)
+        self.ts_layout.addWidget(self.enabled_checkbox, 10)
+
+        self.ts_container = QtWidgets.QWidget()
+        self.ts_layout.addWidget(self.ts_container, 90, QtCore.Qt.AlignLeft)
+        self.ts_inner_layout = QtWidgets.QHBoxLayout(self.ts_container)
+        self.ts_channels_layout = QtWidgets.QVBoxLayout()
+        self.ts_inner_layout.addLayout(self.ts_channels_layout, 70)
+
         self.button_layout = QtWidgets.QHBoxLayout()
 
         self.label = QtWidgets.QLabel(f"Texture Set: {self.tex_set.name()}")
-        self.ts_layout.addWidget(self.label)
+        self.ts_channels_layout.addWidget(self.label)
 
         for mtype, name in self.MaterialTypeNames.items():
             radio = QtWidgets.QRadioButton(name)
-            radio.setChecked(False)
-            radio.toggled.connect(self.parent_window.radio_callback)
+            radio.setChecked(mtype == MaterialType.GENERAL)
             radio.toggled.connect(self._setup_extra_channel_layout)
             self.button_layout.addWidget(radio)
             self.radio_buttons[mtype] = radio
 
-        self.ts_layout.addLayout(self.button_layout)
+        self.ts_channels_layout.addLayout(self.button_layout)
 
         self.extra_channel_layout = QtWidgets.QHBoxLayout()
         self._setup_extra_channel_layout()
 
-        self.ts_layout.addLayout(self.extra_channel_layout)
+        self.ts_channels_layout.addLayout(self.extra_channel_layout)
+
+        self.resolution_dropdown = QtWidgets.QComboBox()
+        self.resolution_dropdown.addItems(["128", "256", "512", "1024", "2048", "4096"])
+        self.resolution_dropdown.setCurrentIndex(
+            int(log2(self.tex_set.get_resolution().width)) - 7
+        )
+        self.ts_inner_layout.addWidget(
+            self.resolution_dropdown, 30, QtCore.Qt.AlignRight
+        )
 
         self.setLayout(self.ts_layout)
+
+    def _enabled_checkbox_callback(self) -> None:
+        self.ts_container.setEnabled(self.enabled_checkbox.isChecked())
 
     def _setup_extra_channel_layout(self) -> None:
         # clear out layout
@@ -217,3 +248,12 @@ class TexSetWidget(QtWidgets.QWidget):
             (mtype for mtype, radio in self.radio_buttons.items() if radio.isChecked()),
             MaterialType.GENERAL,
         )
+
+    @property
+    def enabled(self) -> bool:
+        return self.enabled_checkbox.isChecked()
+
+    @property
+    def resolution(self) -> int:
+        """Returns the resolution log 2"""
+        return self.resolution_dropdown.currentIndex() + 7

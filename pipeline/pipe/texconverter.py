@@ -67,23 +67,16 @@ class TexConverter:
             ]
             # fmt: on
 
-        procs: List[subprocess.Popen] = []
+        cmdlines: List[List[str]] = []
+        # procs: List[subprocess.Popen] = []
         for imgs in self.imgs_by_tex_set:
             log.debug(imgs)
             for img in (Path(i) for i in imgs):
                 if img.suffix == ".png":
                     log.debug(f"        {str(img)}")
-                    procs.append(
-                        subprocess.Popen(
-                            (b2r_cmd if "Normal" in img.name else tex_cmd)(img),
-                            env=os.environ,
-                            startupinfo=silent_startupinfo(),
-                            stderr=subprocess.PIPE,
-                            stdout=subprocess.PIPE,
-                        )
-                    )
+                    cmdlines.append((b2r_cmd if "Normal" in img.name else tex_cmd)(img))
 
-        self._wait_and_print_procs(procs)
+        self._wait_and_print_cmds(cmdlines)
 
         return True
 
@@ -102,7 +95,7 @@ class TexConverter:
                 ],
                 startupinfo=silent_startupinfo(),
             ).decode("utf-8")
-            img_dims = re.search(r"^.* : (\d+) x (\d+), .*$", img_info)
+            img_dims = re.search(r"^.* : +(\d+) +x +(\d+), .*$", img_info)
 
             assert img_dims is not None
             dimx, dimy = img_dims.group(1, 2)
@@ -141,30 +134,40 @@ class TexConverter:
                         img_list[key] = []
                     img_list[key].append(img)
 
-        procs = [
-            subprocess.Popen(
-                jpeg_cmd(Path(root), sorted(imgs)),
-                env=os.environ,
-                startupinfo=silent_startupinfo(),
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-            )
-            for root, imgs in img_list.items()
-        ]
-
-        self._wait_and_print_procs(procs)
+        self._wait_and_print_cmds(
+            [jpeg_cmd(Path(root), sorted(imgs)) for root, imgs in img_list.items()]
+        )
 
         return True
 
-    def _wait_and_print_procs(self, procs: List[subprocess.Popen]) -> None:
+    def _wait_and_print_cmds(self, cmds: List[List[str]]) -> None:
         """Wait for list of processes to finish and print them to the debug log"""
-        for p in procs:
-            p.wait()
-            if log.isEnabledFor(logging.DEBUG):
-                if p.stdout and (stdout := p.stdout.read().decode("utf-8")):
-                    log.debug(stdout)
-                if p.stderr and (stderr := p.stderr.read().decode("utf-8")):
-                    log.debug(stderr)
+        BATCH_SIZE = 12
+
+        batched_cmds = (
+            cmds[i : i + BATCH_SIZE] for i in range(0, len(cmds), BATCH_SIZE)
+        )
+
+        while batch := next(batched_cmds, None):
+            procs: List[subprocess.Popen] = []
+            for cmd in batch:
+                procs.append(
+                    subprocess.Popen(
+                        cmd,
+                        env=os.environ,
+                        startupinfo=silent_startupinfo(),
+                        stderr=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                    )
+                )
+
+            for p in procs:
+                p.wait()
+                if log.isEnabledFor(logging.DEBUG):
+                    if p.stdout and (stdout := p.stdout.read().decode("utf-8")):
+                        log.debug(stdout)
+                    if p.stderr and (stderr := p.stderr.read().decode("utf-8")):
+                        log.debug(stderr)
 
     def _debug_out(self, func: Callable[..., RT]) -> Callable[..., RT]:
         """Decorator to debug print the output of the function"""
