@@ -34,7 +34,7 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
 
     def _setup_ui(self):
         self.setWindowTitle("LnD Exporter")
-        self.resize(400, 300)
+        # self.resize(480, self.height())
 
         self.tex_set_widgets = []
 
@@ -50,16 +50,11 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         self.title.setAlignment(QtCore.Qt.AlignCenter)
         self.main_layout.addWidget(self.title, 0)
         # title_font = self.title.font()
-        # font.setPointSize(100)
-        # title_font = QtGui.QFont()
-        # title_font.setPointSize(100)
+        # print(title_font.pointSize())
+        # title_font = QtGui.QFont('Arial')
+        # title_font.setPointSize(28)
         # title_font.setWeight(18)
         # self.title.setFont(title_font)
-
-        for ts in sp.textureset.all_texture_sets():
-            widget = TexSetWidget(self, ts)
-            self.tex_set_dict[ts] = widget
-            self.main_layout.addWidget(widget)
 
         # File lock warning
         self.lock_warning = QtWidgets.QLabel(
@@ -67,6 +62,11 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
         )
         self.lock_warning.setWordWrap(True)
         self.main_layout.addWidget(self.lock_warning)
+
+        for ts in sp.textureset.all_texture_sets():
+            widget = TexSetWidget(self, ts)
+            self.tex_set_dict[ts] = widget
+            self.main_layout.addWidget(widget)
 
         # Buttons
         self._init_buttons(has_cancel_button=True, ok_name="Export")
@@ -194,9 +194,7 @@ class TexSetWidget(QtWidgets.QWidget):
         self.resolution_dropdown.setCurrentIndex(
             int(log2(self.tex_set.get_resolution().width)) - 7
         )
-        self.ts_inner_layout.addWidget(
-            self.resolution_dropdown, 30, QtCore.Qt.AlignRight
-        )
+        self.ts_inner_layout.addWidget(self.resolution_dropdown, 20, QtCore.Qt.AlignTop)
 
         self.setLayout(self.ts_layout)
 
