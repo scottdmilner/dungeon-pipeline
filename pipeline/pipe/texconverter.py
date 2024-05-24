@@ -2,10 +2,11 @@ import logging
 import os
 import re
 import subprocess
+import time
 
 from math import ceil, floor, sqrt
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Type, TypeVar
+from typing import cast, Callable, Dict, Iterable, List, Type, TypeVar
 
 from .util import silent_startupinfo
 
@@ -14,6 +15,10 @@ from env import Executables
 RT = TypeVar("RT")  # return type
 
 log = logging.getLogger(__name__)
+
+
+class TexConversionError(ChildProcessError):
+    pass
 
 
 class TexConverter:
@@ -31,7 +36,7 @@ class TexConverter:
         self.preview_path = preview_path
         self.imgs_by_tex_set = imgs_by_tex_set
 
-    def convert_tex(self) -> bool:
+    def convert_tex(self) -> List[Path]:
         """Convert all .png textures in the most recent export to .tex"""
 
         assert self.tex_path is not None
@@ -76,11 +81,14 @@ class TexConverter:
                     log.debug(f"        {str(img)}")
                     cmdlines.append((b2r_cmd if "Normal" in img.name else tex_cmd)(img))
 
-        self._wait_and_print_cmds(cmdlines)
+        finished_imgs = self._wait_and_check_cmds(cmdlines)
 
-        return True
+        if len(finished_imgs) != len(cmdlines):
+            raise TexConversionError("Not all jpeg textures were converted")
 
-    def convert_previewsurface(self) -> bool:
+        return finished_imgs
+
+    def convert_previewsurface(self) -> List[Path]:
         """Compile all .jpeg textures in the most recent export to UDIM-less tiles"""
 
         assert self.preview_path is not None
@@ -134,32 +142,39 @@ class TexConverter:
                         img_list[key] = []
                     img_list[key].append(img)
 
-        self._wait_and_print_cmds(
-            [jpeg_cmd(Path(root), sorted(imgs)) for root, imgs in img_list.items()]
-        )
+        cmdlines = [
+            jpeg_cmd(Path(root), sorted(imgs)) for root, imgs in img_list.items()
+        ]
 
-        return True
+        finished_imgs = self._wait_and_check_cmds(cmdlines)
 
-    def _wait_and_print_cmds(self, cmds: List[List[str]]) -> None:
+        if len(finished_imgs) != len(cmdlines):
+            raise TexConversionError("Not all jpeg textures were converted")
+
+        return finished_imgs
+
+    def _wait_and_check_cmds(
+        self, cmds: List[List[str]], batch_size: int = 18
+    ) -> List[Path]:
         """Wait for list of processes to finish and print them to the debug log"""
-        BATCH_SIZE = 12
 
         batched_cmds = (
-            cmds[i : i + BATCH_SIZE] for i in range(0, len(cmds), BATCH_SIZE)
+            cmds[i : i + batch_size] for i in range(0, len(cmds), batch_size)
         )
 
+        finished_imgs: List[Path] = []
+
         while batch := next(batched_cmds, None):
-            procs: List[subprocess.Popen] = []
-            for cmd in batch:
-                procs.append(
-                    subprocess.Popen(
-                        cmd,
-                        env=os.environ,
-                        startupinfo=silent_startupinfo(),
-                        stderr=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                    )
+            procs = [
+                subprocess.Popen(
+                    cmd,
+                    env=os.environ,
+                    startupinfo=silent_startupinfo(),
+                    stderr=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
                 )
+                for cmd in batch
+            ]
 
             for p in procs:
                 p.wait()
@@ -168,6 +183,14 @@ class TexConverter:
                         log.debug(stdout)
                     if p.stderr and (stderr := p.stderr.read().decode("utf-8")):
                         log.debug(stderr)
+
+                img = Path(cast(str, p.args[-1]))  # type: ignore[index]
+
+                # check file has been touched recently
+                if (time.time() - img.stat().st_mtime) < 10:
+                    finished_imgs.append(img)
+
+        return finished_imgs
 
     def _debug_out(self, func: Callable[..., RT]) -> Callable[..., RT]:
         """Decorator to debug print the output of the function"""

@@ -11,7 +11,7 @@ from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
 from pipe.struct import Asset, MaterialType
 from pipe.glui.dialogs import MessageDialog
-from pipe.texconverter import TexConverter
+from pipe.texconverter import TexConverter, TexConversionError
 from pipe.util import get_production_path, resolve_mapped_path
 from env import SG_Config
 
@@ -86,10 +86,17 @@ class Exporter:
             self.tex_path, self.preview_path, self.export_result.textures.values()
         )
 
-        tex_success = tex_converter.convert_tex()
-        pvw_success = tex_converter.convert_previewsurface()
+        try:
+            tex_converter.convert_tex()
+            tex_converter.convert_previewsurface()
+        except TexConversionError:
+            MessageDialog(
+                get_main_qt_window(),
+                'Warning! Not all textures were converted! Make sure to stop rendering this asset in Houdini and press "Reset RenderMan RIS/XPU".',
+            ).exec_()
+            return False
 
-        return tex_success and pvw_success
+        return True
 
     def write_mat_info(
         self, export_settings_arr: Iterable[TexSetExportSettings]
