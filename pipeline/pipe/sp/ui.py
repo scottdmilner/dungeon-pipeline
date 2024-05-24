@@ -61,6 +61,13 @@ class SubstanceExportWindow(QtWidgets.QMainWindow, ButtonPair):
             self.tex_set_dict[ts] = widget
             self.main_layout.addWidget(widget)
 
+        # File lock warning
+        self.lock_warning = QtWidgets.QLabel(
+            'WARNING: If you currently have this asset open in Houdini on Windows, you MUST stop your render and press "Reset Renderman RIS / XPU" before exporting or TEX file conversion will not work!'
+        )
+        self.lock_warning.setWordWrap(True)
+        self.main_layout.addWidget(self.lock_warning)
+
         # Buttons
         self._init_buttons(has_cancel_button=True, ok_name="Export")
         self.buttons.rejected.connect(self.close)
