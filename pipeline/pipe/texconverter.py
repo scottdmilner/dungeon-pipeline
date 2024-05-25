@@ -165,6 +165,8 @@ class TexConverter:
         finished_imgs: List[Path] = []
 
         while batch := next(batched_cmds, None):
+            start_time = time.time()
+
             procs = [
                 subprocess.Popen(
                     cmd,
@@ -187,7 +189,8 @@ class TexConverter:
                 img = Path(cast(str, p.args[-1]))  # type: ignore[index]
 
                 # check file has been touched recently
-                if (time.time() - img.stat().st_mtime) < 10:
+                if start_time < img.stat().st_mtime:
+                    log.debug(f"Successfully converted {img}")
                     finished_imgs.append(img)
 
         return finished_imgs
