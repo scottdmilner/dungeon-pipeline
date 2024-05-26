@@ -65,7 +65,7 @@ class TexConverter:
                 "-mode", "periodic",
                 "-filter", "box",
                 "-mipfilter", "box",
-                "-bumprough", "2", "0", "1", "0", "0", "1",
+                "-bumprough", "2", "0", "0", "0", "0", "1",
                 "-newer",
                 str(img),
                 f"{str(self.tex_path / img.stem)}.b2r",
@@ -73,13 +73,15 @@ class TexConverter:
             # fmt: on
 
         cmdlines: List[List[str]] = []
-        # procs: List[subprocess.Popen] = []
         for imgs in self.imgs_by_tex_set:
             log.debug(imgs)
             for img in (Path(i) for i in imgs):
                 if img.suffix == ".png":
                     log.debug(f"        {str(img)}")
-                    cmdlines.append((b2r_cmd if "Normal" in img.name else tex_cmd)(img))
+                    cmdlines.append(tex_cmd(img))
+                elif img.suffix == ".exr":
+                    log.debug(f"        {str(img)}")
+                    cmdlines.append(b2r_cmd(img))
 
         finished_imgs = self._wait_and_check_cmds(cmdlines)
 
@@ -165,6 +167,8 @@ class TexConverter:
         finished_imgs: List[Path] = []
 
         while batch := next(batched_cmds, None):
+            start_time = time.time()
+
             procs = [
                 subprocess.Popen(
                     cmd,
@@ -187,7 +191,8 @@ class TexConverter:
                 img = Path(cast(str, p.args[-1]))  # type: ignore[index]
 
                 # check file has been touched recently
-                if (time.time() - img.stat().st_mtime) < 10:
+                if start_time < img.stat().st_mtime:
+                    log.debug(f"Successfully converted {img}")
                     finished_imgs.append(img)
 
         return finished_imgs
