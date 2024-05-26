@@ -73,7 +73,6 @@ class TexConverter:
             # fmt: on
 
         cmdlines: List[List[str]] = []
-        # procs: List[subprocess.Popen] = []
         for imgs in self.imgs_by_tex_set:
             log.debug(imgs)
             for img in (Path(i) for i in imgs):
