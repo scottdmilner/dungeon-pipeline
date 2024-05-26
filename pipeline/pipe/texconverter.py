@@ -65,7 +65,7 @@ class TexConverter:
                 "-mode", "periodic",
                 "-filter", "box",
                 "-mipfilter", "box",
-                "-bumprough", "2", "0", "1", "0", "0", "1",
+                "-bumprough", "2", "0", "0", "0", "0", "1",
                 "-newer",
                 str(img),
                 f"{str(self.tex_path / img.stem)}.b2r",
@@ -79,7 +79,10 @@ class TexConverter:
             for img in (Path(i) for i in imgs):
                 if img.suffix == ".png":
                     log.debug(f"        {str(img)}")
-                    cmdlines.append((b2r_cmd if "Normal" in img.name else tex_cmd)(img))
+                    cmdlines.append(tex_cmd(img))
+                elif img.suffix == ".exr":
+                    log.debug(f"        {str(img)}")
+                    cmdlines.append(b2r_cmd(img))
 
         finished_imgs = self._wait_and_check_cmds(cmdlines)
 

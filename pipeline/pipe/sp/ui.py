@@ -131,7 +131,7 @@ class TexSetWidget(QtWidgets.QWidget):
 
     MaterialTypeNames = {
         MaterialType.GENERAL: "General",
-        MaterialType.SHINY: "Shiny (not implemented)",
+        MaterialType.SHINY: "Shiny",
         # MaterialType.METAL: "Metal (not implemented)",
         # MaterialType.GLASS: "Glass (not implemented)",
         # MaterialType.CLOTH: "Cloth (not implemented)",

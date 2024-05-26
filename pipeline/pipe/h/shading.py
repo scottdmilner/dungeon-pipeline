@@ -6,7 +6,7 @@ import json
 
 from pipe.h.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct import Asset
+from pipe.struct import Asset, MaterialType
 from pipe.glui.dialogs import MessageDialog
 
 from env import SG_Config
@@ -153,6 +153,11 @@ class MatlibManager:
 
     def import_matnets(self) -> None:
         """Import a material network for each shading group in the export"""
+        ## Code to export matnets:
+        #  items = hou.selectedItems()
+        #  path = os.getenv("HSITE") + "/matl/general.matl"
+        #  items[0].parent().saveItemsToFile(items, path)
+
         if not (mat_info := self.mat_info):
             MessageDialog(
                 get_main_qt_window(),
@@ -162,8 +167,16 @@ class MatlibManager:
 
         for shading_group in mat_info:
             name = shading_group["name"]
+            mat_type = MaterialType(int(shading_group["material_type"]))
+            if mat_type == MaterialType.GENERAL:
+                mat_name = "general"
+            elif mat_type == MaterialType.SHINY:
+                mat_name = "shiny"
+            else:
+                raise ValueError(f"Unimplemented MaterialType: {mat_type}")
+
             nodes = self._load_items_from_file(
-                self.matlib, str(self._hsite / "matl/general.matl")
+                self.matlib, str(self._hsite / f"matl/{mat_name}.matl")
             )
             self._rename_matnet(nodes, name)
 
