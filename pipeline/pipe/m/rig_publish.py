@@ -75,9 +75,12 @@ class RigPublishUI(QtWidgets.QDialog):
         latest_version = 0
 
         for item in ls_dir:
-            version = int(str(item).split(".")[-2])
-            if version > latest_version:
-                latest_version = version
+            try:
+                version = int(str(item).split(".")[-2])
+                if version > latest_version:
+                    latest_version = version
+            except Exception as e:
+                print(f"exception '{e}' for: {item}")
 
         v_string = str(latest_version + 1).zfill(3)
 
