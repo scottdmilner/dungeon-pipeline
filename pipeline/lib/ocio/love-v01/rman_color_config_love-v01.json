@@ -32,10 +32,10 @@
         "  'ocioconfig_name':  name of OCIO config: 'basic', 'ACES-1.2', etc"
     ],
     "ocio_aliases": {
-        "rendering": "acescg",
-        "srgb_texture": "srgb_texture",
-        "srgb_linear": "srgb_linear",
-        "data": "data"
+        "rendering": "ACEScg",
+        "srgb_texture": "sRGB-Texture",
+        "srgb_linear": "sRGB-Texture",
+        "data": "Linear-Rawr"
     },
     "ocio_aliases_help": {
         "rendering": "The image is already in the correct color space for rendering (no conversion).",

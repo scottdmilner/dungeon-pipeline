@@ -60,7 +60,7 @@ class HoudiniDCC(DCC):
                     str(pipe_path),
                 ]
             ),
-            # "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
+            "RMAN_COLOR_CONFIG_DIR": str(pipe_path / "lib/ocio/love-v01"),
         }
 
         launch_command = ""

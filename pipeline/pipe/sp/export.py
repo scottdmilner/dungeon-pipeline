@@ -197,7 +197,8 @@ def generate_config(
             {
                 "parameters": {
                     "dithering": False,
-                    "paddingAlgorithm": "infinite",
+                    "paddingAlgorithm": "color",
+                    "dilationDistance": 24,
                 }
             }
         ],
@@ -218,7 +219,7 @@ def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
                 for ch in "RGB"
             ],
             "parameters": {
-                "bitDepth": "16",
+                "bitDepth": "8",
                 "fileFormat": "png",
                 "sizeLog2": resolution,
             },
