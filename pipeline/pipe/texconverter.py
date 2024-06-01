@@ -4,9 +4,9 @@ import re
 import subprocess
 import time
 
-from math import ceil, floor, sqrt
+from math import ceil, floor, log2, sqrt
 from pathlib import Path
-from typing import cast, Callable, Dict, Iterable, List, Type, TypeVar
+from typing import cast, Callable, Dict, Iterable, List, Tuple, Type, TypeVar
 
 from .util import silent_startupinfo
 
@@ -42,22 +42,22 @@ class TexConverter:
         assert self.tex_path is not None
 
         @self._debug_out
-        def tex_cmd(img: Path) -> list[str]:
+        def tex_cmd(img: str) -> list[str]:
             # currently using oiiotool so txmake doesn't freak out at the color space
             # TODO: switch back to txmake for color in R26
             # fmt: off
             return [
                 str(Executables.oiiotool),
-                str(img),
+                img,
                 "--compression", "lossless",
                 "--planarconfig", "separate",
                 "-otex:fileformatname=tx:wrap=clamp:resize=1:prman_options=1",
-                f"{str(self.tex_path / img.stem)}.tex",
+                f"{str(self.tex_path / Path(img).stem)}.tex",
             ]
             # fmt: on
 
         @self._debug_out
-        def b2r_cmd(img: Path) -> list[str]:
+        def b2r_cmd(img: str) -> list[str]:
             # fmt: off
             return [
                 str(Executables.txmake),
@@ -67,22 +67,50 @@ class TexConverter:
                 "-mipfilter", "box",
                 "-bumprough", "2", "0", "0", "0", "0", "1",
                 "-newer",
-                str(img),
-                f"{str(self.tex_path / img.stem)}.b2r",
+                img,
+                f"{str(self.tex_path / Path(img).stem)}.b2r",
             ]
             # fmt: on
 
+        @self._debug_out
+        def norm2height(img: str) -> list[str]:
+            """Convert normal map to height map
+            This is necessary because if we run b2r conversion directly on a
+            normal map, reversed UV tiles will have incorrect normals.
+            We can't run b2r conversion directly on the height map from
+            Substance because that doesn't include normal painting or
+            stickers. Thus, the remaining option is to convert the Normal map
+            from Substance back into a height map."""
+            img_dims = [str(int(log2(int(d)))) for d in self._img_dims(img)]
+            # fmt: off
+            return [
+                str(Executables.sbsrender),
+                "render",
+                "--engine", "d3d11pc",
+                "--exr-format-compression", "zip",
+                "--output-bit-depth", "16f",
+                "--output-format", "exr",
+                "--input", f"{os.getenv('PIPE_PATH', '')}/lib/sbs/normal2height.sbsar",
+                "--set-entry", f"input@{img}",
+                "--set-value", f"$outputsize@{','.join(img_dims)}",
+                "--output-path", str(Path(img).parent),
+                "--output-name", img.replace(".pre-b2r", ""),
+            ]
+            # fmt: on
+
+        pre_cmdlines: List[List[str]] = []
         cmdlines: List[List[str]] = []
         for imgs in self.imgs_by_tex_set:
             log.debug(imgs)
-            for img in (Path(i) for i in imgs):
-                if img.suffix == ".png":
-                    log.debug(f"        {str(img)}")
+            for img in imgs:
+                log.debug(f"        {img}")
+                if "pre-b2r" in img:
+                    pre_cmdlines.append(norm2height(img))
+                    cmdlines.append(b2r_cmd(img.replace(".pre-b2r", "")))
+                else:
                     cmdlines.append(tex_cmd(img))
-                elif img.suffix == ".exr":
-                    log.debug(f"        {str(img)}")
-                    cmdlines.append(b2r_cmd(img))
 
+        self._wait_and_check_cmds(pre_cmdlines, skip_check=True)
         finished_imgs = self._wait_and_check_cmds(cmdlines)
 
         if len(finished_imgs) != len(cmdlines):
@@ -97,18 +125,7 @@ class TexConverter:
 
         @self._debug_out
         def jpeg_cmd(root: Path, imgs: List[str]) -> list[str]:
-            img_info = subprocess.check_output(
-                [
-                    str(Executables.oiiotool),
-                    "--info",
-                    imgs[0],
-                ],
-                startupinfo=silent_startupinfo(),
-            ).decode("utf-8")
-            img_dims = re.search(r"^.* : +(\d+) +x +(\d+), .*$", img_info)
-
-            assert img_dims is not None
-            dimx, dimy = img_dims.group(1, 2)
+            dimx, dimy = self._img_dims(imgs[0])
 
             img_name = re.search(r"^(.*_)(.+)$", root.name)
             assert img_name is not None
@@ -124,8 +141,12 @@ class TexConverter:
                 *imgs,
                 "--mosaic", f"{grid_base}x{grid_height}",
                 "--resize", f"{dimx}x{dimy}",
-                *(["--colorconvert", "ACEScg", "srgb_tx"] if color_space == "ACEScg" else []),
-                "-o", f"{str(self.preview_path / name_base)}{'sRGB' if color_space == 'ACEScg' else 'Linear'}.jpeg",
+                *(
+                    ["--colorconvert", "srgb-ap1", "sRGB-Texture"] 
+                    if color_space == "srgb-ap1" 
+                    else []
+                ),
+                "-o", f"{str(self.preview_path / name_base)}{'sRGB' if color_space == 'srgb-ap1' else 'Linear'}.jpeg",
             ]
             # fmt: on
 
@@ -155,8 +176,23 @@ class TexConverter:
 
         return finished_imgs
 
+    def _img_dims(self, img: str) -> Tuple[str, str]:
+        img_info = subprocess.check_output(
+            [
+                str(Executables.oiiotool),
+                "--info",
+                img,
+            ],
+            startupinfo=silent_startupinfo(),
+        ).decode("utf-8")
+        img_dims = re.search(r"^.* : +(\d+) +x +(\d+), .*$", img_info)
+
+        assert img_dims is not None
+        matches = img_dims.group(1, 2)
+        return (matches[0], matches[1])
+
     def _wait_and_check_cmds(
-        self, cmds: List[List[str]], batch_size: int = 18
+        self, cmds: List[List[str]], batch_size: int = 18, skip_check: bool = False
     ) -> List[Path]:
         """Wait for list of processes to finish and print them to the debug log"""
 
@@ -187,6 +223,9 @@ class TexConverter:
                         log.debug(stdout)
                     if p.stderr and (stderr := p.stderr.read().decode("utf-8")):
                         log.debug(stderr)
+
+                if skip_check:
+                    continue
 
                 img = Path(cast(str, p.args[-1]))  # type: ignore[index]
 

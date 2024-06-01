@@ -6,7 +6,8 @@ import json
 
 from pipe.h.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct import Asset, MaterialType
+from pipe.struct.asset import Asset
+from pipe.struct.material import NormalType
 from pipe.glui.dialogs import MessageDialog
 
 from env import SG_Config
@@ -167,13 +168,13 @@ class MatlibManager:
 
         for shading_group in mat_info:
             name = shading_group["name"]
-            mat_type = MaterialType(int(shading_group["material_type"]))
-            if mat_type == MaterialType.GENERAL:
+            norm_type = NormalType(shading_group["normal_type"])
+            if norm_type == NormalType.STANDARD:
                 mat_name = "general"
-            elif mat_type == MaterialType.SHINY:
+            elif norm_type == NormalType.BUMP_ROUGHNESS:
                 mat_name = "shiny"
             else:
-                raise ValueError(f"Unimplemented MaterialType: {mat_type}")
+                raise ValueError(f"Unimplemented MaterialType: {norm_type}")
 
             nodes = self._load_items_from_file(
                 self.matlib, str(self._hsite / f"matl/{mat_name}.matl")

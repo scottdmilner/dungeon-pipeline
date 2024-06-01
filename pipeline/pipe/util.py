@@ -7,7 +7,7 @@ import sys
 
 from inspect import getmembers, isabstract, isclass, isfunction
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, TypeVar, Union
 from types import ModuleType
 
 from env import production_path as _prp
@@ -41,6 +41,15 @@ def check_methods(cls: type, subclass: type) -> bool:
         else:
             return NotImplemented
     return True
+
+
+KT = TypeVar("KT")
+VT = TypeVar("VT")
+
+
+def dict_index(d: Dict[KT, VT], v: VT) -> KT:
+    """List index function for dicts"""
+    return list(d.keys())[list(d.values()).index(v)]
 
 
 def find_implementation(cls: type, module: str, package: Optional[str] = None) -> type:
@@ -133,7 +142,9 @@ def reload_pipe(extra_modules: List[ModuleType] = []) -> None:
         *[
             module
             for name, module in sys.modules.items()
-            if (name.startswith("pipe")) and ("shotgun_api3" not in name)
+            if (name.startswith("pipe"))
+            and ("shotgun_api3" not in name)
+            or (name == "env")
         ],
         *extra_modules,
     ]
