@@ -111,11 +111,12 @@ class Exporter:
         """Write out JSON file with information about the texturesets"""
         info = [
             {
-                "name": export_settings.tex_set.name(),
-                "has_udims": export_settings.tex_set.has_uv_tiles(),
-                "normal_type": export_settings.normal_type,
-                "displacement": export_settings.displacement_source
+                "displacement_source": export_settings.displacement_source
                 is not DisplacementSource.NONE,
+                "has_udims": export_settings.tex_set.has_uv_tiles(),
+                "name": export_settings.tex_set.name(),
+                "normal_source": export_settings.normal_source,
+                "normal_type": export_settings.normal_type,
             }
             for export_settings in export_settings_arr
         ]
@@ -194,11 +195,6 @@ def generate_config(
     }
 
 
-normal_source_to_sbs_parm = {
-    NormalSource.NORMAL_HEIGHT: {"srcMapType": "documentMap", "srcMapName": "height"}
-}
-
-
 def shader_maps(
     resolution: int,
     normal_source: NormalSource,
@@ -240,7 +236,7 @@ def shader_maps(
             },
         },
         {
-            "fileName": "$textureSet_Specular(_$colorSpace)(.$udim)",
+            "fileName": "$textureSet_IOR(_$colorSpace)(.$udim)",
             "channels": [
                 {
                     "destChannel": "L",
@@ -272,7 +268,7 @@ def shader_maps(
             },
         },
         {
-            "fileName": "$textureSet_GlowColor(_$colorSpace)(.$udim)",
+            "fileName": "$textureSet_Emissive(_$colorSpace)(.$udim)",
             "channels": [
                 {
                     "destChannel": ch,

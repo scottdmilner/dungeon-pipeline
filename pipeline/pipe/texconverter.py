@@ -103,6 +103,8 @@ class TexConverter:
         for imgs in self.imgs_by_tex_set:
             log.debug(imgs)
             for img in imgs:
+                if img.endswith(".jpeg"):
+                    continue
                 log.debug(f"        {img}")
                 if "pre-b2r" in img:
                     pre_cmdlines.append(norm2height(img))
