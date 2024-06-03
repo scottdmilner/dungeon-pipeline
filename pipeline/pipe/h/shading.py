@@ -307,3 +307,13 @@ class MatlibManager:
             self._move_matnet(nodes, next(pos))
             self._rename_matnet(nodes, name)
             self._cleanup_matnet(nodes, shading_group)
+
+
+class MatlibErrorChecker:
+    @staticmethod
+    def CheckFilepathsRelative(matlib: hou.LopNode) -> int:
+        for node in matlib.children():
+            if (fn := node.parm("filename")) is not None:
+                if not fn.unexpandedString().startswith("$"):
+                    return 1
+        return 0
