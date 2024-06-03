@@ -9,7 +9,8 @@ from typing import Iterable, List, Set, TypeVar
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct import Asset, MaterialType
+from pipe.struct.asset import Asset
+from pipe.struct.material import DisplacementSource, NormalSource, NormalType
 from pipe.glui.dialogs import MessageDialog
 from pipe.texconverter import TexConverter, TexConversionError
 from pipe.util import get_production_path, resolve_mapped_path
@@ -24,9 +25,11 @@ log = logging.getLogger(__name__)
 @dataclass
 class TexSetExportSettings:
     tex_set: sp.textureset.TextureSet
-    mat_type: MaterialType
     extra_channels: Set[sp.textureset.Channel]
     resolution: int
+    displacement_source: DisplacementSource
+    normal_type: NormalType
+    normal_source: NormalSource
 
 
 class Exporter:
@@ -92,7 +95,11 @@ class Exporter:
         except TexConversionError:
             MessageDialog(
                 get_main_qt_window(),
-                'Warning! Not all textures were converted! Make sure to stop rendering this asset in Houdini and press "Reset RenderMan RIS/XPU".',
+                (
+                    "Warning! Not all textures were converted! Make sure to "
+                    'stop rendering this asset in Houdini and press "Reset '
+                    'RenderMan RIS/XPU".'
+                ),
             ).exec_()
             return False
 
@@ -104,38 +111,18 @@ class Exporter:
         """Write out JSON file with information about the texturesets"""
         info = [
             {
-                "name": export_settings.tex_set.name(),
+                "displacement_source": export_settings.displacement_source
+                is not DisplacementSource.NONE,
                 "has_udims": export_settings.tex_set.has_uv_tiles(),
-                "material_type": export_settings.mat_type,
+                "name": export_settings.tex_set.name(),
+                "normal_source": export_settings.normal_source,
+                "normal_type": export_settings.normal_type,
             }
             for export_settings in export_settings_arr
         ]
         with open(str(self.out_path / "mat.json"), "w", encoding="utf-8") as f:
             json.dump(info, f, ensure_ascii=False, indent=4)
             return True
-
-
-DefaultChannels = {
-    MaterialType.GENERAL: [
-        sp.textureset.ChannelType.BaseColor,
-        sp.textureset.ChannelType.Height,
-        sp.textureset.ChannelType.Roughness,
-        sp.textureset.ChannelType.Opacity,
-        sp.textureset.ChannelType.Emissive,
-        sp.textureset.ChannelType.Metallic,
-        sp.textureset.ChannelType.Normal,
-    ],
-    MaterialType.SHINY: [
-        sp.textureset.ChannelType.BaseColor,
-        sp.textureset.ChannelType.Height,
-        sp.textureset.ChannelType.Roughness,
-        sp.textureset.ChannelType.Opacity,
-        sp.textureset.ChannelType.Emissive,
-        sp.textureset.ChannelType.Metallic,
-        sp.textureset.ChannelType.Normal,
-    ],
-    # add more export defaults here
-}
 
 
 def generate_config(
@@ -149,8 +136,11 @@ def generate_config(
                 "name": export_settings.tex_set.name(),
                 "maps": [
                     # Default RenderMan maps
-                    *maps_by_mat_type(
-                        export_settings.mat_type, export_settings.resolution
+                    *shader_maps(
+                        export_settings.resolution,
+                        export_settings.normal_source,
+                        export_settings.normal_type,
+                        export_settings.displacement_source,
                     ),
                     # Extra AOVs
                     *[
@@ -197,15 +187,21 @@ def generate_config(
             {
                 "parameters": {
                     "dithering": False,
-                    "paddingAlgorithm": "infinite",
+                    "paddingAlgorithm": "color",
+                    "dilationDistance": 24,
                 }
             }
         ],
     }
 
 
-def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
-    base_maps = [
+def shader_maps(
+    resolution: int,
+    normal_source: NormalSource,
+    normal_type: NormalType,
+    displacement_source: DisplacementSource,
+) -> List:
+    maps = [
         {
             "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
             "channels": [
@@ -218,7 +214,7 @@ def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
                 for ch in "RGB"
             ],
             "parameters": {
-                "bitDepth": "16",
+                "bitDepth": "8",
                 "fileFormat": "png",
                 "sizeLog2": resolution,
             },
@@ -240,7 +236,7 @@ def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
             },
         },
         {
-            "fileName": "$textureSet_Specular(_$colorSpace)(.$udim)",
+            "fileName": "$textureSet_IOR(_$colorSpace)(.$udim)",
             "channels": [
                 {
                     "destChannel": "L",
@@ -272,7 +268,7 @@ def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
             },
         },
         {
-            "fileName": "$textureSet_GlowColor(_$colorSpace)(.$udim)",
+            "fileName": "$textureSet_Emissive(_$colorSpace)(.$udim)",
             "channels": [
                 {
                     "destChannel": ch,
@@ -305,65 +301,67 @@ def maps_by_mat_type(mat_type: MaterialType, resolution: int) -> List:
             },
         },
         {
-            "fileName": "$textureSet_Displacement(_$colorSpace)(.$udim)",
+            "fileName": f"$textureSet_Normal(_$colorSpace)(.$udim){'.pre-b2r' if normal_type == NormalType.BUMP_ROUGHNESS else ''}",
             "channels": [
                 {
-                    "destChannel": "L",
-                    "srcChannel": "L",
-                    "srcMapType": "documentMap",
-                    "srcMapName": "height",
-                },
+                    "destChannel": ch,
+                    "srcChannel": ch,
+                    **(
+                        {
+                            "srcMapType": "virtualMap",
+                            "srcMapName": "Normal_OpenGL",
+                        }
+                        if normal_source is NormalSource.NORMAL_HEIGHT
+                        else {
+                            "srcMapType": "documentMap",
+                            "srcMapName": "normal",
+                        }
+                    ),
+                }
+                for ch in "RGB"
             ],
             "parameters": {
-                "bitDepth": "16",
-                "fileFormat": "png",
+                **(
+                    {
+                        "bitDepth": "16f",
+                        "fileFormat": "exr",
+                    }
+                    if normal_type is NormalType.BUMP_ROUGHNESS
+                    else {
+                        "bitDepth": "16",
+                        "fileFormat": "png",
+                    }
+                ),
                 "sizeLog2": resolution,
             },
         },
     ]
 
-    if mat_type == MaterialType.GENERAL:
-        return base_maps + [
+    if displacement_source is not DisplacementSource.NONE:
+        maps += [
             {
-                "fileName": "$textureSet_Normal(_$colorSpace)(.$udim)",
+                "fileName": "$textureSet_Displacement(_$colorSpace)(.$udim)",
                 "channels": [
                     {
-                        "destChannel": ch,
-                        "srcChannel": ch,
-                        "srcMapType": "virtualMap",
-                        "srcMapName": "Normal_OpenGL",
-                    }
-                    for ch in "RGB"
+                        "destChannel": "L",
+                        "srcChannel": "L",
+                        "srcMapType": "documentMap",
+                        "srcMapName": (
+                            "height"
+                            if displacement_source == DisplacementSource.HEIGHT
+                            else "displacement"
+                        ),
+                    },
                 ],
                 "parameters": {
                     "bitDepth": "16",
                     "fileFormat": "png",
                     "sizeLog2": resolution,
                 },
-            },
+            }
         ]
 
-    elif mat_type == MaterialType.SHINY:
-        return base_maps + [
-            {
-                "fileName": "$textureSet_Normal(_$colorSpace)(.$udim)",
-                "channels": [
-                    {
-                        "destChannel": "L",
-                        "srcChannel": "L",
-                        "srcMapType": "documentMap",
-                        "srcMapName": "height",
-                    },
-                ],
-                "parameters": {
-                    "bitDepth": "16f",
-                    "fileFormat": "exr",
-                    "sizeLog2": resolution,
-                },
-            },
-        ]
-    else:
-        raise ValueError(f"Unimplemented MaterialType: {mat_type}")
+    return maps
 
 
 preview_surface_maps = [

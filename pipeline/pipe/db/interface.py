@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Iterable, List, Optional, Sequence
 
 from pipe.util import check_methods
-from pipe.struct import Asset
+from pipe.struct.asset import Asset
 
 
 class DBInterface(metaclass=ABCMeta):

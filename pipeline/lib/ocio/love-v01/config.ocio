@@ -8,24 +8,48 @@ description: VERSION 1.0 OCIO config for BYU Love and Dungeons, '25. Isaac Cridd
 roles:
   aces_interchange: ACES2065-1
   cie_xyz_d65_interchange: CIE-XYZ-D65
-  color_picking: sRGB Texture
+  color_picking: sRGB-Texture
   color_timing: ACEScct
   compositing_log: ACEScct
   default: ACEScg
   data: Linear-Rawr
-  matte_paint: sRGB Texture
+  matte_paint: sRGB-Texture
   scene_linear: ACEScg
-  texture_paint: sRGB Texture
+  texture_paint: sRGB-Texture
+  # Substance Config
+  substance_3d_painter_standard_srgb: sRGB-Texture
+  substance_3d_painter_bitmap_import_8bit: sRGB-Texture
+  substance_3d_painter_bitmap_import_16bit: sRGB-Texture
+  substance_3d_painter_bitmap_import_floating: ACEScg
+  substance_3d_painter_substance_material: ACEScg
+  # Note to future generations: Setting this colorspace as the export 
+  # transform will export textures that use the ACEScg color primaries
+  # and white point, but have an sRGB transformation applied on them.
+  # This is really jank, but means that in RenderMan, we can use the 
+  # "Linearize" checkbox to convert the color maps into linear ACEScg without
+  # needing to use a PxrColorSpace node, which is expensive. The other option
+  # would be to export from Substance as ACEScg but in a 16 bit map instead of
+  # an 8 bit map, which would also be more expensive. The quality of the 16 bit
+  # map is higher, but in our tests we found that the color banding in the
+  # srgb-ap1 method is the same, maybe slightly better than the color banding
+  # in a traditional sRGB workflow (no ACES at all).
+  substance_3d_painter_bitmap_export_8bit: srgb-ap1
+  substance_3d_painter_bitmap_export_16bit: srgb-ap1
+  substance_3d_painter_bitmap_export_floating: ACEScg
+  # RenderMan Config
+  rendering: ACEScg
+  srgb_linear: ACEScg
+  srgb_texture: sRGB-Texture
 
 file_rules:
-  - !<Rule> {name: JPG, extension: "jpg", pattern: "*", colorspace: sRGB Texture}
-  - !<Rule> {name: JPEG, extension: "jpeg", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: JPG, extension: "jpg", pattern: "*", colorspace: sRGB-Texture}
+  - !<Rule> {name: JPEG, extension: "jpeg", pattern: "*", colorspace: sRGB-Texture}
   - !<Rule> {name: mp4, extension: "mp4", pattern: "*", colorspace: Display Rec.709}
   - !<Rule> {name: mov, extension: "mov", pattern: "*", colorspace: Display Rec.709}
   - !<Rule> {name: mkv, extension: "mkv", pattern: "*", colorspace: Display Rec.709}
-  - !<Rule> {name: TIF, extension: "tif", pattern: "*", colorspace: sRGB Texture}
-  - !<Rule> {name: TIFF, extension: "tiff", pattern: "*", colorspace: sRGB Texture}
-  - !<Rule> {name: PNG, extension: "png", pattern: "*", colorspace: sRGB Texture}
+  - !<Rule> {name: TIF, extension: "tif", pattern: "*", colorspace: sRGB-Texture}
+  - !<Rule> {name: TIFF, extension: "tiff", pattern: "*", colorspace: sRGB-Texture}
+  - !<Rule> {name: PNG, extension: "png", pattern: "*", colorspace: sRGB-Texture}
   - !<Rule> {name: OpenEXR, extension: "exr", pattern: "*", colorspace: ACEScg}
   - !<Rule> {name: Default, colorspace: ACEScg}
 
@@ -214,8 +238,8 @@ colorspaces:
         - !<MatrixTransform> {matrix: [2.52168618674388, -1.13413098823972, -0.387555198504164, 0, -0.276479914229922, 1.37271908766826, -0.096239173438334, 0, -0.0153780649660342, -0.152975335867399, 1.16835340083343, 0, 0, 0, 0, 1]}
 
   - !<ColorSpace>
-    name: Messed Up sRGB -> ACEScg Texture
-    aliases: [srgb_encoded_ap1_tx, srgb_ap1]
+    name: srgb-ap1
+    aliases: [srgb_encoded_ap1_tx, srgb_ap1, Messed Up sRGB -> ACEScg Texture]
     family: Utility
     equalitygroup: ""
     bitdepth: 32f
@@ -234,8 +258,8 @@ colorspaces:
         - !<ExponentWithLinearTransform> {gamma: 2.4, offset: 0.055, direction: inverse}
 
   - !<ColorSpace>
-    name: sRGB Texture
-    aliases: [srgb_tx, Utility - sRGB Texture, srgb_texture, Input - Generic - sRGB Texture]
+    name: sRGB-Texture
+    aliases: [srgb_tx, Utility - sRGB Texture, Input - Generic - sRGB Texture]
     family: Utility
     equalitygroup: ""
     bitdepth: 32f

@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from pipe.struct import Asset, AssetStub
+from pipe.struct.asset import Asset, AssetStub
 
 from .baseclass import DB
 from .typing import Filter
