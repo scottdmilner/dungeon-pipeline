@@ -35,6 +35,7 @@ class MatlibManager:
         var_id = node.parm("variant_id")
         assert var_id is not None
 
+        # get variant list from SG
         variants = self._asset.variants
         if not variants:
             var_name.set("main")
@@ -42,6 +43,7 @@ class MatlibManager:
             var_id.set(self._asset.id)
             return
 
+        # set default variant on the hda
         var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
         assert var2 is not None
         assert var2.variant_name is not None
@@ -100,8 +102,8 @@ class MatlibManager:
         """Get the id of the current variant"""
         var_id = self.node.parm("variant_id")
         assert var_id is not None
+        # if it hasn't been set yet, set it to the default value
         if (node_val := var_id.evalAsInt()) == -1:
-            ## if it hasn't been set yet, set it to the default value
             default = int(self.get_variant_list()[0])
             var_id.set(default)
             return default
@@ -141,14 +143,21 @@ class MatlibManager:
             return variant_name
         return node_val
 
+    @staticmethod
+    def _get_map_paths(
+        node: hou.Node, parm: str = "filename"
+    ) -> Generator[Path, None, None]:
+        """Helper function to get all the maps referred to by a <UDIM>
+        wildcard as Path objects"""
+        filename_parm = node.parm(parm)
+        assert filename_parm is not None
+        dir, filename = filename_parm.evalAsString().rsplit("/", 1)
+        return Path(dir).glob(filename.replace("<UDIM>", "*"))
+
     def _cleanup_matnet(
         self, new_items: Iterable[hou.NetworkMovableItem], mat_info: Dict[str, Any]
     ) -> None:
-        def get_map_paths(node: hou.Node) -> Generator[Path, None, None]:
-            filename_parm = node.parm("filename")
-            assert filename_parm is not None
-            dir, filename = filename_parm.evalAsString().rsplit("/", 1)
-            return Path(dir).glob(filename.replace("<UDIM>", "*"))
+        """Clean up a matnet after it has been imported from cpio"""
 
         # locate relevant nodes
         control_node: hou.Node
@@ -159,6 +168,7 @@ class MatlibManager:
         normal_node: hou.Node
         presence_node: hou.Node
         preview_node: hou.Node
+        pvwemissive_node: hou.Node
         for item in new_items:
             if item.networkItemType() != hou.networkItemType.Node:
                 continue
@@ -181,20 +191,25 @@ class MatlibManager:
                 normal_node = item
             elif name.startswith("usdpreview"):
                 preview_node = item
+            elif name.startswith("pvwemissive"):
+                pvwemissive_node = item
 
         # Remove optional maps
-        if not next(get_map_paths(ior_node), None):
+        if not next(self._get_map_paths(ior_node), None):
             ior_node.destroy()
 
-        if not next(get_map_paths(emissive_node), None):
+        if not next(self._get_map_paths(emissive_node), None):
             emissive_node.destroy()
 
-        if not next(get_map_paths(presence_node), None):
+        if not next(self._get_map_paths(presence_node), None):
             preview_node.setInput(8, None)
             presence_node.destroy()
 
+        if not next(self._get_map_paths(pvwemissive_node, parm="file"), None):
+            pvwemissive_node.destroy()
+
         # Remove unused displacement nodes
-        if not next(get_map_paths(displacement_map), None):
+        if not next(self._get_map_paths(displacement_map), None):
             displacement_map.destroy()
             for node in displacement_nodes:
                 node.destroy()
@@ -216,7 +231,7 @@ class MatlibManager:
             assert undisplaced_parm is not None
             undisplaced_parm.set(True)
 
-    def _load_items_from_file(
+    def load_items_from_file(
         self, dest_node: hou.LopNode, file_path: str
     ) -> List[hou.NetworkMovableItem]:
         """Loads a VOP network into a LOP node. Returns list of added items"""
@@ -229,13 +244,15 @@ class MatlibManager:
     def _move_matnet(
         self, new_items: Iterable[hou.NetworkMovableItem], x_pos: int
     ) -> None:
+        # find the master netbox
         master_box = next(
             (
                 cast(hou.NetworkBox, i)
                 for i in new_items
                 if (i.networkItemType() == hou.networkItemType.NetworkBox)
                 and (cast(hou.NetworkBox, i).comment() == _MATNAME)
-            )
+            ),
+            None,
         )
         if not master_box:
             return
@@ -274,8 +291,11 @@ class MatlibManager:
             return [str(self._asset.id), "Main"]
 
     def export_selected_to_path(
-        self, path: str, curr_name: str, new_name: str = _MATNAME
+        self, path: str, curr_name: str = _MATNAME, new_name: str = _MATNAME
     ) -> None:
+        """Export selected items as a cpio file to the path given. For
+        convenience, rename their suffixes to _MATNAME before exporting,
+        then change their names back"""
         items = hou.selectedItems()
         self._rename_matnet(items, new_name, curr_name)
         items[0].parent().saveItemsToFile(items, path)
@@ -286,7 +306,8 @@ class MatlibManager:
         if not (mat_info := self.mat_info):
             MessageDialog(
                 get_main_qt_window(),
-                "Error! Could not get material info. Make sure that textures have been exported for the currently selected variant.",
+                "Error! Could not get material info. Make sure that textures "
+                "have been exported for the currently selected variant.",
             ).exec_()
             return
 
@@ -301,7 +322,7 @@ class MatlibManager:
             else:
                 raise ValueError(f"Unimplemented NormalType: {norm_type}")
 
-            nodes = self._load_items_from_file(
+            nodes = self.load_items_from_file(
                 self.matlib, str(self._hsite / f"matl/{template_name}.cpio")
             )
             self._move_matnet(nodes, next(pos))
@@ -312,6 +333,8 @@ class MatlibManager:
 class MatlibErrorChecker:
     @staticmethod
     def CheckFilepathsRelative(matlib: hou.LopNode) -> int:
+        """Returns 1 if there are any absolute filepaths in the material
+        library, 0 otherwise"""
         for node in matlib.children():
             if (fn := node.parm("filename")) is not None:
                 if not fn.unexpandedString().startswith("$"):
