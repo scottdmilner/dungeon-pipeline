@@ -5,14 +5,14 @@ from PySide2 import QtCore, QtWidgets
 from PySide2.QtGui import QIcon, QPixmap
 from PySide2.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
 from re import findall
-from typing import Callable, List, Mapping, Optional, Set
+from typing import Callable, Iterable, List, Mapping, Optional, Set
 
 import substance_painter as sp
 
 import pipe
-from pipe.sp.local import get_main_qt_window
 from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.sp.export import Exporter, TexSetExportSettings
+from pipe.sp.local import get_main_qt_window
 from pipe.struct.material import DisplacementSource, NormalSource, NormalType
 from pipe.util import dict_index
 
@@ -42,11 +42,13 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         # Make sure window always stays on top
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
 
+        # Set up main layout
         self._central_widget = QtWidgets.QWidget()
         self.setCentralWidget(self._central_widget)
         self._main_layout = QtWidgets.QVBoxLayout()
         self._central_widget.setLayout(self._main_layout)
 
+        # title
         title = QLabel("Publish Textures")
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setStyleSheet("font-size: 15px; font-weight: bold;")
@@ -142,7 +144,6 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
 class TexSetWidget(QtWidgets.QWidget):
     extra_channels: Set[sp.textureset.Channel]
 
-    _layout: QLayout
     _displacement_source_dropdown: QComboBox
     _enabled_checkbox: QtWidgets.QCheckBox
     _extra_channels_layout: QLayout
@@ -166,17 +167,17 @@ class TexSetWidget(QtWidgets.QWidget):
         sp.textureset.ChannelType.Displacement,
     ]
 
-    NORMAL_TYPE_STRINGS = {
+    _NORM_TYPE_STRS = {
         NormalType.STANDARD: "Standard (default)",
         NormalType.BUMP_ROUGHNESS: "Bump Roughness",
     }
 
-    NORMAL_SOURCE_STRINGS = {
+    _NORM_SOURCE_STRS = {
         NormalSource.NORMAL_HEIGHT: "Normal + Height (default)",
         NormalSource.NORMAL_ONLY: "Normal Only",
     }
 
-    DISPLACEMENT_SOURCE_STRINGS = {
+    _DISP_SOURCE_STRS = {
         DisplacementSource.NONE: "None (default)",
         DisplacementSource.HEIGHT: "Height",
         DisplacementSource.DISPLACEMENT: "Displacement",
@@ -211,29 +212,33 @@ class TexSetWidget(QtWidgets.QWidget):
 
         self._setup_ui()
 
-    def _setup_ui(self) -> None:
-        def info_tooltip(message: str) -> QtWidgets.QToolButton:
-            button = QtWidgets.QToolButton()
-            button.setIcon(self._help_icon)
-            button.setStyleSheet("background-color: #00000000; border: none;")
-            button.setToolTip(message)
-            return button
+    def _info_tooltip(self, message: str) -> QtWidgets.QToolButton:
+        button = QtWidgets.QToolButton()
+        button.setIcon(self._help_icon)
+        button.setStyleSheet("background-color: #00000000; border: none;")
+        button.setToolTip(message)
+        return button
 
-        self._layout = QtWidgets.QHBoxLayout()
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(0)
-        self._layout.setAlignment(QtCore.Qt.AlignTop)
+    @staticmethod
+    def _get_default(items: Iterable[str]) -> str:
+        return next((i for i in items if i.endswith("(default)")), "")
+
+    def _setup_ui(self) -> None:
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.setAlignment(QtCore.Qt.AlignTop)
 
         # Enable/disable checkbox and set up layouts
         self._enabled_checkbox = QtWidgets.QCheckBox()
         self._enabled_checkbox.setChecked(True)
         self._enabled_checkbox.setStyleSheet("padding-top: 10px;")
         self._enabled_checkbox.toggled.connect(self._enabled_checkbox_callback)
-        self._layout.addWidget(self._enabled_checkbox, 10, QtCore.Qt.AlignTop)
+        layout.addWidget(self._enabled_checkbox, 10, QtCore.Qt.AlignTop)
         self._settings_container = QtWidgets.QWidget()
         settings_layout = QtWidgets.QGridLayout(self._settings_container)
         settings_layout.setSpacing(2)
-        self._layout.addWidget(self._settings_container, 90)
+        layout.addWidget(self._settings_container, 90)
 
         # Texture set title
         self.label = QLabel(self._tex_set.name())
@@ -260,17 +265,12 @@ class TexSetWidget(QtWidgets.QWidget):
         # Normal map source
         settings_layout.addWidget(QLabel("Normal Map Source:"), 3, 0)
         self._normal_source_dropdown = QComboBox()
-        ns_items = self.NORMAL_SOURCE_STRINGS.values()
+        ns_items = self._NORM_SOURCE_STRS.values()
         self._normal_source_dropdown.addItems(ns_items)
-        self._normal_source_dropdown.setCurrentText(
-            next(
-                (s for s in ns_items if s.endswith("(default)")),
-                "",
-            )
-        )
+        self._normal_source_dropdown.setCurrentText(self._get_default(ns_items))
         settings_layout.addWidget(self._normal_source_dropdown)
         settings_layout.addWidget(
-            info_tooltip(
+            self._info_tooltip(
                 "Substance's default behavior is to convert the Height channel "
                 "to a normal map, then combine it with the Normal channel. \n"
                 '"Normal + Height" keeps this behavior. \n'
@@ -281,17 +281,12 @@ class TexSetWidget(QtWidgets.QWidget):
         # Normal map type
         settings_layout.addWidget(QLabel("Normal Map Type:"), 4, 0)
         self._normal_type_dropdown = QComboBox()
-        nt_items = self.NORMAL_TYPE_STRINGS.values()
+        nt_items = self._NORM_TYPE_STRS.values()
         self._normal_type_dropdown.addItems(nt_items)
-        self._normal_type_dropdown.setCurrentText(
-            next(
-                (s for s in nt_items if s.endswith("(default)")),
-                "",
-            )
-        )
+        self._normal_type_dropdown.setCurrentText(self._get_default(nt_items))
         settings_layout.addWidget(self._normal_type_dropdown)
         settings_layout.addWidget(
-            info_tooltip(
+            self._info_tooltip(
                 "Bump Roughness mapping preserves detail in shiny items with "
                 "variance/breakup in the roughness (i.e. scratches, smudges, "
                 "etc.). \n"
@@ -304,27 +299,20 @@ class TexSetWidget(QtWidgets.QWidget):
         # Displacement map source
         settings_layout.addWidget(QLabel("Displacement Map Source:"), 5, 0)
         self._displacement_source_dropdown = QComboBox()
-        ds_items = list(self.DISPLACEMENT_SOURCE_STRINGS.values())
+        ds_items = list(self._DISP_SOURCE_STRS.values())
         self._displacement_source_dropdown.addItems(ds_items)
-        self._displacement_source_dropdown.setCurrentText(
-            next(
-                (s for s in ds_items if s.endswith("(default)")),
-                "",
-            )
-        )
+        self._displacement_source_dropdown.setCurrentText(self._get_default(ds_items))
         if sp.textureset.ChannelType.Displacement in self._stack.all_channels().keys():
             self._displacement_source_dropdown.setCurrentText(
-                self.DISPLACEMENT_SOURCE_STRINGS[DisplacementSource.DISPLACEMENT]
+                self._DISP_SOURCE_STRS[DisplacementSource.DISPLACEMENT]
             )
         else:
             self._displacement_source_dropdown.removeItem(
-                ds_items.index(
-                    self.DISPLACEMENT_SOURCE_STRINGS[DisplacementSource.DISPLACEMENT]
-                )
+                ds_items.index(self._DISP_SOURCE_STRS[DisplacementSource.DISPLACEMENT])
             )
         settings_layout.addWidget(self._displacement_source_dropdown)
         settings_layout.addWidget(
-            info_tooltip(
+            self._info_tooltip(
                 "Displacement is expensive and should only be used on assets "
                 "that will be close enough to the camera that the changes to "
                 "the silhouette will be noticeable. You can source the "
@@ -333,7 +321,7 @@ class TexSetWidget(QtWidgets.QWidget):
             )
         )
 
-        self.setLayout(self._layout)
+        self.setLayout(layout)
 
     def _enabled_checkbox_callback(self) -> None:
         self._settings_container.setEnabled(self._enabled_checkbox.isChecked())
@@ -341,20 +329,22 @@ class TexSetWidget(QtWidgets.QWidget):
     def _setup_extra_channel_layout(self) -> bool:
         """Sets up extra channel layout. Returns False if there are no extra channels"""
         has_channels: bool = False
-        for ct, ch in self._stack.all_channels().items():
-            if ct not in self.DEFAULT_CHANNELS:
+        for channel_type, channel in self._stack.all_channels().items():
+            if channel_type not in self.DEFAULT_CHANNELS:
+                # get channel name
                 name = (
-                    getattr(ch, "label", None)
-                    and ch.label().title().replace(" ", "")
-                    or ch.type().name
+                    getattr(channel, "label", None)
+                    and channel.label().title().replace(" ", "")
+                    or channel.type().name
                 )
                 # add spaces
                 name = " ".join(
                     findall(r"[A-Z0-9](?:[a-z0-9]+|[A-Z]*(?=[A-Z]|$))", name)
                 )
+                # set up checkboxes
                 checkbox = QtWidgets.QCheckBox(name)
                 checkbox.setChecked(False)
-                checkbox.stateChanged.connect(self._extra_channels_updater(ch))
+                checkbox.stateChanged.connect(self._extra_channels_updater(channel))
                 self._extra_channels_layout.addWidget(checkbox)
                 has_channels = True
 
@@ -383,18 +373,18 @@ class TexSetWidget(QtWidgets.QWidget):
     @property
     def normal_type(self) -> NormalType:
         return dict_index(
-            self.NORMAL_TYPE_STRINGS, self._normal_type_dropdown.currentText()
+            self._NORM_TYPE_STRS, self._normal_type_dropdown.currentText()
         )
 
     @property
     def normal_source(self) -> NormalSource:
         return dict_index(
-            self.NORMAL_SOURCE_STRINGS, self._normal_source_dropdown.currentText()
+            self._NORM_SOURCE_STRS, self._normal_source_dropdown.currentText()
         )
 
     @property
     def displacement_source(self) -> DisplacementSource:
         return dict_index(
-            self.DISPLACEMENT_SOURCE_STRINGS,
+            self._DISP_SOURCE_STRS,
             self._displacement_source_dropdown.currentText(),
         )
