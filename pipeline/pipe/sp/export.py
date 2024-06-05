@@ -226,7 +226,7 @@ class Exporter:
                     for ch in "RGB"
                 ],
                 "parameters": {
-                    "bitDepth": "8",
+                    "bitDepth": "16",
                     "fileFormat": "png",
                     "sizeLog2": export_settings.resolution,
                 },
@@ -291,7 +291,7 @@ class Exporter:
                     for ch in "RGB"
                 ],
                 "parameters": {
-                    "bitDepth": "8",
+                    "bitDepth": "16",
                     "fileFormat": "png",
                     "sizeLog2": export_settings.resolution,
                 },

@@ -22,20 +22,39 @@ roles:
   substance_3d_painter_bitmap_import_16bit: sRGB-Texture
   substance_3d_painter_bitmap_import_floating: ACEScg
   substance_3d_painter_substance_material: ACEScg
-  # Note to future generations: Setting this colorspace as the export 
-  # transform will export textures that use the ACEScg color primaries
-  # and white point, but have an sRGB transformation applied on them.
-  # This is really jank, but means that in RenderMan, we can use the 
-  # "Linearize" checkbox to convert the color maps into linear ACEScg without
-  # needing to use a PxrColorSpace node, which is expensive. The other option
-  # would be to export from Substance as ACEScg but in a 16 bit map instead of
-  # an 8 bit map, which would also be more expensive. The quality of the 16 bit
-  # map is higher, but in our tests we found that the color banding in the
-  # srgb-ap1 method is the same, maybe slightly better than the color banding
-  # in a traditional sRGB workflow (no ACES at all).
-  substance_3d_painter_bitmap_export_8bit: srgb-ap1
-  substance_3d_painter_bitmap_export_16bit: srgb-ap1
+  substance_3d_painter_bitmap_export_8bit: ACEScg
+  substance_3d_painter_bitmap_export_16bit: ACEScg
   substance_3d_painter_bitmap_export_floating: ACEScg
+  # Note to future generations: Setting the colorspace srgb-ap1 as the export 
+  # transform will export textures that use the ACEScg color primaries and 
+  # white point, but have an sRGB transformation applied on them. This is 
+  # really jank, but means that in RenderMan, we can use the "Linearize" 
+  # checkbox to convert the color maps into linear ACEScg without needing to 
+  # use a PxrColorSpace node, which is expensive. 
+  #
+  # The other option is to export from Substance as ACEScg but in a 16 bit map 
+  # instead of an 8 bit map, which would also be more expensive. The quality 
+  # of the 16 bit map is higher, but in our tests we found that the color 
+  # banding in the srgb-ap1 method is the same, maybe slightly better than the 
+  # color banding in a traditional sRGB workflow (no ACES at all).
+  #
+  # This year, we did not realize this until it was too late and had set 
+  # the substance_3d_painter_substance_material parameter to ACESCcg. We get 
+  # around this by exporting in 16 bits, then converting to srgb-ap1 before 
+  # downsampling to 8bit textures.
+  #
+  # RECOMMENDED CONFIG FOR THE NEXT YEAR TO AVOID THIS COLOR CONVERSION AND
+  # DOWNSAMPLING STEP:
+  #
+  # substance_3d_painter_standard_srgb: sRGB-Texture
+  # substance_3d_painter_bitmap_import_8bit: sRGB-Texture
+  # substance_3d_painter_bitmap_import_16bit: sRGB-Texture
+  # substance_3d_painter_bitmap_import_floating: Linear-Rawr
+  # substance_3d_painter_substance_material: sRGB-Texture
+  # substance_3d_painter_bitmap_export_8bit: sRGB-Texture
+  # substance_3d_painter_bitmap_export_16bit: sRGB-Texture
+  # substance_3d_painter_bitmap_export_floating: Linear-Rawr
+
   # RenderMan Config
   rendering: ACEScg
   srgb_linear: ACEScg
