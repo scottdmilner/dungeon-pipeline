@@ -6,7 +6,7 @@ import time
 
 from math import ceil, floor, log2, sqrt
 from pathlib import Path
-from typing import cast, Callable, Dict, Iterable, List, Tuple, Type, TypeVar
+from typing import cast, Callable, Dict, Iterable, List, Tuple, TypeVar
 
 from .util import silent_startupinfo
 
@@ -42,17 +42,24 @@ class TexConverter:
         assert self.tex_path is not None
 
         @self._debug_out
-        def tex_cmd(img: str) -> list[str]:
+        def tex_cmd(img: str, is_color: bool = False) -> list[str]:
             # currently using oiiotool so txmake doesn't freak out at the color space
             # TODO: switch back to txmake for color in R26
             # fmt: off
             return [
                 str(Executables.oiiotool),
                 img,
-                "--compression", "lossless",
+                *(
+                    [
+                        "--colorconvert", "ACEScg", "srgb-ap1",
+                        "-d", "uint8", 
+                        "--dither",
+                    ] if is_color else []
+                ),
+                "--compression", "lzw" if is_color else "lossless",
                 "--planarconfig", "separate",
                 "-otex:fileformatname=tx:wrap=clamp:resize=1:prman_options=1",
-                f"{str(self.tex_path / Path(img).stem)}.tex",
+                f"{str(self.tex_path / Path(img).stem.replace('ACEScg', 'srgb-ap1'))}.tex",
             ]
             # fmt: on
 
@@ -110,7 +117,7 @@ class TexConverter:
                     pre_cmdlines.append(norm2height(img))
                     cmdlines.append(b2r_cmd(img.replace(".pre-b2r", "")))
                 else:
-                    cmdlines.append(tex_cmd(img))
+                    cmdlines.append(tex_cmd(img, ("Color" in img or "Emissive" in img)))
 
         self._wait_and_check_cmds(pre_cmdlines, skip_check=True)
         finished_imgs = self._wait_and_check_cmds(cmdlines)
@@ -243,7 +250,7 @@ class TexConverter:
     def _debug_out(self, func: Callable[..., RT]) -> Callable[..., RT]:
         """Decorator to debug print the output of the function"""
 
-        def inner(self: Type[TexConverter], *args, **kwargs) -> RT:
+        def inner(self: TexConverter, *args, **kwargs) -> RT:
             ret = func(self, *args, **kwargs)
             log.debug(ret)
             return ret

@@ -32,7 +32,8 @@ class JsonSerializable:
             return ftype(value)  # type: ignore[call-arg]
 
     def __post_init__(self):
-        """After initializing the fields, recurse through and ensure that types match"""
+        """After initializing the fields, recurse through and ensure that
+        types match"""
         for field in fields(self):
             value = getattr(self, field.name)
             ftype = field.type
@@ -42,13 +43,17 @@ class JsonSerializable:
                 if type(None) in args:
                     # if Optional is valid and value is None
                     if value is None:
-                        continue
+                        continue  # go to next iteration of for loop
                     if len(args) == 2:
-                        ftype = args[0]
+                        ftype = next(a for a in args if a != type(None))
                     else:
                         raise ValueError(
-                            "Cannot currently handle Union types " "other than Optional"
+                            "Cannot currently handle Union types other than Optional"
                         )
+                else:
+                    raise ValueError(
+                        "Cannot currently handle Union types other than Optional"
+                    )
 
             otype = get_origin(ftype)
             if otype == dict:
