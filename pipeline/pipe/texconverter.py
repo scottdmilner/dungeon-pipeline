@@ -116,7 +116,7 @@ class TexConverter:
         finished_imgs = self._wait_and_check_cmds(cmdlines)
 
         if len(finished_imgs) != len(cmdlines):
-            raise TexConversionError("Not all jpeg textures were converted")
+            raise TexConversionError("Not all png textures were converted")
 
         return finished_imgs
 
@@ -178,7 +178,8 @@ class TexConverter:
 
         return finished_imgs
 
-    def _img_dims(self, img: str) -> Tuple[str, str]:
+    @staticmethod
+    def _img_dims(img: str) -> Tuple[str, str]:
         img_info = subprocess.check_output(
             [
                 str(Executables.oiiotool),
@@ -193,8 +194,9 @@ class TexConverter:
         matches = img_dims.group(1, 2)
         return (matches[0], matches[1])
 
+    @staticmethod
     def _wait_and_check_cmds(
-        self, cmds: List[List[str]], batch_size: int = 18, skip_check: bool = False
+        cmds: List[List[str]], batch_size: int = 18, skip_check: bool = False
     ) -> List[Path]:
         """Wait for list of processes to finish and print them to the debug log"""
 

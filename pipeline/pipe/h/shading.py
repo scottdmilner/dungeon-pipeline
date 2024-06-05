@@ -1,14 +1,19 @@
 from itertools import count
 from pathlib import Path
-from typing import cast, Any, Dict, Generator, Iterable, List, Optional
+from typing import cast, Generator, Iterable, List, Optional
 
 import hou
-import json
 
 from pipe.h.local import get_main_qt_window
 from pipe.db import DB
 from pipe.struct.asset import Asset
-from pipe.struct.material import DisplacementSource, NormalSource, NormalType
+from pipe.struct.material import (
+    DisplacementSource,
+    MaterialInfo,
+    NormalSource,
+    NormalType,
+    TexSetInfo,
+)
 from pipe.glui.dialogs import MessageDialog
 
 from env import SG_Config
@@ -69,7 +74,7 @@ class MatlibManager:
         return Path(hou.hscriptStringExpression("$HSITE"))
 
     @property
-    def mat_info(self) -> Optional[List[Dict[str, Any]]]:
+    def material_info(self) -> Optional[MaterialInfo]:
         """Attempt to get mat.json file for selected variant"""
         try:
             variant = self._conn.get_asset_by_id(self.variant_id)
@@ -79,7 +84,7 @@ class MatlibManager:
                 variant_name = "main"
 
             with open(self._hip / "tex" / variant_name / "mat.json", "r") as f:
-                return json.load(f)
+                return MaterialInfo.from_json(f.read())
         except Exception:
             return None
 
@@ -155,7 +160,7 @@ class MatlibManager:
         return Path(dir).glob(filename.replace("<UDIM>", "*"))
 
     def _cleanup_matnet(
-        self, new_items: Iterable[hou.NetworkMovableItem], mat_info: Dict[str, Any]
+        self, new_items: Iterable[hou.NetworkMovableItem], tex_set_info: TexSetInfo
     ) -> None:
         """Clean up a matnet after it has been imported from cpio"""
 
@@ -220,12 +225,9 @@ class MatlibManager:
 
         # Set bump roughness undisplaced bool
         if (
-            (NormalSource(mat_info["normal_source"]) == NormalSource.NORMAL_HEIGHT)
-            and (
-                DisplacementSource(mat_info["displacement_source"])
-                == DisplacementSource.HEIGHT
-            )
-            and (NormalType(mat_info["normal_type"]) == NormalType.BUMP_ROUGHNESS)
+            (tex_set_info.normal_source == NormalSource.NORMAL_HEIGHT)
+            and (tex_set_info.displacement_source == DisplacementSource.HEIGHT)
+            and (tex_set_info.normal_type == NormalType.BUMP_ROUGHNESS)
         ):
             undisplaced_parm = normal_node.parm("useUndisplacedPosition")
             assert undisplaced_parm is not None
@@ -303,7 +305,7 @@ class MatlibManager:
 
     def import_matnets(self) -> None:
         """Import a material network for each shading group in the export"""
-        if not (mat_info := self.mat_info):
+        if not (mat_info := self.material_info):
             MessageDialog(
                 get_main_qt_window(),
                 "Error! Could not get material info. Make sure that textures "
@@ -312,15 +314,15 @@ class MatlibManager:
             return
 
         pos = count(start=0, step=20)
-        for shading_group in mat_info:
-            name = shading_group["name"]
-            norm_type = NormalType(shading_group["normal_type"])
-            if norm_type == NormalType.STANDARD:
+        for name, shading_group in mat_info.tex_sets.items():
+            if shading_group.normal_type == NormalType.STANDARD:
                 template_name = "standard"
-            elif norm_type == NormalType.BUMP_ROUGHNESS:
+            elif shading_group.normal_type == NormalType.BUMP_ROUGHNESS:
                 template_name = "b2r"
             else:
-                raise ValueError(f"Unimplemented NormalType: {norm_type}")
+                raise ValueError(
+                    f"Unimplemented NormalType: {shading_group.normal_type}"
+                )
 
             nodes = self.load_items_from_file(
                 self.matlib, str(self._hsite / f"matl/{template_name}.cpio")
