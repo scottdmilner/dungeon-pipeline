@@ -94,7 +94,7 @@ class RigPublishUI(QtWidgets.QDialog):
         # create symlinks
         if update_anim:
             anim_link_dir_path = pu.get_anim_path() / "Rigs"
-            temp_name = f"/{anim_link_dir_path}/tmp"
+            temp_name = f"{anim_link_dir_path}\\tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{anim_link_dir_path}/{file_name}.mb")
 
@@ -103,7 +103,7 @@ class RigPublishUI(QtWidgets.QDialog):
             )
         if update_pvis:
             pvis_link_dir_path = pu.get_previs_path() / "Rigs"
-            temp_name = f"/{pvis_link_dir_path}/tmp"
+            temp_name = f"{pvis_link_dir_path}\\tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{pvis_link_dir_path}/{file_name}.mb")
 
