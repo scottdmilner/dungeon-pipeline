@@ -117,6 +117,7 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
     filter_field: QtWidgets.QLineEdit
     list_label: QtWidgets.QLabel
     list_widget: QtWidgets.QListWidget
+    _layout: QtWidgets.QBoxLayout
 
     def __init__(
         self,
@@ -138,9 +139,9 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 
         self.resize(500, 600)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addLayout(self.filtered_list)
-        layout.addWidget(self.buttons)
+        self._layout = QtWidgets.QVBoxLayout(self)
+        self._layout.addLayout(self.filtered_list)
+        self._layout.addWidget(self.buttons)
 
 
 # class DialogFactory:
