@@ -2,8 +2,8 @@ import logging
 import os
 import platform
 import shutil
-from typing import Optional
-from PySide2.QtWidgets import QWidget
+from typing import Optional, Sequence
+from PySide2.QtWidgets import QCheckBox, QWidget
 
 import maya.cmds as mc
 
@@ -13,6 +13,28 @@ from pipe.glui.dialogs import FilteredListDialog, MessageDialog
 from env import SG_Config
 
 log = logging.getLogger(__name__)
+
+
+class PublishAssetDialog(FilteredListDialog):
+    _substance_only: QCheckBox
+
+    def __init__(self, parent: Optional[QWidget], items: Sequence[str]) -> None:
+        super().__init__(
+            parent,
+            items,
+            "Publish Asset",
+            "Select asset to publish",
+            accept_button_name="Publish",
+        )
+
+        self._substance_only = QCheckBox(
+            "Export Substance-only file? ONLY USE IF INSTRUCTED BY A LEAD"
+        )
+        self._layout.insertWidget(1, self._substance_only)
+
+    @property
+    def is_substance_only(self) -> bool:
+        return self._substance_only.isChecked()
 
 
 class IOManager:
@@ -26,12 +48,8 @@ class IOManager:
         self.window = pipe.m.local.get_main_qt_window()
 
     def publish_asset(self) -> None:
-        dialog = FilteredListDialog(
-            self.window,
-            self._conn.get_asset_name_list(sorted=True),
-            "Publish Asset",
-            "Select asset to publish",
-            accept_button_name="Publish",
+        dialog = PublishAssetDialog(
+            self.window, self._conn.get_asset_name_list(sorted=True)
         )
 
         if not dialog.exec_():
@@ -54,7 +72,11 @@ class IOManager:
         publish_dir = pipe.util.get_production_path() / asset.path
         publish_dir.mkdir(parents=True, exist_ok=True)
 
-        publish_path = str(publish_dir / asset.name) + ".usd"
+        publish_path = (
+            str(publish_dir / asset.name)
+            + ("_SUBSTANCE" if dialog.is_substance_only else "")
+            + ".usd"
+        )
         temp_publish_path = os.getenv("TEMP", "") + asset.name + ".usd"
 
         # save the file
