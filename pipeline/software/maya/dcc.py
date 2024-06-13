@@ -40,11 +40,21 @@ class MayaDCC(DCC):
                     str(pipe_path),
                     str(this_path.parent / "scripts"),
                     str(this_path.parent / "userSetup"),
+                    str(this_path.parent / "scripts/studiolibrary/src"),
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI") if system == "Linux" else None,
             "QT_PLUGIN_PATH": None,
+            "XBMLANGPATH": os.pathsep.join(
+                [
+                    str(
+                        this_path.parent
+                        / "scripts/studiolibrary/src/studiolibrary/resource/icons"
+                    )
+                    + ("/%B" if system == "Linux" else ""),
+                ]
+            ),
         }
 
         launch_command = ""

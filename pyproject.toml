@@ -7,6 +7,7 @@ exclude = [
     'dwpicker.*',
     'rjg',
     'shotgun_api3',
+    'studiolibrary',
 ]
 
 files = 'pipeline'
@@ -29,4 +30,5 @@ exclude = [
     "dwpicker_git",
     "rjg",
     "shotgun_api3",
+    'studiolibrary',
 ]

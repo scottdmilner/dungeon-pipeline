@@ -17,3 +17,6 @@
 [submodule "pipeline/software/nuke/tools/NukeSurvivalToolkit_publicRelease"]
 	path = pipeline/software/nuke/tools/NukeSurvivalToolkit_publicRelease
 	url = https://github.com/CreativeLyons/NukeSurvivalToolkit_publicRelease.git
+[submodule "pipeline/software/maya/scripts/studiolibrary"]
+	path = pipeline/software/maya/scripts/studiolibrary
+	url = https://github.com/krathjen/studiolibrary.git
