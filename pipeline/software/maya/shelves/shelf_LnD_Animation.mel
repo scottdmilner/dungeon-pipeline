@@ -49,6 +49,40 @@ global proc shelf_LnD_Animation () {
         -manage 1
         -visible 1
         -preventOverride 0
+        -annotation "Studio Library" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Studio Library" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Studio Library" 
+        -overlayLabelColor 2.624876 0.801436 0.012446 
+        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
+        -image "logo_high.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import pipe.m.studiolibrary; pipe.m.studiolibrary.run()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
         -annotation "Dynamic Space Switch" 
         -enableBackground 0
         -backgroundColor 0 0 0 
