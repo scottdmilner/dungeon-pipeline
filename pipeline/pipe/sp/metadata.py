@@ -1,8 +1,9 @@
 import substance_painter as sp
 
-from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog, MessageDialog
+from pipe.sp.local import get_main_qt_window
+
 from env import SG_Config
 
 
