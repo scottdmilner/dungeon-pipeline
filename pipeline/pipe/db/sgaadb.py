@@ -15,7 +15,8 @@ from typing import (
 from pipe.struct.asset import Asset, AssetStub
 
 from .baseclass import DB
-from .typing import Filter
+from .typing.filter import Filter
+from .typing.shotgun import Shotgun
 
 from . import shotgun_api3
 
@@ -27,7 +28,7 @@ log = logging.getLogger(__name__)
 class SGaaDB(DB):
     """ShotGrid as a Database"""
 
-    _sg: shotgun_api3.Shotgun
+    _sg: Shotgun
     _id: int
     _sg_asset_list: List[dict]
     _sg_asset_list_utime: datetime
@@ -49,7 +50,7 @@ class SGaaDB(DB):
             self._init(*args)
 
     def _init(self, sg_server: str, sg_script: str, sg_key: str, id: int) -> None:
-        self._sg = shotgun_api3.Shotgun(sg_server, sg_script, sg_key)
+        self._sg = shotgun_api3.Shotgun(sg_server, sg_script, sg_key)  # type: ignore[assignment]
         self._id = id
 
         self._load_sg_asset_list()
@@ -154,17 +155,19 @@ class SGaaDB(DB):
             if a
         ]  # wrap in list comprehension to remove Nones
 
+    def update_asset(self, asset: Asset) -> bool:
+        try:
+            assert asset.id
+            self._sg.update("Asset", asset.id, asset.sg_diff())
+            return True
+        except Exception as e:
+            log.error(e)
+        finally:
+            self.expire_cache()
+        return False
+
     class _Query(ABC):
         """Helper class for making queries to a SG connection instance"""
-
-        _untracked_asset_types = [
-            "FX",
-            "Graphic",
-            "Matte Painting",
-            "Vehicle",
-            "Tool",
-            "Font",
-        ]
 
         project_id: int
         fields: List[str]
@@ -204,7 +207,7 @@ class SGaaDB(DB):
             self.filters.append(filter)
 
         @abstractmethod
-        def exec(self, sg: shotgun_api3.Shotgun) -> Any:
+        def exec(self, sg: Shotgun) -> Any:
             pass
 
         @abstractproperty
@@ -218,8 +221,17 @@ class SGaaDB(DB):
     class _AssetListQuery(_Query):
         """Helper class for making queries about assets to a SG connection instance"""
 
+        _untracked_asset_types = [
+            "FX",
+            "Graphic",
+            "Matte Painting",
+            "Vehicle",
+            "Tool",
+            "Font",
+        ]
+
         # Override
-        def exec(self, sg: shotgun_api3.Shotgun) -> List[dict]:
+        def exec(self, sg: Shotgun) -> List[dict]:
             return sg.find("Asset", self.filters, self.fields)
 
         # Override
@@ -234,6 +246,7 @@ class SGaaDB(DB):
                 "assets",  # child assets
                 "tags",  # asset tags
                 "shots",  # shots asset present in
+                "sg_material_variants",  # material variants
             ]
 
         # Override
