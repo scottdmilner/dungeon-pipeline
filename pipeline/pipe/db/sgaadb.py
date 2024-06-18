@@ -176,9 +176,11 @@ class SGaaDB(DB):
         def __init__(
             self,
             project_id: int,
-            extra_fields: Sequence[str] = [],
+            extra_fields: Optional[Sequence[str]] = None,
             override_default_fields: bool = False,
         ) -> None:
+            if extra_fields is None:
+                extra_fields = []
             self.project_id = project_id
             self.fields = self._construct_fields(extra_fields, override_default_fields)
             self.filters = self._construct_filters()
