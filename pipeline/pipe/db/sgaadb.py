@@ -15,8 +15,7 @@ from typing import (
 from pipe.struct.asset import Asset, AssetStub
 
 from .baseclass import DB
-from .typing.filter import Filter
-from .typing.shotgun import Shotgun
+from .typing import Filter
 
 from . import shotgun_api3
 
@@ -28,7 +27,7 @@ log = logging.getLogger(__name__)
 class SGaaDB(DB):
     """ShotGrid as a Database"""
 
-    _sg: Shotgun
+    _sg: shotgun_api3.Shotgun
     _id: int
     _sg_asset_list: List[dict]
     _sg_asset_list_utime: datetime
@@ -50,7 +49,7 @@ class SGaaDB(DB):
             self._init(*args)
 
     def _init(self, sg_server: str, sg_script: str, sg_key: str, id: int) -> None:
-        self._sg = shotgun_api3.Shotgun(sg_server, sg_script, sg_key)  # type: ignore[assignment]
+        self._sg = shotgun_api3.Shotgun(sg_server, sg_script, sg_key)
         self._id = id
 
         self._load_sg_asset_list()
@@ -209,7 +208,7 @@ class SGaaDB(DB):
             self.filters.append(filter)
 
         @abstractmethod
-        def exec(self, sg: Shotgun) -> Any:
+        def exec(self, sg: shotgun_api3.Shotgun) -> Any:
             pass
 
         @abstractproperty
@@ -233,7 +232,7 @@ class SGaaDB(DB):
         ]
 
         # Override
-        def exec(self, sg: Shotgun) -> List[dict]:
+        def exec(self, sg: shotgun_api3.Shotgun) -> List[dict]:
             return sg.find("Asset", self.filters, self.fields)
 
         # Override
