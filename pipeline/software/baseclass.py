@@ -21,7 +21,7 @@ class DCC(DCCInterface):
     def __init__(
         self,
         command: str,
-        args: Optional[List[str]] = [],
+        args: Optional[List[str]] = None,
         env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None,
         pre_launch_tasks: Optional[Callable[[], None]] = None,
     ) -> None:
@@ -31,6 +31,9 @@ class DCC(DCCInterface):
         - command -- the command to launch the software
         - args    -- the arguments to pass to the command
         """
+
+        if args is None:
+            args = []
 
         self.command = command
         self.args = args
