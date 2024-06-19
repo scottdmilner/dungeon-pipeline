@@ -56,6 +56,13 @@ class MatlibManager:
         var_name.set(var2.variant_name)
         var_id.set(var2.id)
 
+        # set default mat_variant on the hda
+        mat_var = node.parm("mat_var")
+        assert mat_var is not None
+        mat_var.set("Default")
+
+        self.update_base_path(node=node)
+
     @property
     def _asset(self) -> Asset:
         """Get asset based off of the path of the current hipfile"""
@@ -130,6 +137,8 @@ class MatlibManager:
         else:
             var_name.set("main")
 
+        self.update_base_path()
+
     @property
     def variant_name(self) -> str:
         var_name = self.node.parm("variant_name")
@@ -147,6 +156,25 @@ class MatlibManager:
             var_name.set(variant_name)
             return variant_name
         return node_val
+
+    def update_base_path(self, node: Optional[hou.LopNode] = None) -> None:
+        if not node:
+            # this lets us call update_base_path from inside self._init_hda
+            node = self.node
+
+        base_path = node.parm("base_path")
+        assert base_path is not None
+
+        var_name = node.parm("variant_name")
+        assert var_name is not None
+
+        mat_var_name = node.parm("mat_var")
+        assert mat_var_name is not None
+
+        if (mvn := mat_var_name.evalAsString()) == "Default":
+            base_path.set(f"tex/{var_name.evalAsString()}")
+        else:
+            base_path.set(f"tex/{var_name.evalAsString()}/variants/{mvn}")
 
     @staticmethod
     def _get_map_paths(
@@ -291,6 +319,14 @@ class MatlibManager:
             return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
         else:
             return [str(self._asset.id), "Main"]
+
+    def get_mat_variant_list(self) -> List[str]:
+        """Gets list of mat variants in the way that the HDA interface
+        expects: [id1, label1, id2, label2, ...]"""
+        current_geo_var = self._conn.get_asset_by_id(self.variant_id)
+        assert current_geo_var is not None
+        mvs = list(current_geo_var.material_variants)
+        return [s for v in (["Default"] + mvs) for s in (v, v)]
 
     def export_selected_to_path(
         self, path: str, curr_name: str = _MATNAME, new_name: str = _MATNAME
