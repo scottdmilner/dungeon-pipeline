@@ -5,12 +5,14 @@
 [submodule "pipeline/software/maya/scripts/rjg"]
 	path = pipeline/software/maya/scripts/rjg
 	url = https://github.com/jgashler/rjg
+	ignore = dirty
 [submodule "pipeline/software/maya/scripts/dwpicker_git"]
 	path = pipeline/software/maya/scripts/dwpicker_git
 	url = https://github.com/DreamWall-Animation/dwpicker.git
 [submodule "pipeline/lib/MOPS"]
 	path = pipeline/lib/MOPS
 	url = https://github.com/toadstorm/MOPS.git
+	ignore = dirty
 [submodule "pipeline/lib/VFX-LYNX"]
 	path = pipeline/lib/VFX-LYNX
 	url = https://github.com/LucaScheller/VFX-LYNX.git
