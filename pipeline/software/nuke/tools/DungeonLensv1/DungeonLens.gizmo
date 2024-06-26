@@ -4,17 +4,17 @@ Gizmo {
  tile_color 0xff5f00ff
  addUserKnob {20 sliders l Sliders}
  addUserKnob {7 flaregain1 l "Flare 1 Gain" R 0 10}
- flaregain1 5.35
+ flaregain1 1
  addUserKnob {7 flaregain2 l "Flare 2 Gain" R 0 10}
- flaregain2 10
+ flaregain2 1
  addUserKnob {7 overallglow l "Overall Glow" R 0 10}
  overallglow 1
  addUserKnob {7 chromAbb l "Chromatic Abberation" R 0 10}
- chromAbb 1.1
+ chromAbb 1
  addUserKnob {7 halation l Halation R 0 10}
- halation 0.9
+ halation 1
  addUserKnob {7 Vignette R 0 10}
- Vignette 1.05
+ Vignette 1
  addUserKnob {7 Grain R 0 10}
  Grain 1
  addUserKnob {26 someadvice l "Some Advice:" T "Keep these at 1 unless something is glitching. :)"}
