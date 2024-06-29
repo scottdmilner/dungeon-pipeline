@@ -80,41 +80,13 @@ class IOManager:
         temp_publish_path = os.getenv("TEMP", "") + asset.name + ".usd"
 
         # save the file
-        mc.file(
-            temp_publish_path if self.system == "Windows" else publish_path,
-            options=";".join(
-                [
-                    "",
-                    "exportUVs=1",
-                    "exportSkels=none",
-                    "exportSkin=none",
-                    "exportBlendShapes=0",
-                    "exportDisplayColor=0",
-                    "exportColorSets=1",
-                    "exportComponentTags=1",
-                    "defaultMeshScheme=catmullClark",
-                    "animation=0",
-                    "eulerFilter=0",
-                    "staticSingleSample=0",
-                    "startTime=1",
-                    "endTime=1",
-                    "frameStride=1",
-                    "frameSample=0.0",
-                    "defaultUSDFormat=usdc",
-                    "parentScope=" + asset.name,
-                    "shadingMode=useRegistry",
-                    "convertMaterialsTo=[UsdPreviewSurface]",
-                    "exportInstances=1",
-                    "exportVisibility=0",
-                    "mergeTransformAndShape=1",
-                    "stripNamespaces=0",
-                    "worldspace=0",
-                ]
-            ),
-            type="USD Export",
-            preserveReferences=True,
-            exportSelected=True,
-        )
+        kwargs = {
+            "file": temp_publish_path if self.system == "Windows" else publish_path,
+            "selection": True,
+            "shadingMode": "none",
+            "stripNamespaces": True,
+        }
+        mc.mayaUSDExport(**kwargs)  # type: ignore[attr-defined]
 
         # if on Windows, work around this bug: https://github.com/PixarAnimationStudios/OpenUSD/issues/849
         # TODO: check if this is still needed in Maya 2025
