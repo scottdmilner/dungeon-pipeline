@@ -1,5 +1,6 @@
 import logging
 from abc import ABC, abstractmethod, abstractproperty
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import (
     Any,
@@ -24,6 +25,15 @@ RT = TypeVar("RT")  # return type
 log = logging.getLogger(__name__)
 
 
+@dataclass(eq=True, frozen=True)
+class SG_Config:
+    project_id: int
+    # DO NOT SHARE/COMMIT THE sg_key!!! IT'S EQUIVALENT TO AN ADMIN PW!!!
+    sg_key: str
+    sg_script: str
+    sg_server: str
+
+
 class SGaaDB(DB):
     """ShotGrid as a Database"""
 
@@ -35,22 +45,21 @@ class SGaaDB(DB):
     _sg_asset_list_exp: timedelta = timedelta(minutes=2)
     _force_expire: bool
 
-    def __init__(self, *args) -> None:
-        # unpack SG_Config object if we're passed one
-        # instead of individual arguments
-        if len(args) == 1:
-            self._init(
-                args[0].sg_server,
-                args[0].sg_script,
-                args[0].sg_key,
-                args[0].project_id,
-            )
-        else:
-            self._init(*args)
+    _conn_instances: dict[SG_Config, "SGaaDB"] = {}
 
-    def _init(self, sg_server: str, sg_script: str, sg_key: str, id: int) -> None:
-        self._sg = shotgun_api3.Shotgun(sg_server, sg_script, sg_key)
-        self._id = id
+    @classmethod
+    def Get(cls, config: SG_Config) -> "SGaaDB":
+        if config in cls._conn_instances:
+            return cls._conn_instances[config]
+        else:
+            cls._conn_instances[config] = cls(config)
+            return cls._conn_instances[config]
+
+    def __init__(self, config: SG_Config) -> None:
+        self._sg = shotgun_api3.Shotgun(
+            config.sg_server, config.sg_script, config.sg_key
+        )
+        self._id = config.project_id
 
         self._load_sg_asset_list()
         self._force_expire = False
@@ -158,12 +167,12 @@ class SGaaDB(DB):
         try:
             assert asset.id
             self._sg.update("Asset", asset.id, asset.sg_diff())
-            return True
         except Exception as e:
             log.error(e)
+            return False
         finally:
             self.expire_cache()
-        return False
+        return True
 
     class _Query(ABC):
         """Helper class for making queries to a SG connection instance"""

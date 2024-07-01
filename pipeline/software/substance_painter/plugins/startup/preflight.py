@@ -4,9 +4,9 @@ import substance_painter as sp
 
 import pipe.sp
 from pipe.db import DB
-from env import SG_Config
+from env import DB_Config
 
-conn = DB(SG_Config)
+conn = DB.Get(DB_Config)
 
 
 def start_plugin():

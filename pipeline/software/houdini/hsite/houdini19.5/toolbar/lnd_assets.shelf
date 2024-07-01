@@ -14,7 +14,7 @@
 import pipe
 import pipe.util
 from pipe.db import DB
-from env import SG_Config
+from env import DB_Config
 
 def open_asset_file():
     if hou.hipFile.hasUnsavedChanges():
@@ -27,7 +27,7 @@ def open_asset_file():
         if warning_response == 1:
             return
     
-    conn = DB(SG_Config)
+    conn = DB.Get(DB_Config)
     asset_names = conn.get_asset_name_list(sorted=True, child_mode=DB.ChildQueryMode.ROOTS)
     
     asset_response = hou.ui.selectFromList(

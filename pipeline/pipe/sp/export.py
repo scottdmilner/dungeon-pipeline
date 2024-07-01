@@ -19,7 +19,7 @@ from pipe.struct.material import (
 from pipe.glui.dialogs import MessageDialog
 from pipe.texconverter import TexConverter, TexConversionError
 from pipe.util import get_production_path, resolve_mapped_path
-from env import SG_Config
+from env import DB_Config
 
 RT = TypeVar("RT")  # return type
 
@@ -48,7 +48,7 @@ class Exporter:
     _tex_path: Path
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         id = sp.project.Metadata("LnD").get("asset_id")
         assert (a := self._conn.get_asset_by_id(id)) is not None
         self._asset = a

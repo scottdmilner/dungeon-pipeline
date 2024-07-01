@@ -1,6 +1,7 @@
 """Adapted/updated from 2024 (Accomplice) / 2022 (Cenote) pipelines"""
 
 import logging
+import re
 
 from PySide2 import QtWidgets, QtCore
 from typing import Callable, Optional, Sequence
@@ -73,10 +74,11 @@ class DialogFilteredList:
 
     def _filter_items(self) -> None:
         filter_text = self._filter_field.text().lower()
+        reg = re.compile(".*".join(["", *filter_text.split(), ""]))
         for row in range(self._list_widget.count()):
             item = self._list_widget.item(row)
             item_text = item.text().lower()
-            if all(char in item_text for char in filter_text):
+            if reg.match(item_text):
                 item.setHidden(False)
             else:
                 item.setHidden(True)

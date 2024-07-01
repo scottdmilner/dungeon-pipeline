@@ -18,7 +18,7 @@ from pipe.struct.asset import Asset
 from pipe.struct.material import DisplacementSource, NormalSource, NormalType
 from pipe.util import dict_index
 
-from env import SG_Config
+from env import DB_Config
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
             ).exec_()
             return
 
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         metadata = sp.project.Metadata("LnD")
         asset = self._conn.get_asset_by_id(int(metadata.get("asset_id")))
         assert asset is not None

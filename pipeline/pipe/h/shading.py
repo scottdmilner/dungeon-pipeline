@@ -16,7 +16,7 @@ from pipe.struct.material import (
 )
 from pipe.glui.dialogs import MessageDialog
 
-from env import SG_Config
+from env import DB_Config
 
 _MATLIB_NAME = "Material_Library"
 _MATNAME = "matname"
@@ -27,7 +27,7 @@ class MatlibManager:
     _conn: DB
 
     def __init__(self, node: Optional[hou.LopNode] = None) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         if node:
             self._init_hda(node)
 

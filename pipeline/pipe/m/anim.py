@@ -9,7 +9,7 @@ import maya.cmds as mc
 
 import pipe
 from pipe.db import DB
-from env import SG_Config
+from env import DB_Config
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class RiggedExporter:
     window: Optional[QWidget]
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         self.window = pipe.m.local.get_main_qt_window()
 
     @staticmethod
