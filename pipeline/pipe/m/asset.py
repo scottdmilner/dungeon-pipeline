@@ -4,6 +4,7 @@ import platform
 import shutil
 from typing import Optional, Sequence
 from PySide2.QtWidgets import QCheckBox, QWidget
+from PySide2.QtGui import QTextCursor
 
 import maya.cmds as mc
 
@@ -11,6 +12,8 @@ import pipe
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog, MessageDialog
 from env import SG_Config
+
+from modelChecker.modelChecker_UI import UI as MCUI
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +51,15 @@ class IOManager:
         self.window = pipe.m.local.get_main_qt_window()
 
     def publish_asset(self) -> None:
+        checker = ModelChecker.get()
+        if not checker.check_selected():
+            cursor = QTextCursor(checker.reportOutputUI.textCursor())
+            cursor.setPosition(0)
+            cursor.insertHtml(
+                "<h1>Asset not exported. Please resolve model checks.</h1>"
+            )
+            return
+
         dialog = PublishAssetDialog(
             self.window, self._conn.get_asset_name_list(sorted=True)
         )
@@ -99,3 +111,42 @@ class IOManager:
             "Export Complete",
         )
         confirm.exec_()
+
+
+class ModelChecker(MCUI):
+    @classmethod
+    def get(cls):
+        if not cls.qmwInstance or (type(cls.qmwInstance) is not cls):
+            cls.qmwInstance = cls()
+        return cls.qmwInstance
+
+    def configure(self) -> None:
+        self.uncheckAll()
+        commands = [
+            "crossBorder",
+            "hardEdges",
+            "lamina",
+            "missingUVs",
+            "ngons",
+            "noneManifoldEdges",
+            "onBorder",
+            "selfPenetratingUVs",
+            "zeroAreaFaces",
+            "zeroLengthEdges",
+        ]
+        for cmd in commands:
+            self.commandCheckBox[cmd].setChecked(True)
+
+    def check_selected(self) -> bool:
+        self.configure()
+        self.sanityCheck(["Selection"], True)
+        self.createReport("Selection")
+
+        # loop and show UI if anything had an error
+        diagnostics = self.contexts["Selection"]["diagnostics"]
+        for error in self.commandsList.keys():
+            if (error in diagnostics) and len(self.parseErrors(diagnostics[error])):
+                self.show_UI()
+                return False
+
+        return True

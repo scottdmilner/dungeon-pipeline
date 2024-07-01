@@ -56,11 +56,12 @@ class MayaDCC(DCC):
             # Icons
             "XBMLANGPATH": os.pathsep.join(
                 [
-                    str(
+                    str(pth) + ("/%B" if system == "Linux" else "")
+                    for pth in [
                         this_path.parent
-                        / "scripts/studiolibrary/src/studiolibrary/resource/icons"
-                    )
-                    + ("/%B" if system == "Linux" else ""),
+                        / "scripts/studiolibrary/src/studiolibrary/resource/icons",
+                        pipe_path / "lib/icon",
+                    ]
                 ]
             ),
         }
