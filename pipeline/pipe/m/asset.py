@@ -95,7 +95,7 @@ class IOManager:
         kwargs = {
             "file": temp_publish_path if self.system == "Windows" else publish_path,
             "selection": True,
-            "shadingMode": "none",
+            "shadingMode": "useRegistry",
             "stripNamespaces": True,
         }
         mc.mayaUSDExport(**kwargs)  # type: ignore[attr-defined]

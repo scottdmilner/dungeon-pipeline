@@ -81,7 +81,7 @@ class RiggedExporter:
             "file": str(path),
             "pythonPostCallback": f"{type(self).__name__}.{self.convert_to_houdini_scale.__name__}('{str(path)}')",
             "selection": True,
-            "shadingMode": "none",
+            "shadingMode": "useRegistry",
             "stripNamespaces": True,
         }
 
@@ -92,6 +92,7 @@ class RiggedExporter:
                     "exportUVs": False,
                     "frameRange": [1, 20],
                     "frameStride": 1.0,
+                    "shadingMode": "none",
                 }
             )
         mc.select(self.EXPORT_SETS[char])

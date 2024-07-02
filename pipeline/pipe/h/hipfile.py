@@ -96,8 +96,8 @@ class FileManager:
         self.populate_asset_file()
 
     def populate_asset_file(self) -> None:
-        # TODO: create starting nodes
-        pass
+        hip_path = Path(hou.hscriptStringExpression("$HIP"))
+        hou.setContextOption("ASSET", hip_path.name)
 
     def open_shot_file(self) -> None:
         pass
