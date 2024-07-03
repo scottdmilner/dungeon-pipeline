@@ -69,7 +69,7 @@ global proc shelf_LnD_Rigging () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "import pipe.m.ToolBox.V2_EyeUIandBasics; pipe.m.ToolBox.V2_EyeUIandBasics.createUI();" 
+        -command "import pipe.m.ToolBox.Katie_Toolbox_GUI; pipe.m.ToolBox.Katie_Toolbox_GUI.createUI();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
