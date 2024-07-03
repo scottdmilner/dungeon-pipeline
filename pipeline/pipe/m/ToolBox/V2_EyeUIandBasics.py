@@ -928,7 +928,4 @@ def createUI():
     # Show the window
     cmds.showWindow(window)
 
-    cmds.select(selected_objects)
-
-
 createUI()

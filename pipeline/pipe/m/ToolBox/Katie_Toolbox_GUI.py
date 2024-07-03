@@ -2,14 +2,19 @@ import maya.cmds as cmds
 from importlib import reload
 
 
-def test_button(*args):
+def Button_eyelids(*args):
     import pipe.m.ToolBox.V2_EyeUIandBasics
-
     reload(
         pipe.m.ToolBox.V2_EyeUIandBasics
     )  # Optional: Reload the module if it has changed
     pipe.m.ToolBox.V2_EyeUIandBasics.createUI()
 
+def Button_eyesockets(*args):
+    import pipe.m.ToolBox.EyeSocket_V1_01
+    reload(
+        pipe.m.ToolBox.EyeSocket_V1_01
+    )  # Optional: Reload the module if it has changed
+    pipe.m.ToolBox.EyeSocket_V1_01.eyesocket()
 
 def createUI():
     if cmds.window(
@@ -23,7 +28,8 @@ def createUI():
 
     cmds.columnLayout(adj=True)  # Create a layout for UI elements
 
-    cmds.button(label="1. Eyes", command=test_button)  # Create a button to build curves
+    cmds.button(label="Eyeslids", command=Button_eyelids) 
+    cmds.button(label="Eyesockets", command=Button_eyesockets)
 
     cmds.showWindow(window)  # Show the window
 
