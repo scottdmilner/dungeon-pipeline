@@ -139,7 +139,6 @@ def create_square_control(control_name, length1, length2, normalDirection):
 
 
 def eyesocket():
-    
     def loft_curves(curveOne, curveTwo, loftSurfaceName):
         surface = cmds.loft(
             curveOne,
@@ -155,15 +154,19 @@ def eyesocket():
         )[0]  # loft command returns a list, so we take the first item
         return surface
 
-    loft_curves("l_eyesocket_outer_CRV", "l_eyesocket_inner_CRV", "l_eyesocket_ribbon_surface")
-    loft_curves("r_eyesocket_outer_CRV", "r_eyesocet_inner_CRV", "r_eyesocket_ribbon_surface")
-    
+    loft_curves(
+        "l_eyesocket_outer_CRV", "l_eyesocket_inner_CRV", "l_eyesocket_ribbon_surface"
+    )
+    loft_curves(
+        "r_eyesocket_outer_CRV", "r_eyesocet_inner_CRV", "r_eyesocket_ribbon_surface"
+    )
+
     def add_follicles_to_surface(Loft_Surface):
         cmds.select(Loft_Surface)
         mel.eval("createHair 29 1 10 0 0 1 0 5 0 1 2 1;")
 
     add_follicles_to_surface("l_eyesocket_ribbon_surface")
-    add_follicles_to_surface("r_eyesocket_ribbon_surface")        
+    add_follicles_to_surface("r_eyesocket_ribbon_surface")
 
     def Two_CleanupFollicles():
         cmds.rename("hairSystem1Follicles", "l_eyesocketFollicles")
@@ -199,8 +202,8 @@ def eyesocket():
         create_joints_from_list(0.1, "r_eyesocket_JNT")
         clear_selection_list()
 
-    Two_CleanupFollicles()   
-    
+    Two_CleanupFollicles()
+
     def Two_eyesocket_controls():
         l_eyesocket_control_placement = [
             "l_eyesocket_JNT_01",
@@ -234,8 +237,8 @@ def eyesocket():
             "r_eyesocket_JNT_23",
             "r_eyesocket_JNT_25",
             "r_eyesocket_JNT_27",
-        ] 
-        
+        ]
+
         cmds.group(empty=True, name="l_socket_ctrl_jnts_GRP")
         cmds.select(l_eyesocket_control_placement)
         cmds.duplicate()
@@ -246,11 +249,13 @@ def eyesocket():
         cmds.select(r_eyesocket_control_placement)
         cmds.duplicate()
         cmds.select("r_socket_ctrl_jnts_GRP", add=True)
-        cmds.parent()  
-        
+        cmds.parent()
+
     Two_eyesocket_controls()  # Call the function here (correct indentation)
 
-    def eyesocket_control_placement(control_joint_group, sorting_group, eyeball_center_joint):
+    def eyesocket_control_placement(
+        control_joint_group, sorting_group, eyeball_center_joint
+    ):
         select_all_in_group(control_joint_group)
         add_to_selection_list()
         for index, obj in enumerate(selected_objects):
@@ -273,26 +278,30 @@ def eyesocket():
             cmds.circle(radius=0.2, name=eyesocket_control_name)
             control_placement = cmds.parentConstraint(obj, eyesocket_control_name)
             cmds.delete(control_placement)
-            
+
             clear_selection_list
             cv_list = cmds.ls(eyesocket_control_name + ".cv[0:7]")
             cmds.select(cv_list)
             cmds.move(0, 0, 0.25, relative=True)
             clear_selection_list
-    
+
             cmds.select(eyesocket_control_name)
             cmds.CenterPivot()
-            
+
             cmds.parent(eyesocket_control_name, offset_name)
 
-            cmds.parentConstraint(eyesocket_control_name, obj, maintainOffset = True)
-            cmds.parent(offset_name, sorting_group) 
-            
+            cmds.parentConstraint(eyesocket_control_name, obj, maintainOffset=True)
+            cmds.parent(offset_name, sorting_group)
+
     cmds.group(empty=True, name="l_eyesocket_ctrl_GRP")
     cmds.group(empty=True, name="r_eyesocket_ctrl_GRP")
 
-    eyesocket_control_placement("l_socket_ctrl_jnts_GRP", "l_eyesocket_ctrl_GRP", "L_eye_JNT")
-    eyesocket_control_placement("r_socket_ctrl_jnts_GRP", "r_eyesocket_ctrl_GRP", "R_eye_JNT")
+    eyesocket_control_placement(
+        "l_socket_ctrl_jnts_GRP", "l_eyesocket_ctrl_GRP", "L_eye_JNT"
+    )
+    eyesocket_control_placement(
+        "r_socket_ctrl_jnts_GRP", "r_eyesocket_ctrl_GRP", "R_eye_JNT"
+    )
 
     select_all_in_group("l_socket_ctrl_jnts_GRP")
     cmds.select("l_eyesocket_ribbon_surface", add=True)
@@ -301,5 +310,6 @@ def eyesocket():
     select_all_in_group("r_socket_ctrl_jnts_GRP")
     cmds.select("r_eyesocket_ribbon_surface", add=True)
     cmds.skinCluster(tsb=True)
+
 
 eyesocket()
