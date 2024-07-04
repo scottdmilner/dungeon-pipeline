@@ -1,16 +1,17 @@
 import substance_painter as sp
 
-from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog, MessageDialog
-from env import SG_Config
+from pipe.sp.local import get_main_qt_window
+
+from env import DB_Config
 
 
 class MetadataUpdater:
     _conn: DB
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
 
     def check(self) -> bool:
         data = sp.project.Metadata("LnD")

@@ -19,14 +19,4 @@ pip install \
     types-PySide2 \
     types-substance_painter
 
-cat << 'EOF' > "${LOCAL_DIR}/pipeline/lib/shotgun_api3/shotgun_api3/__init__.pyi"
-from typing import Any
-class Shotgun(object):
-    def __init__(
-        self, base_url, script_name=None, api_key=None, convert_datetimes_to_utc=True, http_proxy=None, ensure_ascii=True, connect=True, ca_certs=None, login=None, password=None, sudo_as_login=None, session_token=None, auth_token=None,
-    ) -> None: ...
-    def connect(self) -> None: ...
-    def find(
-        self, entity_type, filters, fields=None, order=None, filter_operator=None, limit=0, retired_only=False, page=0, include_archived_projects=True, additional_filter_presets=None,
-    ) -> list[dict[Any, Any]]: ...
-EOF
+cat "${LOCAL_DIR}/.githooks/shotgun.pyi" > "${LOCAL_DIR}/pipeline/lib/shotgun_api3/shotgun_api3/__init__.pyi"

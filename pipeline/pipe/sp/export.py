@@ -4,7 +4,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Set, TypeVar
+from typing import Iterable, List, Optional, Set, TypeVar
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
@@ -19,7 +19,7 @@ from pipe.struct.material import (
 from pipe.glui.dialogs import MessageDialog
 from pipe.texconverter import TexConverter, TexConversionError
 from pipe.util import get_production_path, resolve_mapped_path
-from env import SG_Config
+from env import DB_Config
 
 RT = TypeVar("RT")  # return type
 
@@ -48,16 +48,19 @@ class Exporter:
     _tex_path: Path
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         id = sp.project.Metadata("LnD").get("asset_id")
         assert (a := self._conn.get_asset_by_id(id)) is not None
         self._asset = a
 
+    def _init_paths(self, mat_var: Optional[str]) -> None:
         # initialize paths, pulling from SG database
         assert self._asset.tex_path is not None
-        self._out_path = resolve_mapped_path(
-            get_production_path() / self._asset.tex_path
-        )
+        base_path = get_production_path() / self._asset.tex_path
+        if mat_var:
+            base_path /= f"variants/{mat_var}"
+
+        self._out_path = resolve_mapped_path(base_path)
         self._src_path = self._out_path / "src"
         self._tex_path = self._out_path / "tex"
         self._preview_path = self._out_path / "preview"
@@ -67,9 +70,12 @@ class Exporter:
         self._tex_path.mkdir(parents=True, exist_ok=True)
         self._preview_path.mkdir(parents=True, exist_ok=True)
 
-    def export(self, exp_setting_arr: List[TexSetExportSettings]) -> bool:
+    def export(
+        self, exp_setting_arr: List[TexSetExportSettings], mat_var: Optional[str]
+    ) -> bool:
         """Export all the textures of the given Texture Sets"""
-        self._src_path.mkdir(parents=True, exist_ok=True)
+        self._init_paths(mat_var)
+
         try:
             [tss.tex_set.get_stack() for tss in exp_setting_arr]
         except ValueError:
@@ -124,7 +130,7 @@ class Exporter:
             old_mat_info = MaterialInfo()
 
         all_tex_sets = [ts.name() for ts in sp.textureset.all_texture_sets()]
-        for tex_set in old_mat_info.tex_sets.keys():
+        for tex_set in list(old_mat_info.tex_sets.keys()):
             if tex_set not in all_tex_sets:
                 del old_mat_info.tex_sets[tex_set]
 

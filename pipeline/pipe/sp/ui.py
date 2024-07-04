@@ -2,7 +2,7 @@ import logging
 import os
 from math import log2
 from PySide2 import QtCore, QtWidgets
-from PySide2.QtGui import QIcon, QPixmap
+from PySide2.QtGui import QIcon, QPixmap, QRegExpValidator
 from PySide2.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
 from re import findall
 from typing import Callable, Iterable, List, Mapping, Optional, Set
@@ -10,18 +10,37 @@ from typing import Callable, Iterable, List, Mapping, Optional, Set
 import substance_painter as sp
 
 import pipe
+from pipe.db import DB
 from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.sp.export import Exporter, TexSetExportSettings
 from pipe.sp.local import get_main_qt_window
+from pipe.struct.asset import Asset
 from pipe.struct.material import DisplacementSource, NormalSource, NormalType
 from pipe.util import dict_index
+
+from env import DB_Config
 
 log = logging.getLogger(__name__)
 
 
+def _checkbox_callback_helper(
+    checkbox: QtWidgets.QCheckBox, widget: QtWidgets.QWidget
+) -> Callable[[], None]:
+    def inner() -> None:
+        widget.setEnabled(checkbox.isChecked())
+
+    return inner
+
+
 class SubstanceExportWindow(QMainWindow, ButtonPair):
+    _asset: Asset
     _central_widget: QtWidgets.QWidget
+    _conn: DB
     _main_layout: QLayout
+    _mat_var_dropdown: QComboBox
+    _mat_var_enabled: QtWidgets.QCheckBox
+    _metadataManager: pipe.sp.metadata.MetadataUpdater
+    _srgbChecker: pipe.sp.channels.sRGBChecker
     _tex_set_dict: Mapping[sp.textureset.TextureSet, "TexSetWidget"]
     _tex_set_widgets: List["TexSetWidget"]
 
@@ -33,6 +52,23 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
 
         self._tex_set_dict = {}
         self._tex_set_widgets = []
+
+        if not self._preflight():
+            MessageDialog(
+                get_main_qt_window(),
+                (
+                    "Your file has failed preflight checks. Please follow the "
+                    "instructions to fix them when you first open this window."
+                ),
+                "Preflight failed.",
+            ).exec_()
+            return
+
+        self._conn = DB.Get(DB_Config)
+        metadata = sp.project.Metadata("LnD")
+        asset = self._conn.get_asset_by_id(int(metadata.get("asset_id")))
+        assert asset is not None
+        self._asset = asset
 
         self._setup_ui()
 
@@ -81,6 +117,32 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         texture_set_scroll_area.setWidgetResizable(True)
         self._main_layout.addWidget(texture_set_scroll_area)
 
+        # Material Variants
+        mat_var_widget = QtWidgets.QWidget()
+        mat_var_layout = QtWidgets.QHBoxLayout(mat_var_widget)
+        mat_var_layout.setContentsMargins(0, 0, 0, 0)
+        mat_var_layout.setSpacing(0)
+        self._mat_var_enabled = QtWidgets.QCheckBox()
+        mat_var_layout.addWidget(self._mat_var_enabled, 10)
+        mat_var_settings_widget = QtWidgets.QWidget()
+        mat_var_settings_layout = QtWidgets.QHBoxLayout(mat_var_settings_widget)
+        mat_var_label = QLabel("Material Variant:")
+        mat_var_settings_layout.addWidget(mat_var_label, 30)
+        self._mat_var_dropdown = QComboBox()
+        mv_items = list(self._asset.material_variants)
+        self._mat_var_dropdown.addItems(mv_items)
+        self._mat_var_dropdown.setCurrentText("")
+        self._mat_var_dropdown.setEditable(True)
+        mat_var_validator = QRegExpValidator("[a-z][a-z_\d]*")
+        self._mat_var_dropdown.setValidator(mat_var_validator)
+        mat_var_settings_layout.addWidget(self._mat_var_dropdown, 70)
+        self._mat_var_enabled.toggled.connect(
+            _checkbox_callback_helper(self._mat_var_enabled, mat_var_settings_widget)
+        )
+        mat_var_settings_widget.setEnabled(False)
+        mat_var_layout.addWidget(mat_var_settings_widget, 90)
+        self._main_layout.addWidget(mat_var_widget)
+
         # Buttons
         self._init_buttons(has_cancel_button=True, ok_name="Export")
         self.buttons.rejected.connect(self.close)
@@ -97,19 +159,19 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         srgb = srgbChecker.check() or srgbChecker.prompt_srgb_fix()
         return meta and srgb
 
-    def do_export(self) -> None:
-        if not self._preflight():
-            MessageDialog(
-                get_main_qt_window(),
-                (
-                    "Your file has failed preflight checks. Please follow the "
-                    "instructions to fix them when you press Export."
-                ),
-                "Preflight failed.",
-            ).exec_()
-            return
+    @property
+    def mat_var(self) -> Optional[str]:
+        if self._mat_var_enabled.isChecked():
+            return self._mat_var_dropdown.currentText()
+        return None
 
-        print("Exporting!")
+    def do_export(self) -> None:
+        if self.mat_var and (self.mat_var not in self._asset.material_variants):
+            self._asset.material_variants.add(self.mat_var)
+            log.info(f"Updating new material variant: {self.mat_var}")
+            self._conn.update_asset(self._asset)
+
+        log.info("Exporting!")
         exporter = Exporter()
         if exporter.export(
             [
@@ -123,7 +185,8 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
                 )
                 for ts, wgt in self._tex_set_dict.items()
                 if wgt.enabled
-            ]
+            ],
+            self.mat_var,
         ):
             MessageDialog(
                 get_main_qt_window(),
@@ -233,12 +296,14 @@ class TexSetWidget(QtWidgets.QWidget):
         self._enabled_checkbox = QtWidgets.QCheckBox()
         self._enabled_checkbox.setChecked(True)
         self._enabled_checkbox.setStyleSheet("padding-top: 10px;")
-        self._enabled_checkbox.toggled.connect(self._enabled_checkbox_callback)
         layout.addWidget(self._enabled_checkbox, 10, QtCore.Qt.AlignTop)
-        self._settings_container = QtWidgets.QWidget()
-        settings_layout = QtWidgets.QGridLayout(self._settings_container)
+        settings_container = QtWidgets.QWidget()
+        self._enabled_checkbox.toggled.connect(
+            _checkbox_callback_helper(self._enabled_checkbox, settings_container)
+        )
+        settings_layout = QtWidgets.QGridLayout(settings_container)
         settings_layout.setSpacing(2)
-        layout.addWidget(self._settings_container, 90)
+        layout.addWidget(settings_container, 90)
 
         # Texture set title
         self.label = QLabel(self._tex_set.name())
@@ -322,9 +387,6 @@ class TexSetWidget(QtWidgets.QWidget):
         )
 
         self.setLayout(layout)
-
-    def _enabled_checkbox_callback(self) -> None:
-        self._settings_container.setEnabled(self._enabled_checkbox.isChecked())
 
     def _setup_extra_channel_layout(self) -> bool:
         """Sets up extra channel layout. Returns False if there are no extra channels"""

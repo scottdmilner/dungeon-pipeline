@@ -1,8 +1,28 @@
 from abc import ABCMeta, abstractmethod
+from inspect import getmembers, isfunction
 from typing import Iterable, List, Optional, Sequence
 
-from pipe.util import check_methods
 from pipe.struct.asset import Asset
+
+
+def _check_methods(cls: type, subclass: type) -> bool:
+    """Check if a class implements another class's methods."""
+    # Get the names of the class's methods
+    methods: list = [member[0] for member in getmembers(cls, isfunction)]
+
+    # Get the subclass's method resolution order (MRO)
+    mro = subclass.__mro__
+
+    # Check if the subclass's MRO contains every method
+    for method in methods:
+        for entry in mro:
+            if method in entry.__dict__:
+                if entry.__dict__[method] is None:
+                    return NotImplemented
+                break
+        else:
+            return NotImplemented
+    return True
 
 
 class DBInterface(metaclass=ABCMeta):
@@ -10,7 +30,7 @@ class DBInterface(metaclass=ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, subclass: type) -> bool:
-        return check_methods(cls, subclass)
+        return _check_methods(cls, subclass)
 
     @abstractmethod
     def __init__(self) -> None:

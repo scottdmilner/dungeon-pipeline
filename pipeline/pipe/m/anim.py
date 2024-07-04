@@ -9,7 +9,7 @@ import maya.cmds as mc
 
 import pipe
 from pipe.db import DB
-from env import SG_Config
+from env import DB_Config
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class RiggedExporter:
     window: Optional[QWidget]
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         self.window = pipe.m.local.get_main_qt_window()
 
     @staticmethod
@@ -81,7 +81,7 @@ class RiggedExporter:
             "file": str(path),
             "pythonPostCallback": f"{type(self).__name__}.{self.convert_to_houdini_scale.__name__}('{str(path)}')",
             "selection": True,
-            "shadingMode": "none",
+            "shadingMode": "useRegistry",
             "stripNamespaces": True,
         }
 
@@ -92,6 +92,7 @@ class RiggedExporter:
                     "exportUVs": False,
                     "frameRange": [1, 20],
                     "frameStride": 1.0,
+                    "shadingMode": "none",
                 }
             )
         mc.select(self.EXPORT_SETS[char])

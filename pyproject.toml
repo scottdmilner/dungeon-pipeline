@@ -5,6 +5,7 @@ exclude = [
     'VFX-LYNX',
     'ae_SVG',
     'dwpicker.*',
+    'modelChecker',
     'rjg',
     'shotgun_api3',
     'studiolibrary',
@@ -14,6 +15,10 @@ files = 'pipeline'
 
 [[tool.mypy.overrides]]
 module = "dwpicker"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "modelChecker.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -28,6 +33,8 @@ exclude = [
     "ae_SVG",
     "dwpicker",
     "dwpicker_git",
+    "modelChecker",
+    "modelChecker_git",
     "rjg",
     "shotgun_api3",
     'studiolibrary',

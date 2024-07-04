@@ -22,3 +22,6 @@
 [submodule "pipeline/software/maya/scripts/studiolibrary"]
 	path = pipeline/software/maya/scripts/studiolibrary
 	url = https://github.com/krathjen/studiolibrary.git
+[submodule "pipeline/software/maya/scripts/modelChecker_git"]
+	path = pipeline/software/maya/scripts/modelChecker_git
+	url = https://github.com/JakobJK/modelChecker.git

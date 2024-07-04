@@ -5,7 +5,7 @@ import platform
 import subprocess
 import sys
 
-from inspect import getmembers, isabstract, isclass, isfunction
+from inspect import getmembers, isabstract, isclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TypeVar, Union
 from types import ModuleType
@@ -21,26 +21,6 @@ class dotdict(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__  # type: ignore[assignment]
     __delattr__ = dict.__delitem__  # type: ignore[assignment]
-
-
-def check_methods(cls: type, subclass: type) -> bool:
-    """Check if a class implements another class's methods."""
-    # Get the names of the class's methods
-    methods: list = [member[0] for member in getmembers(cls, isfunction)]
-
-    # Get the subclass's method resolution order (MRO)
-    mro = subclass.__mro__
-
-    # Check if the subclass's MRO contains every method
-    for method in methods:
-        for entry in mro:
-            if method in entry.__dict__:
-                if entry.__dict__[method] is None:
-                    return NotImplemented
-                break
-        else:
-            return NotImplemented
-    return True
 
 
 KT = TypeVar("KT")
@@ -136,21 +116,21 @@ def get_asset_path() -> Path:
     return get_production_path() / "asset"
 
 
-def reload_pipe(extra_modules: List[ModuleType] = []) -> None:
+def reload_pipe(extra_modules: Optional[List[ModuleType]] = None) -> None:
     """Reload all pipe python modules"""
+    if extra_modules is None:
+        extra_modules = []
+
     pipe_modules = [
-        *[
-            module
-            for name, module in sys.modules.items()
-            if (name.startswith("pipe"))
-            and ("shotgun_api3" not in name)
-            or (name == "env")
-        ],
-        *extra_modules,
-    ]
+        module
+        for name, module in sys.modules.items()
+        if (name.startswith("pipe")) and ("shotgun_api3" not in name) or (name == "env")
+    ] + extra_modules
+
     for module in pipe_modules:
-        log.info(f"Reloading {module.__name__}")
-        importlib.reload(module)
+        if (name := module.__name__) in sys.modules:
+            log.info(f"Unloading {name}")
+            del sys.modules[name]
 
 
 def resolve_mapped_path(path: Union[str, Path]) -> Path:

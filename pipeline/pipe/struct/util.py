@@ -1,9 +1,11 @@
 import json
+from copy import deepcopy
 from dataclasses import dataclass, fields
 from typing import get_args, get_origin, Any, Type, TypeVar, Union
 
 FT = TypeVar("FT")
 Self = TypeVar("Self")  # In Python 3.11+, just use `from typing import Self`
+RT = TypeVar("RT")  # return type
 
 
 @dataclass
@@ -36,7 +38,12 @@ class JsonSerializable:
 
     def to_json(self) -> str:
         return json.dumps(
-            vars(self), default=lambda o: o.__dict__, indent=4, ensure_ascii=False
+            vars(self),
+            default=lambda o: {
+                k: v for k, v in o.__dict__.items() if not str(k).startswith("_")
+            },
+            indent=4,
+            ensure_ascii=False,
         )
 
     @staticmethod
@@ -46,7 +53,7 @@ class JsonSerializable:
             return value
         elif isinstance(value, dict):
             return ftype(**value)
-        elif isinstance(value, list):
+        elif isinstance(value, list) or isinstance(value, set):
             return ftype(*value)
         else:
             return ftype(value)  # type: ignore[call-arg]
@@ -55,6 +62,8 @@ class JsonSerializable:
         """After initializing the fields, recurse through and ensure that
         types match"""
         for field in fields(self):
+            if field.name.startswith("_"):
+                continue
             value = getattr(self, field.name)
             field_type = field.type
 
@@ -97,6 +106,13 @@ class JsonSerializable:
                 setattr(
                     self, field.name, [self._spread_cast(value_type, v) for v in value]
                 )
+            elif origin_type == set:
+                value_type = get_args(field_type)
+                setattr(
+                    self,
+                    field.name,
+                    set((self._spread_cast(value_type, v) for v in value)),
+                )
             else:
                 if isinstance(value, field_type):
                     continue
@@ -107,3 +123,31 @@ class JsonSerializable:
                         f"Expected {field.name} to be {field_type}, "
                         f"got {repr(value)}"
                     )
+
+
+@dataclass
+class Freezable:
+    def __init_freezer__(self, items: list[str]) -> None:
+        if not hasattr(self, "_freeze_list"):
+            self._freeze_list = []
+        self._freeze_list += items
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if hasattr(self, "_freeze_list") and (__name in self._freeze_list):
+            raise AttributeError("Cannot set frozen attribute!")
+        return super().__setattr__(__name, __value)
+
+
+@dataclass
+class Diffable(JsonSerializable, Freezable):
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.__init_freezer__(["__initial_state"])
+        self.__initial_state: "Diffable" = deepcopy(self)
+
+    def _diff(self) -> dict[str, Any]:
+        diff: dict[str, Any] = {}
+        for name in (f.name for f in fields(self)):
+            if (val := getattr(self, name)) != getattr(self.__initial_state, name):
+                diff[name] = val
+        return diff
