@@ -23,6 +23,7 @@ def lnd_componentgeometry(kwargs: dict, parent: Optional[hou.Node] = None) -> ho
 
     # Configure Component Geometry node
     cgeo.parm("dogeommodelapi").set(True)
+    cgeo.parm("attribs").set("P uv")
     cgeo.parm("indexattribs").set("texset")
 
     cgeo.setColor(hou.Color((0.616, 0.871, 0.769)))

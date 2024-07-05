@@ -392,8 +392,8 @@ class Exporter:
                     {
                         "destChannel": ch,
                         "srcChannel": ch,
-                        "srcMapType": "virtualMap",
-                        "srcMapName": "Diffuse",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "baseColor",
                     }
                     for ch in "RGB"
                 ],

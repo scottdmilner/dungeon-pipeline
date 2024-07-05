@@ -22,7 +22,7 @@ roles:
   substance_3d_painter_bitmap_import_16bit: sRGB-Texture
   substance_3d_painter_bitmap_import_floating: ACEScg
   substance_3d_painter_substance_material: ACEScg
-  substance_3d_painter_bitmap_export_8bit: ACEScg
+  substance_3d_painter_bitmap_export_8bit: sRGB-Texture
   substance_3d_painter_bitmap_export_16bit: ACEScg
   substance_3d_painter_bitmap_export_floating: ACEScg
   # Note to future generations: Setting the colorspace srgb-ap1 as the export 
