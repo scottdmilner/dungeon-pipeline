@@ -150,11 +150,6 @@ class TexConverter:
                 *imgs,
                 "--mosaic", f"{grid_base}x{grid_height}",
                 "--resize", f"{dimx}x{dimy}",
-                # *(
-                #     ["--colorconvert", "ACEScg", "sRGB-Texture"] 
-                #     if color_space == "ACEScg" 
-                #     else []
-                # ),
                 "-o", f"{str(self.preview_path / name_base)}{'sRGB' if color_space == 'sRGB-Texture' else 'Linear'}.jpeg",
             ]
             # fmt: on
