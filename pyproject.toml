@@ -5,10 +5,12 @@ exclude = [
     'VFX-LYNX',
     'ae_SVG',
     'dwpicker.*',
+    'maya-timeline-marker_git',
     'modelChecker',
     'rjg',
     'shotgun_api3',
     'studiolibrary',
+    'timeline_marker',
 ]
 
 files = 'pipeline'
@@ -33,9 +35,11 @@ exclude = [
     "ae_SVG",
     "dwpicker",
     "dwpicker_git",
+    "maya-timeline-marker_git",
     "modelChecker",
     "modelChecker_git",
     "rjg",
     "shotgun_api3",
-    'studiolibrary',
+    "studiolibrary",
+    "timeline_marker",
 ]
