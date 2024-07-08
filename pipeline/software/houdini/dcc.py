@@ -42,6 +42,15 @@ class HoudiniDCC(DCC):
             "HOUDINI_NO_ENV_FILE_OVERRIDES": 1,
             # Disable start page splash
             "HOUDINI_NO_START_PAGE_SPLASH": 1,
+            # Configure additional HDA locations outside of the pipeline
+            "HOUDINI_OTLSCAN_PATH": os.pathsep.join(
+                [
+                    str(p)
+                    for p in resolve_mapped_path(
+                        get_production_path() / "hda"
+                    ).iterdir()
+                ]
+            ),
             # Package loading debug logging
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
             # Splash file
