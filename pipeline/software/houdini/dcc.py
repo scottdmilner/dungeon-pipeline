@@ -50,6 +50,7 @@ class HoudiniDCC(DCC):
                         get_production_path() / "hda"
                     ).iterdir()
                 ]
+                + ["&"]
             ),
             # Package loading debug logging
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
