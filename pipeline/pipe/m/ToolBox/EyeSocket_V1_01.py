@@ -311,6 +311,3 @@ def eyesocket():
     select_all_in_group("r_socket_ctrl_jnts_GRP")
     cmds.select("r_eyesocket_ribbon_surface", add=True)
     cmds.skinCluster(tsb=True)
-
-
-
