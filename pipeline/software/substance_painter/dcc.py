@@ -3,7 +3,7 @@ import os
 import platform
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from typing import Mapping, Optional, Union
 
 from ..baseclass import DCC
 from env import Executables
@@ -47,6 +47,6 @@ class SubstancePainterDCC(DCC):
                 f"The operating system {system} is not a supported OS for this DCC software"
             )
 
-        launch_args: List[str] = []
+        launch_args: list[str] = []
 
         super().__init__(launch_command, launch_args, env_vars)

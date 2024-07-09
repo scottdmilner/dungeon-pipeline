@@ -5,7 +5,7 @@ from PySide2 import QtCore, QtWidgets
 from PySide2.QtGui import QIcon, QPixmap, QRegExpValidator
 from PySide2.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
 from re import findall
-from typing import Callable, Iterable, List, Mapping, Optional, Set
+from typing import Callable, Iterable, Mapping, Optional
 
 import substance_painter as sp
 
@@ -42,7 +42,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
     _metadataManager: pipe.sp.metadata.MetadataUpdater
     _srgbChecker: pipe.sp.channels.sRGBChecker
     _tex_set_dict: Mapping[sp.textureset.TextureSet, "TexSetWidget"]
-    _tex_set_widgets: List["TexSetWidget"]
+    _tex_set_widgets: list["TexSetWidget"]
 
     def __init__(
         self,
@@ -205,7 +205,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
 
 
 class TexSetWidget(QtWidgets.QWidget):
-    extra_channels: Set[sp.textureset.Channel]
+    extra_channels: set[sp.textureset.Channel]
 
     _displacement_source_dropdown: QComboBox
     _enabled_checkbox: QtWidgets.QCheckBox

@@ -1,6 +1,6 @@
 from itertools import count
 from pathlib import Path
-from typing import cast, Generator, Iterable, List, Optional
+from typing import cast, Generator, Iterable, Optional
 
 import hou
 
@@ -196,7 +196,7 @@ class MatlibManager:
         # locate relevant nodes
         control_node: hou.Node
         displacement_map: hou.Node
-        displacement_nodes: List[hou.Node] = []
+        displacement_nodes: list[hou.Node] = []
         emissive_node: hou.Node
         ior_node: hou.Node
         normal_node: hou.Node
@@ -264,7 +264,7 @@ class MatlibManager:
 
     def load_items_from_file(
         self, dest_node: hou.LopNode, file_path: str
-    ) -> List[hou.NetworkMovableItem]:
+    ) -> list[hou.NetworkMovableItem]:
         """Loads a VOP network into a LOP node. Returns list of added items"""
         before = dest_node.allItems()
         dest_node.loadItemsFromFile(file_path)
@@ -313,7 +313,7 @@ class MatlibManager:
                 if item.comment() == name_placeholder:
                     item.setComment(name)
 
-    def get_variant_list(self) -> List[str]:
+    def get_variant_list(self) -> list[str]:
         """Gets list of variants in the way that the HDA interface expects:
         [id1, label1, id2, label2, ...]"""
         if len(self._asset.variants):
@@ -321,7 +321,7 @@ class MatlibManager:
         else:
             return [str(self._asset.id), "Main"]
 
-    def get_mat_variant_list(self) -> List[str]:
+    def get_mat_variant_list(self) -> list[str]:
         """Gets list of mat variants in the way that the HDA interface
         expects: [id1, label1, id2, label2, ...]"""
         current_geo_var = self._conn.get_asset_by_id(self.variant_id)

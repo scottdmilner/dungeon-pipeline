@@ -3,7 +3,7 @@ import os
 import platform
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from typing import Mapping, Optional, Union
 
 from pipe.util import get_production_path, resolve_mapped_path
 
@@ -96,6 +96,6 @@ class HoudiniDCC(DCC):
         else:
             launch_command = str(Executables.houdini)
 
-        launch_args: List[str] = [] if is_python_shell else ["-foreground"]
+        launch_args: list[str] = [] if is_python_shell else ["-foreground"]
 
         super().__init__(launch_command, launch_args, env_vars)

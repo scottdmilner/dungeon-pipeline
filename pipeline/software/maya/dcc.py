@@ -4,7 +4,7 @@ import platform
 import shutil
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from typing import Mapping, Optional, Union
 
 from ..baseclass import DCC
 from pipe.util import get_rigging_path
@@ -72,7 +72,7 @@ class MayaDCC(DCC):
         else:
             launch_command = str(Executables.maya)
 
-        launch_args: List[str] = []
+        launch_args: list[str] = []
 
         super().__init__(
             launch_command, launch_args, env_vars, lambda: self.set_up_shelf_path()

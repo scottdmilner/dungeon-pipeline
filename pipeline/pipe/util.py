@@ -7,7 +7,7 @@ import sys
 
 from inspect import getmembers, isabstract, isclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, Dict, Optional, Sequence, TypeVar, Union
 from types import ModuleType
 
 from env import production_path as _prp
@@ -116,10 +116,12 @@ def get_asset_path() -> Path:
     return get_production_path() / "asset"
 
 
-def reload_pipe(extra_modules: Optional[List[ModuleType]] = None) -> None:
+def reload_pipe(extra_modules: Optional[Sequence[ModuleType]] = None) -> None:
     """Reload all pipe python modules"""
     if extra_modules is None:
         extra_modules = []
+    else:
+        extra_modules = list(extra_modules)
 
     pipe_modules = [
         module
