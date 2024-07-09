@@ -91,7 +91,7 @@ class JsonSerializable:
                     )
 
             origin_type = get_origin(field_type)
-            if origin_type == dict:
+            if origin_type is dict:
                 key_type, value_type = get_args(field_type)
                 setattr(
                     self,
@@ -101,12 +101,12 @@ class JsonSerializable:
                         for k, v in value.items()
                     },
                 )
-            elif origin_type == list:
+            elif origin_type is list:
                 value_type = get_args(field_type)
                 setattr(
                     self, field.name, [self._spread_cast(value_type, v) for v in value]
                 )
-            elif origin_type == set:
+            elif origin_type is set:
                 value_type = get_args(field_type)
                 setattr(
                     self,
