@@ -313,4 +313,4 @@ def eyesocket():
     cmds.skinCluster(tsb=True)
 
 
-eyesocket()
+
