@@ -1,3 +1,4 @@
+# mypy: disable-error-code="attr-defined"
 import logging
 from abc import ABC, abstractmethod, abstractproperty
 from dataclasses import dataclass
