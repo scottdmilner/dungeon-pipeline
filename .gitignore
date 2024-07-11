@@ -26,3 +26,6 @@ env_sg.py
 
 # Ignore proprietary plugins
 pipeline/lib/axiom
+
+# Ignore third-party Python libraries
+pipeline/lib/python
