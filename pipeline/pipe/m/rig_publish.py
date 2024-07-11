@@ -4,7 +4,10 @@ from PySide2 import QtWidgets
 
 import maya.cmds as mc
 import os
-from typing import Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 import shared.util as su
 from pipe.m.local import get_main_qt_window

@@ -4,7 +4,10 @@ import logging
 import re
 
 from PySide2 import QtWidgets, QtCore
-from typing import Callable, Optional, Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Optional, Sequence
 
 """Adapted/updated from 2024 (Accomplice) / 2022 (Cenote) pipelines"""
 

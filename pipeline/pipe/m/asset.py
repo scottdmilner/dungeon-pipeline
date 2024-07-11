@@ -4,7 +4,10 @@ import logging
 import os
 import platform
 import shutil
-from typing import Optional, Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional, Sequence
 from PySide2.QtWidgets import QCheckBox, QWidget
 from PySide2.QtGui import QTextCursor
 

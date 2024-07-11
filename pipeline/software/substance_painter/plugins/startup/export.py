@@ -1,4 +1,7 @@
-from typing import Sequence, Type
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Sequence, Type
 
 from PySide2 import QtWidgets
 

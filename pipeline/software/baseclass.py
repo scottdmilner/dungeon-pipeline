@@ -4,7 +4,10 @@ import logging
 import os
 import subprocess
 
-from typing import Callable, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Mapping, Optional, Sequence, Union
 
 from shared.util import fix_launcher_metadata, get_production_path
 

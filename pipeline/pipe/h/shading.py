@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from itertools import count
 from pathlib import Path
-from typing import cast, Generator, Iterable, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import cast, Generator, Iterable, Optional
 
 import hou
 

@@ -6,7 +6,10 @@ import platform
 import shutil
 
 from pathlib import Path
-from typing import Mapping, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Mapping, Optional, Union
 
 from ..baseclass import DCC
 from shared.util import get_rigging_path

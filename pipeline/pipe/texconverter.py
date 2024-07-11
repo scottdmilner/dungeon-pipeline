@@ -8,13 +8,17 @@ import time
 
 from math import ceil, floor, log2, sqrt
 from pathlib import Path
-from typing import cast, Callable, Dict, Iterable, Sequence, TypeVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import cast, Callable, Dict, Iterable, Sequence, TypeVar
+
+    RT = TypeVar("RT")  # return type
 
 from pipe.util import silent_startupinfo
 
 from env import Executables
 
-RT = TypeVar("RT")  # return type
 
 log = logging.getLogger(__name__)
 

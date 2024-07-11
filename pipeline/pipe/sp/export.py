@@ -6,7 +6,12 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, TypeVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterable, Optional, Sequence, TypeVar
+
+    RT = TypeVar("RT")  # return type
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
@@ -23,7 +28,6 @@ from pipe.texconverter import TexConverter, TexConversionError
 from shared.util import get_production_path, resolve_mapped_path
 from env_sg import DB_Config
 
-RT = TypeVar("RT")  # return type
 
 lib_path = resolve_mapped_path(Path(__file__).parents[1] / "lib")
 log = logging.getLogger(__name__)

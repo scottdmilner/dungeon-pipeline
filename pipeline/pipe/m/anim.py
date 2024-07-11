@@ -4,7 +4,10 @@ import logging
 import numpy as np
 from pathlib import Path
 from pxr import Usd, UsdGeom, Vt
-from typing import Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Dict, Iterable, Optional, Union
 from PySide2.QtWidgets import QWidget
 
 import maya.cmds as mc

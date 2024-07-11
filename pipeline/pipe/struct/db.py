@@ -4,11 +4,15 @@ import attrs
 import cattrs
 
 from attrs import field
-from typing import Any, Optional, Type, TypeVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, Optional, Type, TypeVar
+
+    _S = TypeVar("_S")
 
 from pipe.struct.util import Diffable
 
-_S = TypeVar("_S")
 
 _SG_NAME = "sg_name"
 _STRUCT_HOOK = "struct_hook"
@@ -39,6 +43,18 @@ class SGDiffable(Diffable):
         if not sg_stub:
             raise TypeError(f"Cannot create {cls.__name__} from empty dict")
         return _con.structure(sg_stub, cls)
+
+    @classmethod
+    def map_sg_field_names(cls: Type[attrs.AttrsInstance], name: str) -> str:
+        """take SG name and map it to the field name on this class"""
+        return next(
+            (
+                f.metadata.get(_SG_NAME, None) or f.name
+                for f in attrs.fields(cls)
+                if f.name == name
+            ),
+            "",
+        )
 
     def sg_diff(self) -> dict[str, Any]:
         """Return a dict with changes made to the asset since it was

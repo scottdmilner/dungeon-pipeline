@@ -7,7 +7,10 @@ from PySide2 import QtCore, QtWidgets
 from PySide2.QtGui import QIcon, QPixmap, QRegExpValidator
 from PySide2.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
 from re import findall
-from typing import Callable, Iterable, Mapping, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Iterable, Mapping, Optional
 
 import substance_painter as sp
 

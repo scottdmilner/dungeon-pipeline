@@ -5,8 +5,15 @@ import platform
 import subprocess
 import sys
 
-from typing import Any, Dict, Optional, Sequence, TypeVar
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, Optional, Sequence, TypeVar
+    from types import ModuleType
+
+    KT = TypeVar("KT")
+    VT = TypeVar("VT")
+
 
 log = logging.getLogger(__name__)
 
@@ -17,10 +24,6 @@ class dotdict(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__  # type: ignore[assignment]
     __delattr__ = dict.__delitem__  # type: ignore[assignment]
-
-
-KT = TypeVar("KT")
-VT = TypeVar("VT")
 
 
 def dict_index(d: Dict[KT, VT], v: VT) -> KT:

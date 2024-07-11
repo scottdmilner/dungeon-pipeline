@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from inspect import getmembers, isfunction
-from typing import Iterable, Optional, Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterable, Optional
 
 from pipe.struct.db import Asset
 
@@ -48,6 +53,6 @@ class DBInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_asset_name_list(self) -> Sequence[str]:
+    def get_asset_name_list(self) -> list[str]:
         """Get a list of Asset ids"""
         raise NotImplementedError

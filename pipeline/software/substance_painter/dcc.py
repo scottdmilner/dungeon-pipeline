@@ -5,7 +5,10 @@ import os
 import platform
 
 from pathlib import Path
-from typing import Mapping, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Mapping, Optional, Union
 
 from ..baseclass import DCC
 from env import Executables

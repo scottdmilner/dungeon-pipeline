@@ -5,17 +5,20 @@ import threading
 
 from abc import ABC, abstractmethod, abstractproperty
 from dataclasses import dataclass
-from typing import Any, Iterable, Optional, TypeVar, Union
-from typing import Sequence as typing_Sequence
+from functools import partialmethod
+from typing import TYPE_CHECKING
 
-from pipe.struct.db import Asset, AssetStub, Shot, Sequence
+if TYPE_CHECKING:
+    from typing import Any, Iterable, Optional, Protocol, Union
+    from typing import Sequence as typing_Sequence
+
+from pipe.struct.db import Asset, AssetStub, Sequence, SequenceStub, Shot, ShotStub
 
 from .baseclass import DB
 from .typing import Filter
 
 from . import shotgun_api3
 
-RT = TypeVar("RT")  # return type
 
 log = logging.getLogger(__name__)
 
@@ -108,20 +111,24 @@ class SGaaDB(DB):
         with self._update_notifier:
             self._update_notifier.notify()
 
-    # TODO use partial()
     def get_asset_by_attr(self, attr: str, attr_val: Union[str, int]) -> Asset:
+        attr = Asset.map_sg_field_names(attr)
         return Asset.from_sg(
             next((a for a in self._sg_asset_list if a[attr] == attr_val), None)
         )
 
-    def get_asset_by_name(self, name: str) -> Asset:
-        return self.get_asset_by_attr("code", name)
+    if TYPE_CHECKING:
 
-    def get_asset_by_id(self, id: int) -> Asset:
-        return self.get_asset_by_attr("id", id)
+        class GetAssetAttrPartial(Protocol):
+            def __call__(self, attr_val: Union[str, int]) -> Asset: ...
+
+    get_asset_by_name: GetAssetAttrPartial = partialmethod(
+        get_asset_by_attr, "disp_name"
+    )  # type: ignore[assignment]
+    get_asset_by_id: GetAssetAttrPartial = partialmethod(get_asset_by_attr, "id")  # type: ignore[assignment]
 
     def get_asset_by_stub(self, stub: AssetStub) -> Asset:
-        return Asset.from_sg(next(a for a in self._sg_asset_list if a["id"] == stub.id))
+        return self.get_asset_by_id(stub.id)
 
     def get_assets_by_stub(self, stubs: Iterable[AssetStub]) -> list[Asset]:
         ids = [s.id for s in stubs]
@@ -134,15 +141,8 @@ class SGaaDB(DB):
         child_mode: DB.ChildQueryMode = DB.ChildQueryMode.LEAVES,
         sorted: bool = False,
     ) -> list[str]:
-        """Get a list of a single attribute on the asset list
-        Valid attrs: name, code, sg_path, sg_pipe_name, id
-        """
-        if attr == "name":
-            attr = "sg_pipe_name"
-        if attr == "path":
-            attr = "sg_path"
-        if attr == "disp_name":
-            attr = "code"
+        """Get a list of a single attribute on the asset list"""
+        attr = Asset.map_sg_field_names(attr)
 
         if child_mode == DB.ChildQueryMode.ALL:
             arr = [a[attr] for a in self._sg_asset_list]
@@ -161,17 +161,21 @@ class SGaaDB(DB):
             arr.sort()
         return arr
 
-    def get_asset_name_list(
-        self,
-        *,
-        child_mode: DB.ChildQueryMode = DB.ChildQueryMode.LEAVES,
-        sorted: bool = False,
-    ) -> list[str]:
-        return self.get_asset_attr_list(
-            "disp_name", child_mode=child_mode, sorted=sorted
-        )
+    if TYPE_CHECKING:
+
+        class GetAssetAttrListPartial(Protocol):
+            def __call__(
+                self,
+                child_mode: DB.ChildQueryMode = DB.ChildQueryMode.LEAVES,
+                sorted: bool = False,
+            ) -> list[str]: ...
+
+    get_asset_name_list: GetAssetAttrListPartial = partialmethod(
+        get_asset_attr_list, "disp_name"
+    )  # type: ignore[assignment]
 
     def get_assets_by_name(self, names: Iterable[str]) -> list[Asset]:
+        self.get_asset_name_list()
         return [
             Asset.from_sg(i)
             for i in set([a for a in self._sg_asset_list if a["code"] in names])
@@ -189,38 +193,75 @@ class SGaaDB(DB):
         return True
 
     def get_sequence_by_attr(self, attr: str, attr_val: Union[int, str]) -> Sequence:
+        attr = Sequence.map_sg_field_names(attr)
         return Sequence.from_sg(
             next((s for s in self._sg_sequence_list if s.get(attr) == attr_val), None)
         )
 
-    def get_sequence_by_code(self, code: str) -> Sequence:
-        return self.get_sequence_by_attr("code", code)
+    if TYPE_CHECKING:
+
+        class GetSequenceAttrPartial(Protocol):
+            def __call__(self, attr_val: Union[str, int]) -> Sequence: ...
+
+    get_sequence_by_code: GetSequenceAttrPartial = partialmethod(
+        get_sequence_by_attr, "code"
+    )  # type: ignore[assignment]
+    get_sequence_by_id: GetSequenceAttrPartial = partialmethod(
+        get_sequence_by_attr, "id"
+    )  # type: ignore[assignment]
+
+    def get_sequence_by_stub(self, stub: SequenceStub) -> Sequence:
+        return self.get_sequence_by_id(stub.id)
 
     def get_sequence_attr_list(self, attr: str, *, sorted: bool = False) -> list[str]:
+        """Get a list of a single attribute on the sequence list"""
+        attr = Sequence.map_sg_field_names(attr)
         arr = [s[attr] for s in self._sg_sequence_list]
         if sorted:
             arr.sort()
         return arr
 
-    def get_sequence_code_list(self, *, sorted: bool = False) -> list[str]:
-        return self.get_sequence_attr_list("code", sorted=sorted)
+    if TYPE_CHECKING:
+
+        class GetSequenceAttrListPartial(Protocol):
+            def __call__(self, sorted: bool = False) -> list[str]: ...
+
+    get_sequence_code_list: GetSequenceAttrListPartial = partialmethod(
+        get_sequence_attr_list, "code"
+    )  # type: ignore[assignment]
 
     def get_shot_by_attr(self, attr: str, attr_val: Union[int, str]) -> Shot:
+        attr = Shot.map_sg_field_names(attr)
         return Shot.from_sg(
             next((s for s in self._sg_shot_list if s.get(attr) == attr_val), None)
         )
 
-    def get_shot_by_code(self, code: str) -> Shot:
-        return self.get_shot_by_attr("code", code)
+    if TYPE_CHECKING:
+
+        class GetShotAttrPartial(Protocol):
+            def __call__(self, attr_val: Union[int, str]) -> Shot: ...
+
+    get_shot_by_code: GetShotAttrPartial = partialmethod(get_shot_by_attr, "code")  # type: ignore[assignment]
+    get_shot_by_id: GetShotAttrPartial = partialmethod(get_shot_by_attr, "id")  # type: ignore[assignment]
+
+    def get_shot_by_stub(self, stub: ShotStub) -> Shot:
+        return self.get_shot_by_id(stub.id)
 
     def get_shot_attr_list(self, attr: str, *, sorted: bool = False) -> list[str]:
+        attr = Shot.map_sg_field_names(attr)
         arr = [s[attr] for s in self._sg_shot_list]
         if sorted:
             arr.sort()
         return arr
 
-    def get_shot_code_list(self, *, sorted: bool = False) -> list[str]:
-        return self.get_shot_attr_list("code", sorted=sorted)
+    if TYPE_CHECKING:
+
+        class GetShotAttrListPartial(Protocol):
+            def __call__(self, sorted: bool = False) -> list[str]: ...
+
+    get_shot_code_list: GetShotAttrListPartial = partialmethod(
+        get_shot_attr_list, "code"
+    )  # type: ignore[assignment]
 
 
 class _Query(ABC):
