@@ -71,7 +71,7 @@ class MatlibManager:
     def _asset(self) -> Asset:
         """Get asset based off of the path of the current hipfile"""
         asset_name = str(hou.contextOption("ASSET"))
-        a = self._conn.get_asset_by_attr("sg_pipe_name", asset_name)
+        a = self._conn.get_asset_by_attr("name", asset_name)
         return a
 
     @property

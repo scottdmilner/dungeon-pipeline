@@ -7,12 +7,9 @@ import cattrs
 
 from attr._make import _frozen_setattrs
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import Any, Type, TypeVar, Union
 
-if TYPE_CHECKING:
-    from typing import Any, Type, TypeVar, Union
-
-    _S = TypeVar("_S")
+_S = TypeVar("_S")
 
 
 @attrs.define

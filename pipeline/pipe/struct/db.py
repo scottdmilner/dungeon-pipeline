@@ -4,15 +4,11 @@ import attrs
 import cattrs
 
 from attrs import field
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any, Optional, Type, TypeVar
-
-    _S = TypeVar("_S")
+from typing import Any, Optional, Type, TypeVar
 
 from pipe.struct.util import Diffable
 
+_S = TypeVar("_S")
 
 _SG_NAME = "sg_name"
 _STRUCT_HOOK = "struct_hook"
@@ -88,8 +84,8 @@ class Asset(SGDiffable):
     material_variants: set[str] = field(
         metadata={
             _SG_NAME: "sg_material_variants",
-            _STRUCT_HOOK: lambda mv, _: set(mv.split(",")) if mv else None,
-            _UNSTRUCT_HOOK: lambda mv, _: ",".join(mv) if mv else None,
+            _STRUCT_HOOK: lambda mv, _: set(mv.split(",") if mv else []),
+            _UNSTRUCT_HOOK: lambda mv, _: ",".join(mv) if mv else "",
         }
     )
     path: Optional[str] = field(metadata={_SG_NAME: "sg_path"})

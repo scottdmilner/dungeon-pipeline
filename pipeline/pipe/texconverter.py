@@ -8,10 +8,10 @@ import time
 
 from math import ceil, floor, log2, sqrt
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from typing import cast, Callable, Dict, Iterable, Sequence, TypeVar
+    from typing import Callable, Dict, Iterable, Sequence, TypeVar
 
     RT = TypeVar("RT")  # return type
 

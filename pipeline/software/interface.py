@@ -1,10 +1,11 @@
-"""Interfaces for interacting with DCCs"""
-
+from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any
+
+"""Interfaces for interacting with DCCs"""
 
 
 class DCCInterface(metaclass=ABCMeta):

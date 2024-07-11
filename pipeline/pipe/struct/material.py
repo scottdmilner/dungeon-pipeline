@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import attrs
+
 from enum import IntEnum
 
 from pipe.struct.util import JsonSerializable
@@ -22,7 +23,7 @@ class NormalType(IntEnum):
     BUMP_ROUGHNESS = 1
 
 
-@dataclass
+@attrs.define
 class TexSetInfo(JsonSerializable):
     displacement_source: DisplacementSource = DisplacementSource.NONE
     has_udims: bool = True
@@ -30,6 +31,6 @@ class TexSetInfo(JsonSerializable):
     normal_type: NormalType = NormalType.STANDARD
 
 
-@dataclass
+@attrs.define
 class MaterialInfo(JsonSerializable):
-    tex_sets: dict[str, TexSetInfo] = field(default_factory=dict)
+    tex_sets: dict[str, TexSetInfo] = dict()

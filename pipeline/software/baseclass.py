@@ -68,7 +68,7 @@ class DCC(DCCInterface):
 
         if not os.environ["PYTHONPATH"]:
             os.environ["PYTHONPATH"] = ""
-        os.environ["PYTHONPATH"] = ":".join(
+        os.environ["PYTHONPATH"] = os.pathsep.join(
             [
                 os.environ["PYTHONPATH"],
                 str(get_production_path() / "../pipeline/pipeline/lib/python"),

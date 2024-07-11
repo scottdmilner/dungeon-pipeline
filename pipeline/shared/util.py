@@ -7,7 +7,10 @@ import subprocess
 
 from inspect import getmembers, isabstract, isclass
 from pathlib import Path
-from typing import Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional, Union
 
 from env import production_path as _prp
 
