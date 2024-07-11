@@ -13,10 +13,10 @@ def main():
         if plugin not in pluginInfo:
             mc.loadPlugin(plugin)
 
-    import pipe
+    from shared.util import get_production_path
 
     # set workspace
-    mc.workspace(str(pipe.util.get_production_path().parent), openWorkspace=True)
+    mc.workspace(str(get_production_path().parent), openWorkspace=True)
 
     # enable timeline-marker plugin
     from timeline_marker import install  # type: ignore[import-not-found]

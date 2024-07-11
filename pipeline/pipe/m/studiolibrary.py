@@ -1,5 +1,5 @@
 import studiolibrary
-from pipe.util import get_anim_path
+from shared.util import get_anim_path
 
 
 def run():

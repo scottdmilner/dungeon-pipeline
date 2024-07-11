@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import substance_painter as sp
 
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional, Set, TypeVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterable, Optional, Sequence, TypeVar
+
+    RT = TypeVar("RT")  # return type
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import (
     DisplacementSource,
     NormalSource,
@@ -18,10 +25,9 @@ from pipe.struct.material import (
 )
 from pipe.glui.dialogs import MessageDialog
 from pipe.texconverter import TexConverter, TexConversionError
-from pipe.util import get_production_path, resolve_mapped_path
-from env import DB_Config
+from shared.util import get_production_path, resolve_mapped_path
+from env_sg import DB_Config
 
-RT = TypeVar("RT")  # return type
 
 lib_path = resolve_mapped_path(Path(__file__).parents[1] / "lib")
 log = logging.getLogger(__name__)
@@ -30,7 +36,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class TexSetExportSettings:
     tex_set: sp.textureset.TextureSet
-    extra_channels: Set[sp.textureset.Channel]
+    extra_channels: set[sp.textureset.Channel]
     resolution: int
     displacement_source: DisplacementSource
     normal_type: NormalType
@@ -71,7 +77,7 @@ class Exporter:
         self._preview_path.mkdir(parents=True, exist_ok=True)
 
     def export(
-        self, exp_setting_arr: List[TexSetExportSettings], mat_var: Optional[str]
+        self, exp_setting_arr: Sequence[TexSetExportSettings], mat_var: Optional[str]
     ) -> bool:
         """Export all the textures of the given Texture Sets"""
         self._init_paths(mat_var)
@@ -218,7 +224,7 @@ class Exporter:
         }
 
     @staticmethod
-    def _shader_maps(export_settings: TexSetExportSettings) -> List:
+    def _shader_maps(export_settings: TexSetExportSettings) -> list:
         maps = [
             {
                 "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
@@ -384,7 +390,7 @@ class Exporter:
         return maps
 
     @staticmethod
-    def _preview_surface_maps() -> List:
+    def _preview_surface_maps() -> list:
         return [
             {
                 "fileName": "$textureSet_DiffuseColor(_$colorSpace)(.$udim)",

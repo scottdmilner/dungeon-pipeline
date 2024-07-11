@@ -6,6 +6,8 @@ source "${LOCAL_DIR}/venv/bin/activate"
 
 pip install --upgrade pip
 pip install \
+    attrs \
+    cattrs \
     maya-stubs \
     mypy \
     nptyping \

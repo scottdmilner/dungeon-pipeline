@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from PySide2 import QtWidgets
 
 import maya.cmds as mc
 import os
-from typing import Optional
+from typing import TYPE_CHECKING
 
-import pipe.util as pu
+if TYPE_CHECKING:
+    from typing import Optional
+
+import shared.util as su
 from pipe.m.local import get_main_qt_window
 
 rig_list = [
@@ -75,7 +80,7 @@ class RigPublishUI(QtWidgets.QDialog):
         update_anim = self.anim_check.isChecked()
         update_pvis = self.pvis_check.isChecked()
 
-        dir_path = pu.get_rigging_path() / "Rigs" / file_name / "RigVersions"
+        dir_path = su.get_rigging_path() / "Rigs" / file_name / "RigVersions"
 
         # search directory for all versions and determine new version number
         ls_dir = dir_path.iterdir()
@@ -100,7 +105,7 @@ class RigPublishUI(QtWidgets.QDialog):
 
         # create symlinks
         if update_anim:
-            anim_link_dir_path = pu.get_anim_path() / "Rigs"
+            anim_link_dir_path = su.get_anim_path() / "Rigs"
             temp_name = f"{anim_link_dir_path}\\tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{anim_link_dir_path}/{file_name}.mb")
@@ -109,7 +114,7 @@ class RigPublishUI(QtWidgets.QDialog):
                 f"Link to file created or updated at '{anim_link_dir_path}/{file_name}.mb'\n"
             )
         if update_pvis:
-            pvis_link_dir_path = pu.get_previs_path() / "Rigs"
+            pvis_link_dir_path = su.get_previs_path() / "Rigs"
             temp_name = f"{pvis_link_dir_path}\\tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{pvis_link_dir_path}/{file_name}.mb")

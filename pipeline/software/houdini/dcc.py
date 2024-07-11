@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from typing import TYPE_CHECKING
 
-from pipe.util import get_production_path, resolve_mapped_path
+if TYPE_CHECKING:
+    from typing import Mapping, Optional, Union
+
+from shared.util import get_production_path, resolve_mapped_path
 
 from ..baseclass import DCC
 from env import Executables
@@ -96,6 +101,6 @@ class HoudiniDCC(DCC):
         else:
             launch_command = str(Executables.houdini)
 
-        launch_args: List[str] = [] if is_python_shell else ["-foreground"]
+        launch_args: list[str] = [] if is_python_shell else ["-foreground"]
 
         super().__init__(launch_command, launch_args, env_vars)

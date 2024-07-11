@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from inspect import getmembers, isfunction
-from typing import Iterable, List, Optional, Sequence
+from typing import TYPE_CHECKING
 
-from pipe.struct.asset import Asset
+if TYPE_CHECKING:
+    from typing import Iterable, Optional
+
+from pipe.struct.db import Asset
 
 
 def _check_methods(cls: type, subclass: type) -> bool:
@@ -43,11 +48,11 @@ class DBInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_assets_by_name(self, names: Iterable[str]) -> List[Asset]:
+    def get_assets_by_name(self, names: Iterable[str]) -> list[Asset]:
         """Get multiple Asset objects"""
         raise NotImplementedError
 
     @abstractmethod
-    def get_asset_name_list(self) -> Sequence[str]:
+    def get_asset_name_list(self) -> list[str]:
         """Get a list of Asset ids"""
         raise NotImplementedError

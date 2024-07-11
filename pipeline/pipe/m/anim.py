@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import logging
 import numpy as np
 from pathlib import Path
 from pxr import Usd, UsdGeom, Vt
-from typing import Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Dict, Iterable, Optional, Union
 from PySide2.QtWidgets import QWidget
 
 import maya.cmds as mc
 
 import pipe
 from pipe.db import DB
-from env import DB_Config
+from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
 

@@ -14,6 +14,7 @@ fi
 # Update the env file
 if [[ "${PROD_DIR}" != "${LOCAL_DIR}" ]]; then
     cp "${PROD_DIR}/pipeline/env.py" "${LOCAL_DIR}/pipeline/env.py"
+    cp "${PROD_DIR}/pipeline/env_sg.py" "${LOCAL_DIR}/pipeline/env_sg.py"
 fi
 
 # Set up venv if it doesn't exist

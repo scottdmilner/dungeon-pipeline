@@ -1,8 +1,13 @@
+from __future__ import annotations
 # mypy: disable-error-code="union-attr"
+
 import hou
 import loptoolutils  # type: ignore[import-not-found]
 
-from typing import Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 """Scripts for building node setups. Called by lnd_nodelayouts.hdanc in Interactive > Shelf Tools"""
 

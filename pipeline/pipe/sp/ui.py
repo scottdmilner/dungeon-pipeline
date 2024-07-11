@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 from math import log2
@@ -5,7 +7,10 @@ from PySide2 import QtCore, QtWidgets
 from PySide2.QtGui import QIcon, QPixmap, QRegExpValidator
 from PySide2.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
 from re import findall
-from typing import Callable, Iterable, List, Mapping, Optional, Set
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Iterable, Mapping, Optional
 
 import substance_painter as sp
 
@@ -14,11 +19,11 @@ from pipe.db import DB
 from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.sp.export import Exporter, TexSetExportSettings
 from pipe.sp.local import get_main_qt_window
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import DisplacementSource, NormalSource, NormalType
 from pipe.util import dict_index
 
-from env import DB_Config
+from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +47,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
     _metadataManager: pipe.sp.metadata.MetadataUpdater
     _srgbChecker: pipe.sp.channels.sRGBChecker
     _tex_set_dict: Mapping[sp.textureset.TextureSet, "TexSetWidget"]
-    _tex_set_widgets: List["TexSetWidget"]
+    _tex_set_widgets: list["TexSetWidget"]
 
     def __init__(
         self,
@@ -205,7 +210,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
 
 
 class TexSetWidget(QtWidgets.QWidget):
-    extra_channels: Set[sp.textureset.Channel]
+    extra_channels: set[sp.textureset.Channel]
 
     _displacement_source_dropdown: QComboBox
     _enabled_checkbox: QtWidgets.QCheckBox

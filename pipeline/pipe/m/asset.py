@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
 import shutil
-from typing import Optional, Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional, Sequence
 from PySide2.QtWidgets import QCheckBox, QWidget
 from PySide2.QtGui import QTextCursor
 
@@ -11,7 +16,8 @@ import maya.cmds as mc
 import pipe
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog, MessageDialog
-from env import DB_Config
+from shared.util import get_production_path
+from env_sg import DB_Config
 
 from modelChecker.modelChecker_UI import UI as MCUI
 
@@ -81,7 +87,7 @@ class IOManager:
         log.debug(asset)
 
         assert asset.path is not None
-        publish_dir = pipe.util.get_production_path() / asset.path
+        publish_dir = get_production_path() / asset.path
         publish_dir.mkdir(parents=True, exist_ok=True)
 
         publish_path = (

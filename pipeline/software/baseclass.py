@@ -1,27 +1,33 @@
-"""Baseclasses for interacting with DCCs"""
+from __future__ import annotations
 
 import logging
 import os
 import subprocess
 
-from typing import Callable, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Mapping, Optional, Sequence, Union
+
+from shared.util import fix_launcher_metadata, get_production_path
 
 from .interface import DCCInterface, DCCLocalizerInterface
-from pipe.util import fix_launcher_metadata
+
+"""Baseclasses for interacting with DCCs"""
 
 log = logging.getLogger(__name__)
 
 
 class DCC(DCCInterface):
     command: str
-    args: Optional[List[str]]
+    args: Optional[list[str]]
     env_vars: Mapping[str, Optional[Union[int, str]]]
     pre_launch_tasks: Callable[[], None]
 
     def __init__(
         self,
         command: str,
-        args: Optional[List[str]] = None,
+        args: Optional[Sequence[str]] = None,
         env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None,
         pre_launch_tasks: Optional[Callable[[], None]] = None,
     ) -> None:
@@ -36,7 +42,7 @@ class DCC(DCCInterface):
             args = []
 
         self.command = command
-        self.args = args
+        self.args = list(args) if args else None
         self.env_vars = env_vars or {}
         self.pre_launch_tasks = pre_launch_tasks or (lambda: None)
 
@@ -60,10 +66,20 @@ class DCC(DCCInterface):
             else:
                 os.environ[key] = str(val)
 
+        if not os.environ["PYTHONPATH"]:
+            os.environ["PYTHONPATH"] = ""
+        os.environ["PYTHONPATH"] = os.pathsep.join(
+            [
+                os.environ["PYTHONPATH"],
+                str(get_production_path() / "../pipeline/pipeline/lib/python"),
+            ]
+        )
+        print(os.environ["PYTHONPATH"])
+
     def launch(
         self,
         command: Optional[str] = None,
-        args: Optional[List[str]] = None,
+        args: Optional[Sequence[str]] = None,
         pre_launch_tasks: Optional[Callable[[], None]] = None,
     ) -> None:
         """Launch the software with the specified arguments.
@@ -85,7 +101,7 @@ class DCC(DCCInterface):
 
         log.info("Launching the software")
         log.debug(f"Command: {command}, Args: {args}")
-        subprocess.call([command] + (args or []))
+        subprocess.call([command] + list(args or []))
 
 
 class DCCLocalizer(DCCLocalizerInterface):
