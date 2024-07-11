@@ -14,22 +14,57 @@ global proc shelf_LnD_Rigging () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Rig Publish" 
+        -annotation "Open rig build UI" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "Rig_Publish" 
+        -label "Build" 
         -labelOffset 0
         -rotation 0
         -flipX 0
         -flipY 0
         -useAlpha 1
-        -imageOverlayLabel "Rig Publish" 
+        -imageOverlayLabel "Build" 
         -overlayLabelColor 2.624876 0.801436 0.012446 
         -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
-        -image "createContainer.png" 
-        -image1 "createContainer.png" 
+        -image "rig_arm.png" 
+        -image1 "rig_arm.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import rjg.build_scripts.build_ui as bui; bui.run();" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Open rig publish UI" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Publish"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -imageOverlayLabel "Publish" 
+        -overlayLabelColor 2.624876 0.801436 0.012446 
+        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
+        -image "envelope.png" 
+        -image1 "envelope.png" 
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
@@ -39,6 +74,159 @@ global proc shelf_LnD_Rigging () {
         -flat 1
     ;
 
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "ReloadPipe" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "ReloadPipe" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -imageOverlayLabel "ReloadPipe" 
+        -overlayLabelColor 2.624876 0.801436 0.012446 
+        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
+        -image "createContainer.png" 
+        -image1 "createContainer.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import pipe.util as pu; pu.reload_pipe();" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+    separator 
+        -width 12 
+        -height 35 
+        -style shelf 
+        -hr 0 
+        -parent "LnD_Rigging";
+
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "RayBuild" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RayBuild" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -imageOverlayLabel "RayBuild" 
+        -overlayLabelColor 2.624876 0.801436 0.012446 
+        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
+        -image "chameleon.png" 
+        -image1 "chameleon.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import rjg.build_scripts.rayden_build as rb; rb.run();"
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "RobinBuild" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RobinBuild" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -imageOverlayLabel "RobinBuild" 
+        -overlayLabelColor 2.624876 0.801436 0.012446 
+        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
+        -image "robin.png" 
+        -image1 "robin.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import rjg.build_scripts.robin_build as rb; rb.run();"
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "DMBuild" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "DMBuild" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -imageOverlayLabel "DMBuild" 
+        -overlayLabelColor 2.624876 0.801436 0.012446 
+        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
+        -image "skull.png" 
+        -image1 "skull.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import rjg.build_scripts.dm_build as rb; rb.run();"
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+    separator 
+        -width 12 
+        -height 35 
+        -style shelf 
+        -hr 0 
+        -parent "LnD_Rigging";
 
     shelfButton
         -enableCommandRepeat 1
@@ -69,7 +257,7 @@ global proc shelf_LnD_Rigging () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "import pipe.m.ToolBox.V2_EyeUIandBasics; pipe.m.ToolBox.V2_EyeUIandBasics.createUI();" 
+        -command "import pipe.m.ToolBox.DungeonToolBox as dtb; dtb.createUI();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

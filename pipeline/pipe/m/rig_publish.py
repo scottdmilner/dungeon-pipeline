@@ -13,12 +13,14 @@ import shared.util as su
 from pipe.m.local import get_main_qt_window
 
 rig_list = [
+    "select rig",
     "Robin",
     "RobinFace",
     "Rayden",
     "RaydenFace",
     "DungeonMonster",
     "Crossbow",
+    "Cipher",
     "LootBag",
     "Door",
     "test",
@@ -42,8 +44,8 @@ class RigPublishUI(QtWidgets.QDialog):
 
         self.anim_check = QtWidgets.QCheckBox("Update Anim Symlink")
         self.pvis_check = QtWidgets.QCheckBox("Update Previs Symlink")
-        self.anim_check.setChecked(True)
-        self.pvis_check.setChecked(True)
+        self.anim_check.setChecked(False)
+        self.pvis_check.setChecked(False)
 
         self.publish_btn = QtWidgets.QPushButton("Publish")
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
@@ -70,6 +72,11 @@ class RigPublishUI(QtWidgets.QDialog):
 
     def on_publish(self):
         file_name = self.rig_options.currentText()
+
+        if file_name == "select rig":
+            mc.warning("Select a rig to publish.")
+            return
+
         update_anim = self.anim_check.isChecked()
         update_pvis = self.pvis_check.isChecked()
 
