@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from inspect import getmembers, isfunction
 from typing import Iterable, Optional, Sequence
 
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 
 
 def _check_methods(cls: type, subclass: type) -> bool:

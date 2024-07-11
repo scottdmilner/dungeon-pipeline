@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import substance_painter as sp
 
 from pipe.sp.local import get_main_qt_window

@@ -1,4 +1,4 @@
-"""Baseclasses for interacting with DCCs"""
+from __future__ import annotations
 
 import logging
 import os
@@ -6,8 +6,11 @@ import subprocess
 
 from typing import Callable, Mapping, Optional, Sequence, Union
 
+from shared.util import fix_launcher_metadata, get_production_path
+
 from .interface import DCCInterface, DCCLocalizerInterface
-from pipe.util import fix_launcher_metadata
+
+"""Baseclasses for interacting with DCCs"""
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +62,16 @@ class DCC(DCCInterface):
                     del os.environ[key]
             else:
                 os.environ[key] = str(val)
+
+        if not os.environ["PYTHONPATH"]:
+            os.environ["PYTHONPATH"] = ""
+        os.environ["PYTHONPATH"] = ":".join(
+            [
+                os.environ["PYTHONPATH"],
+                str(get_production_path() / "../pipeline/pipeline/lib/python"),
+            ]
+        )
+        print(os.environ["PYTHONPATH"])
 
     def launch(
         self,

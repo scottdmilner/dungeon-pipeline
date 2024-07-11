@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
 
 from pathlib import Path
 
-from pipe.util import resolve_mapped_path
+from shared.util import resolve_mapped_path
 
 from ..baseclass import DCC
 from env import Executables

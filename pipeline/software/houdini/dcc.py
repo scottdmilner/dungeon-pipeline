@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
@@ -5,7 +7,7 @@ import platform
 from pathlib import Path
 from typing import Mapping, Optional, Union
 
-from pipe.util import get_production_path, resolve_mapped_path
+from shared.util import get_production_path, resolve_mapped_path
 
 from ..baseclass import DCC
 from env import Executables

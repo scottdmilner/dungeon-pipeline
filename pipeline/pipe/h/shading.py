@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import count
 from pathlib import Path
 from typing import cast, Generator, Iterable, Optional
@@ -6,7 +8,7 @@ import hou
 
 from pipe.h.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import (
     DisplacementSource,
     MaterialInfo,
@@ -16,7 +18,7 @@ from pipe.struct.material import (
 )
 from pipe.glui.dialogs import MessageDialog
 
-from env import DB_Config
+from env_sg import DB_Config
 
 _MATLIB_NAME = "Material_Library"
 _MATNAME = "matname"
@@ -50,7 +52,6 @@ class MatlibManager:
 
         # set default variant on the hda
         var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
-        assert var2 is not None
         assert var2.variant_name is not None
         assert var2.id is not None
         var_name.set(var2.variant_name)
@@ -68,7 +69,6 @@ class MatlibManager:
         """Get asset based off of the path of the current hipfile"""
         asset_name = str(hou.contextOption("ASSET"))
         a = self._conn.get_asset_by_attr("sg_pipe_name", asset_name)
-        assert a is not None
         return a
 
     @property
@@ -149,7 +149,6 @@ class MatlibManager:
             variant_name: str
             if variants:
                 var1 = self._conn.get_asset_by_stub(variants[0])
-                assert var1 is not None
                 assert var1.variant_name is not None
                 variant_name = var1.variant_name
             else:

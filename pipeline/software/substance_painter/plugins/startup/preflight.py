@@ -4,7 +4,7 @@ import substance_painter as sp
 
 import pipe.sp
 from pipe.db import DB
-from env import DB_Config
+from env_sg import DB_Config
 
 conn = DB.Get(DB_Config)
 

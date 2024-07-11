@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -8,7 +10,7 @@ from math import ceil, floor, log2, sqrt
 from pathlib import Path
 from typing import cast, Callable, Dict, Iterable, Sequence, TypeVar
 
-from .util import silent_startupinfo
+from pipe.util import silent_startupinfo
 
 from env import Executables
 

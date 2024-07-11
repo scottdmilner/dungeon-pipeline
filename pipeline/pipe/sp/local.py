@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from substance_painter import ui
 from typing import Optional
 

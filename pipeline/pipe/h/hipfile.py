@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hou
 import logging
 from pathlib import Path
@@ -5,7 +7,10 @@ from pathlib import Path
 import pipe.h
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog
-from env import DB_Config
+
+from shared.util import get_production_path
+
+from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +85,7 @@ class FileManager:
             )
             return
 
-        asset_path = pipe.util.get_production_path() / asset.path
+        asset_path = get_production_path() / asset.path
 
         if not self._prompt_create_if_not_exist(asset_path):
             return

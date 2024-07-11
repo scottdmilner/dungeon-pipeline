@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
@@ -7,7 +9,7 @@ from pathlib import Path
 from typing import Mapping, Optional, Union
 
 from ..baseclass import DCC
-from pipe.util import get_rigging_path
+from shared.util import get_rigging_path
 from env import Executables
 
 log = logging.getLogger(__name__)

@@ -1,10 +1,12 @@
-"""Adapted/updated from 2024 (Accomplice) / 2022 (Cenote) pipelines"""
+from __future__ import annotations
 
 import logging
 import re
 
 from PySide2 import QtWidgets, QtCore
 from typing import Callable, Optional, Sequence
+
+"""Adapted/updated from 2024 (Accomplice) / 2022 (Cenote) pipelines"""
 
 log = logging.getLogger(__name__)
 

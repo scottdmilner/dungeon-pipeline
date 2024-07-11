@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import substance_painter as sp
 
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog, MessageDialog
 from pipe.sp.local import get_main_qt_window
 
-from env import DB_Config
+from env_sg import DB_Config
 
 
 class MetadataUpdater:

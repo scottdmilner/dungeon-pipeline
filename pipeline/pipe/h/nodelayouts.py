@@ -1,4 +1,6 @@
+from __future__ import annotations
 # mypy: disable-error-code="union-attr"
+
 import hou
 import loptoolutils  # type: ignore[import-not-found]
 

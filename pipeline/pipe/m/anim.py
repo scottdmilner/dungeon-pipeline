@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import numpy as np
 from pathlib import Path
@@ -9,7 +11,7 @@ import maya.cmds as mc
 
 import pipe
 from pipe.db import DB
-from env import DB_Config
+from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
 

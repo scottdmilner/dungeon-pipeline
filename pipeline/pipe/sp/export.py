@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import substance_painter as sp
 
 import logging
@@ -8,7 +10,7 @@ from typing import Iterable, Optional, Sequence, TypeVar
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import (
     DisplacementSource,
     NormalSource,
@@ -18,8 +20,8 @@ from pipe.struct.material import (
 )
 from pipe.glui.dialogs import MessageDialog
 from pipe.texconverter import TexConverter, TexConversionError
-from pipe.util import get_production_path, resolve_mapped_path
-from env import DB_Config
+from shared.util import get_production_path, resolve_mapped_path
+from env_sg import DB_Config
 
 RT = TypeVar("RT")  # return type
 

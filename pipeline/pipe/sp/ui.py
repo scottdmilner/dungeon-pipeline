@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 from math import log2
@@ -14,11 +16,11 @@ from pipe.db import DB
 from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.sp.export import Exporter, TexSetExportSettings
 from pipe.sp.local import get_main_qt_window
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import DisplacementSource, NormalSource, NormalType
 from pipe.util import dict_index
 
-from env import DB_Config
+from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
 
