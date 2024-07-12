@@ -7,7 +7,7 @@ import shutil
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence
+    import typing
 from PySide2.QtWidgets import QCheckBox, QWidget
 from PySide2.QtGui import QTextCursor
 
@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 class PublishAssetDialog(FilteredListDialog):
     _substance_only: QCheckBox
 
-    def __init__(self, parent: Optional[QWidget], items: Sequence[str]) -> None:
+    def __init__(self, parent: QWidget | None, items: typing.Sequence[str]) -> None:
         super().__init__(
             parent,
             items,
@@ -49,7 +49,7 @@ class PublishAssetDialog(FilteredListDialog):
 class IOManager:
     _conn: DB
     system: str
-    window: Optional[QWidget]
+    window: QWidget | None
 
     def __init__(self) -> None:
         self._conn = DB.Get(DB_Config)

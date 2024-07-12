@@ -4,6 +4,9 @@ import attrs
 import cattrs
 
 from attrs import field
+
+# We need to always import typing for defining the structs
+# attrs doesn't support `|` syntax in 3.9
 from typing import Any, Optional, Type, TypeVar
 
 from pipe.struct.util import Diffable

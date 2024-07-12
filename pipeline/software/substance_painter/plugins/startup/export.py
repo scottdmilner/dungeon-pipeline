@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Sequence, Type
+    import typing
 
 from PySide2 import QtWidgets
 
@@ -12,7 +12,7 @@ import pipe.sp
 from pipe.sp.ui import SubstanceExportWindow
 from pipe.glui.dialogs import MessageDialog
 
-plugin_widgets: Sequence[Type[QtWidgets.QWidget]] = []
+plugin_widgets: list[typing.Type[QtWidgets.QWidget]] = []
 
 
 def start_plugin():

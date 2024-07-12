@@ -8,11 +8,11 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Sequence, TypeVar
+    import typing
     from types import ModuleType
 
-    KT = TypeVar("KT")
-    VT = TypeVar("VT")
+    KT = typing.TypeVar("KT")
+    VT = typing.TypeVar("VT")
 
 
 log = logging.getLogger(__name__)
@@ -26,12 +26,12 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__  # type: ignore[assignment]
 
 
-def dict_index(d: Dict[KT, VT], v: VT) -> KT:
+def dict_index(d: dict[KT, VT], v: VT) -> KT:
     """List index function for dicts"""
     return list(d.keys())[list(d.values()).index(v)]
 
 
-def reload_pipe(extra_modules: Optional[Sequence[ModuleType]] = None) -> None:
+def reload_pipe(extra_modules: typing.Sequence[ModuleType] | None = None) -> None:
     """Reload all pipe python modules"""
     if extra_modules is None:
         extra_modules = []
@@ -52,7 +52,7 @@ def reload_pipe(extra_modules: Optional[Sequence[ModuleType]] = None) -> None:
 
 try:
 
-    def silent_startupinfo() -> Optional[subprocess.STARTUPINFO]:  # type: ignore[name-defined]
+    def silent_startupinfo() -> subprocess.STARTUPINFO | None:  # type: ignore[name-defined]
         """Returns a Windows-only object to make sure tasks launched through
         subprocess don't open a cmd window.
 
@@ -67,5 +67,5 @@ try:
         return startupinfo
 except Exception:
 
-    def silent_startupinfo() -> Optional[Any]:
+    def silent_startupinfo() -> typing.Any | None:
         pass

@@ -5,7 +5,7 @@ from inspect import getmembers, isfunction
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional
+    import typing
 
 from pipe.struct.db import Asset
 
@@ -43,12 +43,12 @@ class DBInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_asset_by_name(self, name: str) -> Optional[Asset]:
+    def get_asset_by_name(self, name: str) -> Asset | None:
         """Get an Asset object"""
         raise NotImplementedError
 
     @abstractmethod
-    def get_assets_by_name(self, names: Iterable[str]) -> list[Asset]:
+    def get_assets_by_name(self, names: typing.Iterable[str]) -> list[Asset]:
         """Get multiple Asset objects"""
         raise NotImplementedError
 

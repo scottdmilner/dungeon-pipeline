@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import re
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Optional
 
 from PySide2 import QtWidgets
 import shiboken2
@@ -18,7 +14,7 @@ class _MayaLocalizer(DCCLocalizer):
     def __init__(self) -> None:
         super().__init__("maya")
 
-    def get_main_qt_window(self) -> Optional[QtWidgets.QWidget]:
+    def get_main_qt_window(self) -> QtWidgets.QWidget | None:
         if not self.is_headless():
             ptr = omUI.MQtUtil.mainWindow()
             if ptr is not None:

@@ -7,7 +7,7 @@ from pxr import Usd, UsdGeom, Vt
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, Optional, Union
+    import typing
 from PySide2.QtWidgets import QWidget
 
 import maya.cmds as mc
@@ -20,14 +20,14 @@ log = logging.getLogger(__name__)
 
 
 class RiggedExporter:
-    EXPORT_SETS: Dict[str, str] = {
+    EXPORT_SETS: dict[str, str] = {
         "rayden": "Rayden:cache_SET",
         "robin": "Robin:cache_SET",
     }
 
     _conn: DB
     _path: str
-    window: Optional[QWidget]
+    window: QWidget | None
 
     def __init__(self) -> None:
         self._conn = DB.Get(DB_Config)
@@ -51,7 +51,7 @@ class RiggedExporter:
                 if not attr.IsValid():
                     continue
 
-                frames: Iterable[Usd.TimeCode]
+                frames: typing.Iterable[Usd.TimeCode]
                 if attr.ValueMightBeTimeVarying():
                     frames = (Usd.TimeCode(f) for f in attr.GetTimeSamples())
                 else:
@@ -74,7 +74,7 @@ class RiggedExporter:
         stage.Save()
 
     def publish_char(
-        self, char: str, anim: bool = False, path: Optional[Union[Path, str]] = None
+        self, char: str, anim: bool = False, path: Path | str | None = None
     ) -> None:
         if not path:
             if user_select := mc.fileDialog2(fileFilter="*.usd"):

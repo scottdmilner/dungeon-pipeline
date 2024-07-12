@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Mapping, Optional, Union
+    import typing
 
 from shared.util import get_production_path, resolve_mapped_path
 
@@ -28,7 +28,7 @@ class HoudiniDCC(DCC):
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
 
-        env_vars: Optional[Mapping[str, Union[int, str, None]]]
+        env_vars: typing.Mapping[str, int | str | None] | None
         env_vars = {
             "DCC": str(this_path.parent.name),
             # Asset Gallery sqlite db

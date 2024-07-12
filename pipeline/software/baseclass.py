@@ -7,7 +7,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Callable, Mapping, Optional, Sequence, Union
+    import typing
 
 from shared.util import fix_launcher_metadata, get_production_path
 
@@ -20,16 +20,16 @@ log = logging.getLogger(__name__)
 
 class DCC(DCCInterface):
     command: str
-    args: Optional[list[str]]
-    env_vars: Mapping[str, Optional[Union[int, str]]]
-    pre_launch_tasks: Callable[[], None]
+    args: list[str] | None
+    env_vars: typing.Mapping[str, int | str | None]
+    pre_launch_tasks: typing.Callable[[], None]
 
     def __init__(
         self,
         command: str,
-        args: Optional[Sequence[str]] = None,
-        env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None,
-        pre_launch_tasks: Optional[Callable[[], None]] = None,
+        args: typing.Sequence[str] | None = None,
+        env_vars: typing.Mapping[str, int | str | None] | None = None,
+        pre_launch_tasks: typing.Callable[[], None] | None = None,
     ) -> None:
         """Initialize DCC object.
 
@@ -47,7 +47,7 @@ class DCC(DCCInterface):
         self.pre_launch_tasks = pre_launch_tasks or (lambda: None)
 
     def _set_env_vars(
-        self, env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None
+        self, env_vars: typing.Mapping[str, int | str | None] | None = None
     ) -> None:
         """(Un)Set environment variables to their associated values.
 
@@ -78,9 +78,9 @@ class DCC(DCCInterface):
 
     def launch(
         self,
-        command: Optional[str] = None,
-        args: Optional[Sequence[str]] = None,
-        pre_launch_tasks: Optional[Callable[[], None]] = None,
+        command: str | None = None,
+        args: typing.Sequence[str] | None = None,
+        pre_launch_tasks: typing.Callable[[], None] | None = None,
     ) -> None:
         """Launch the software with the specified arguments.
 
