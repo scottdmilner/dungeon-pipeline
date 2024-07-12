@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    import typing
 
-    Incomplete = Any
+    Incomplete = typing.Any
 
     NO_SSL_VALIDATION: bool
     __version__: str
@@ -80,18 +80,18 @@ if TYPE_CHECKING:
         def __init__(
             self,
             base_url: str,
-            script_name: Optional[str] = None,
-            api_key: Optional[str] = None,
+            script_name: str | None = None,
+            api_key: str | None = None,
             convert_datetimes_to_utc: bool = True,
-            http_proxy: Optional[str] = None,
+            http_proxy: str | None = None,
             ensure_ascii: bool = True,
-            connect: Optional[bool] = True,
-            ca_certs: Optional[str] = None,
-            login: Optional[str] = None,
-            password: Optional[str] = None,
-            sudo_as_login: Optional[str] = None,
-            session_token: Optional[str] = None,
-            auth_token: Optional[str] = None,
+            connect: bool | None = True,
+            ca_certs: str | None = None,
+            login: str | None = None,
+            password: str | None = None,
+            sudo_as_login: str | None = None,
+            session_token: str | None = None,
+            auth_token: str | None = None,
         ) -> None: ...
         @property
         def server_info(self) -> dict: ...
@@ -104,47 +104,47 @@ if TYPE_CHECKING:
             self,
             entity_type: str,
             filters: list,
-            fields: Optional[list] = None,
-            order: Optional[int] = None,
-            filter_operator: Optional[str] = None,
+            fields: list | None = None,
+            order: int | None = None,
+            filter_operator: str | None = None,
             retired_only: bool = False,
             include_archived_projects: bool = True,
-            additional_filter_presets: Optional[list] = None,
+            additional_filter_presets: list | None = None,
         ) -> dict: ...
         def find(
             self,
             entity_type: str,
             filters: list,
-            fields: Optional[list] = None,
-            order: Optional[int] = None,
-            filter_operator: Optional[str] = None,
+            fields: list | None = None,
+            order: int | None = None,
+            filter_operator: str | None = None,
             limit: int = 0,
             retired_only: bool = False,
             page: int = 0,
             include_archived_projects: bool = True,
-            additional_filter_presets: Optional[list] = None,
+            additional_filter_presets: list | None = None,
         ) -> list: ...
         def summarize(
             self,
             entity_type: str,
             filters: list,
             summary_fields: list,
-            filter_operator: Optional[str] = None,
-            grouping: Optional[list] = None,
+            filter_operator: str | None = None,
+            grouping: list | None = None,
             include_archived_projects: bool = True,
         ): ...
         def create(
             self,
             entity_type: str,
             data: dict,
-            return_fields: Optional[list[str]] = None,
+            return_fields: list[str] | None = None,
         ) -> dict: ...
         def update(
             self,
             entity_type: str,
             entity_id: int,
             data: dict,
-            multi_entity_update_modes: Optional[dict] = None,
+            multi_entity_update_modes: dict | None = None,
         ) -> dict: ...
         def delete(self, entity_type: str, entity_id: int) -> bool: ...
         def revive(self, entity_type: str, entity_id: int) -> bool: ...
@@ -153,17 +153,17 @@ if TYPE_CHECKING:
             self,
             start_date,
             end_date,
-            project: Optional[Incomplete] = None,
-            user: Optional[Incomplete] = None,
+            project: Incomplete | None = None,
+            user: Incomplete | None = None,
         ): ...
         def work_schedule_update(
             self,
             date,
             working,
-            description: Optional[Incomplete] = None,
-            project: Optional[Incomplete] = None,
-            user: Optional[Incomplete] = None,
-            recalculate_field: Optional[Incomplete] = None,
+            description: Incomplete | None = None,
+            project: Incomplete | None = None,
+            user: Incomplete | None = None,
+            recalculate_field: Incomplete | None = None,
         ): ...
         def follow(self, user, entity): ...
         def unfollow(self, user, entity): ...
@@ -171,30 +171,30 @@ if TYPE_CHECKING:
         def following(
             self,
             user,
-            project: Optional[Incomplete] = None,
-            entity_type: Optional[Incomplete] = None,
+            project: Incomplete | None = None,
+            entity_type: Incomplete | None = None,
         ): ...
-        def schema_entity_read(self, project_entity: Optional[Incomplete] = None): ...
-        def schema_read(self, project_entity: Optional[Incomplete] = None): ...
+        def schema_entity_read(self, project_entity: Incomplete | None = None): ...
+        def schema_read(self, project_entity: Incomplete | None = None): ...
         def schema_field_read(
             self,
             entity_type,
-            field_name: Optional[Incomplete] = None,
-            project_entity: Optional[Incomplete] = None,
+            field_name: Incomplete | None = None,
+            project_entity: Incomplete | None = None,
         ): ...
         def schema_field_create(
             self,
             entity_type,
             data_type,
             display_name,
-            properties: Optional[Incomplete] = None,
+            properties: Incomplete | None = None,
         ): ...
         def schema_field_update(
             self,
             entity_type,
             field_name,
             properties,
-            project_entity: Optional[Incomplete] = None,
+            project_entity: Incomplete | None = None,
         ): ...
         def schema_field_delete(self, entity_type, field_name): ...
         def add_user_agent(self, agent) -> None: ...
@@ -203,8 +203,8 @@ if TYPE_CHECKING:
         def share_thumbnail(
             self,
             entities,
-            thumbnail_path: Optional[Incomplete] = None,
-            source_entity: Optional[Incomplete] = None,
+            thumbnail_path: Incomplete | None = None,
+            source_entity: Incomplete | None = None,
             filmstrip_thumbnail: bool = False,
             **kwargs,
         ): ...
@@ -217,59 +217,59 @@ if TYPE_CHECKING:
             entity_type,
             entity_id,
             path,
-            field_name: Optional[Incomplete] = None,
-            display_name: Optional[Incomplete] = None,
-            tag_list: Optional[Incomplete] = None,
+            field_name: Incomplete | None = None,
+            display_name: Incomplete | None = None,
+            tag_list: Incomplete | None = None,
         ): ...
         def download_attachment(
             self,
             attachment: bool = False,
-            file_path: Optional[Incomplete] = None,
-            attachment_id: Optional[Incomplete] = None,
+            file_path: Incomplete | None = None,
+            attachment_id: Incomplete | None = None,
         ): ...
         def set_up_auth_cookie(self) -> None: ...
         def get_attachment_download_url(self, attachment): ...
         def authenticate_human_user(
-            self, user_login, user_password, auth_token: Optional[Incomplete] = None
+            self, user_login, user_password, auth_token: Incomplete | None = None
         ): ...
         def update_project_last_accessed(
-            self, project, user: Optional[Incomplete] = None
+            self, project, user: Incomplete | None = None
         ) -> None: ...
         def note_thread_read(
-            self, note_id, entity_fields: Optional[Incomplete] = None
+            self, note_id, entity_fields: Incomplete | None = None
         ): ...
         def text_search(
             self,
             text,
             entity_types,
-            project_ids: Optional[Incomplete] = None,
-            limit: Optional[Incomplete] = None,
+            project_ids: Incomplete | None = None,
+            limit: Incomplete | None = None,
         ): ...
         def activity_stream_read(
             self,
             entity_type,
             entity_id,
-            entity_fields: Optional[Incomplete] = None,
-            min_id: Optional[Incomplete] = None,
-            max_id: Optional[Incomplete] = None,
-            limit: Optional[Incomplete] = None,
+            entity_fields: Incomplete | None = None,
+            min_id: Incomplete | None = None,
+            max_id: Incomplete | None = None,
+            limit: Incomplete | None = None,
         ): ...
         def nav_expand(
             self,
             path,
-            seed_entity_field: Optional[Incomplete] = None,
-            entity_fields: Optional[Incomplete] = None,
+            seed_entity_field: Incomplete | None = None,
+            entity_fields: Incomplete | None = None,
         ): ...
         def nav_search_string(
             self,
             root_path,
             search_string,
-            seed_entity_field: Optional[Incomplete] = None,
+            seed_entity_field: Incomplete | None = None,
         ): ...
         def nav_search_entity(
-            self, root_path, entity, seed_entity_field: Optional[Incomplete] = None
+            self, root_path, entity, seed_entity_field: Incomplete | None = None
         ): ...
         def get_session_token(self): ...
-        def preferences_read(self, prefs: Optional[Incomplete] = None): ...
+        def preferences_read(self, prefs: Incomplete | None = None): ...
         def schema(self, entity_type) -> None: ...
         def entity_types(self) -> None: ...

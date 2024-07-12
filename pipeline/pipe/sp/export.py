@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional, Sequence, TypeVar
+    import typing
 
-    RT = TypeVar("RT")  # return type
+    RT = typing.TypeVar("RT")  # return type
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
@@ -59,7 +59,7 @@ class Exporter:
         assert (a := self._conn.get_asset_by_id(id)) is not None
         self._asset = a
 
-    def _init_paths(self, mat_var: Optional[str]) -> None:
+    def _init_paths(self, mat_var: str | None) -> None:
         # initialize paths, pulling from SG database
         assert self._asset.tex_path is not None
         base_path = get_production_path() / self._asset.tex_path
@@ -77,7 +77,9 @@ class Exporter:
         self._preview_path.mkdir(parents=True, exist_ok=True)
 
     def export(
-        self, exp_setting_arr: Sequence[TexSetExportSettings], mat_var: Optional[str]
+        self,
+        exp_setting_arr: typing.Sequence[TexSetExportSettings],
+        mat_var: str | None,
     ) -> bool:
         """Export all the textures of the given Texture Sets"""
         self._init_paths(mat_var)
@@ -124,7 +126,7 @@ class Exporter:
         return True
 
     def write_mat_info(
-        self, export_settings_arr: Iterable[TexSetExportSettings]
+        self, export_settings_arr: typing.Iterable[TexSetExportSettings]
     ) -> bool:
         """Write out JSON file with information about the texturesets"""
         mat_info_path = self._out_path / "mat.json"
@@ -160,7 +162,7 @@ class Exporter:
 
     @staticmethod
     def _generate_config(
-        asset_path: Path, export_settings_arr: Iterable[TexSetExportSettings]
+        asset_path: Path, export_settings_arr: typing.Iterable[TexSetExportSettings]
     ) -> dict:
         return {
             "exportPath": str(asset_path),

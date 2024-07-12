@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from typing import cast, Generator, Iterable, Optional
+    import typing
 
 import hou
 
@@ -31,7 +31,7 @@ _MATNAME = "matname"
 class MatlibManager:
     _conn: DB
 
-    def __init__(self, node: Optional[hou.LopNode] = None) -> None:
+    def __init__(self, node: hou.LopNode | None = None) -> None:
         self._conn = DB.Get(DB_Config)
         if node:
             self._init_hda(node)
@@ -85,7 +85,7 @@ class MatlibManager:
         return Path(hou.hscriptStringExpression("$HSITE"))
 
     @property
-    def material_info(self) -> Optional[MaterialInfo]:
+    def material_info(self) -> MaterialInfo | None:
         """Attempt to get mat.json file for selected variant"""
         try:
             variant = self._conn.get_asset_by_id(self.variant_id)
@@ -160,7 +160,7 @@ class MatlibManager:
             return variant_name
         return node_val
 
-    def update_base_path(self, node: Optional[hou.LopNode] = None) -> None:
+    def update_base_path(self, node: hou.LopNode | None = None) -> None:
         if not node:
             # this lets us call update_base_path from inside self._init_hda
             node = self.node
@@ -182,7 +182,7 @@ class MatlibManager:
     @staticmethod
     def _get_map_paths(
         node: hou.Node, parm: str = "filename"
-    ) -> Generator[Path, None, None]:
+    ) -> typing.Generator[Path, None, None]:
         """Helper function to get all the maps referred to by a <UDIM>
         wildcard as Path objects"""
         filename_parm = node.parm(parm)
@@ -191,7 +191,9 @@ class MatlibManager:
         return Path(dir).glob(filename.replace("<UDIM>", "*"))
 
     def _cleanup_matnet(
-        self, new_items: Iterable[hou.NetworkMovableItem], tex_set_info: TexSetInfo
+        self,
+        new_items: typing.Iterable[hou.NetworkMovableItem],
+        tex_set_info: TexSetInfo,
     ) -> None:
         """Clean up a matnet after it has been imported from cpio"""
 
@@ -275,7 +277,7 @@ class MatlibManager:
         return list(set(after) - set(before))
 
     def _move_matnet(
-        self, new_items: Iterable[hou.NetworkMovableItem], x_pos: int
+        self, new_items: typing.Iterable[hou.NetworkMovableItem], x_pos: int
     ) -> None:
         # find the master netbox
         master_box = next(
@@ -293,7 +295,7 @@ class MatlibManager:
 
     def _rename_matnet(
         self,
-        new_items: Iterable[hou.NetworkMovableItem],
+        new_items: typing.Iterable[hou.NetworkMovableItem],
         name: str,
         name_placeholder: str = _MATNAME,
     ) -> None:

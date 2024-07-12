@@ -10,7 +10,7 @@ from re import findall
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterable, Mapping, Optional
+    import typing
 
 import substance_painter as sp
 
@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 def _checkbox_callback_helper(
     checkbox: QtWidgets.QCheckBox, widget: QtWidgets.QWidget
-) -> Callable[[], None]:
+) -> typing.Callable[[], None]:
     def inner() -> None:
         widget.setEnabled(checkbox.isChecked())
 
@@ -46,12 +46,12 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
     _mat_var_enabled: QtWidgets.QCheckBox
     _metadataManager: pipe.sp.metadata.MetadataUpdater
     _srgbChecker: pipe.sp.channels.sRGBChecker
-    _tex_set_dict: Mapping[sp.textureset.TextureSet, "TexSetWidget"]
+    _tex_set_dict: typing.Mapping[sp.textureset.TextureSet, "TexSetWidget"]
     _tex_set_widgets: list["TexSetWidget"]
 
     def __init__(
         self,
-        flags: Optional[QtCore.Qt.WindowFlags] = None,
+        flags: QtCore.Qt.WindowFlags | None = None,
     ) -> None:
         super(SubstanceExportWindow, self).__init__(get_main_qt_window())
 
@@ -165,7 +165,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         return meta and srgb
 
     @property
-    def mat_var(self) -> Optional[str]:
+    def mat_var(self) -> str | None:
         if self._mat_var_enabled.isChecked():
             return self._mat_var_dropdown.currentText()
         return None
@@ -255,7 +255,7 @@ class TexSetWidget(QtWidgets.QWidget):
         self,
         parent: SubstanceExportWindow,
         tex_set: sp.textureset.TextureSet,
-        flags: Optional[QtCore.Qt.WindowFlags] = None,
+        flags: QtCore.Qt.WindowFlags | None = None,
     ) -> None:
         super().__init__(parent)
         self.setParent(parent)
@@ -288,7 +288,7 @@ class TexSetWidget(QtWidgets.QWidget):
         return button
 
     @staticmethod
-    def _get_default(items: Iterable[str]) -> str:
+    def _get_default(items: typing.Iterable[str]) -> str:
         return next((i for i in items if i.endswith("(default)")), "")
 
     def _setup_ui(self) -> None:
@@ -417,7 +417,9 @@ class TexSetWidget(QtWidgets.QWidget):
 
         return has_channels
 
-    def _extra_channels_updater(self, ch: sp.textureset.Channel) -> Callable[[], None]:
+    def _extra_channels_updater(
+        self, ch: sp.textureset.Channel
+    ) -> typing.Callable[[], None]:
         """Callback function generator for extra channels checkboxes"""
 
         def inner() -> None:

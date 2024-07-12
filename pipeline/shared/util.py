@@ -7,15 +7,11 @@ import subprocess
 
 from inspect import getmembers, isabstract, isclass
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Optional, Union
 
 from env import production_path as _prp
 
 
-def find_implementation(cls: type, module: str, package: Optional[str] = None) -> type:
+def find_implementation(cls: type, module: str, package: str | None = None) -> type:
     """Find an implementation of the class in the specified module."""
     # Check if the specified module exists
     if importlib.util.find_spec(module, package):
@@ -99,7 +95,7 @@ def get_asset_path() -> Path:
     return get_production_path() / "asset"
 
 
-def resolve_mapped_path(path: Union[str, Path]) -> Path:
+def resolve_mapped_path(path: str | Path) -> Path:
     """Windows mapped drive workaround. Adapated from: https://bugs.python.org/msg309160"""
     path = Path(path).resolve()
 

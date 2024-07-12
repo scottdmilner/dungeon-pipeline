@@ -4,10 +4,6 @@ from PySide2 import QtWidgets
 
 import maya.cmds as mc
 import os
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Optional
 
 import shared.util as su
 from pipe.m.local import get_main_qt_window
@@ -129,7 +125,7 @@ class RigPublishUI(QtWidgets.QDialog):
         self.close()
 
 
-rig_pub: Optional[RigPublishUI] = None
+rig_pub: RigPublishUI | None = None
 
 
 def run():

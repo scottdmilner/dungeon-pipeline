@@ -3,10 +3,6 @@ from __future__ import annotations
 import hou
 import re
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Optional
 
 from PySide2 import QtWidgets
 
@@ -17,7 +13,7 @@ class _HoudiniLocalizer(DCCLocalizer):
     def __init__(self) -> None:
         super().__init__("houdini")
 
-    def get_main_qt_window(self) -> Optional[QtWidgets.QWidget]:
+    def get_main_qt_window(self) -> QtWidgets.QWidget | None:
         if not self.is_headless():
             return hou.qt.mainWindow()
         return None

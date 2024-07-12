@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, Iterable, Sequence, TypeVar
+    import typing
 
-    RT = TypeVar("RT")  # return type
+    RT = typing.TypeVar("RT")  # return type
 
 from pipe.util import silent_startupinfo
 
@@ -30,13 +30,13 @@ class TexConversionError(ChildProcessError):
 class TexConverter:
     tex_path: Path
     preview_path: Path
-    imgs_by_tex_set: Iterable[list[str]]
+    imgs_by_tex_set: typing.Iterable[list[str]]
 
     def __init__(
         self,
         tex_path: Path,
         preview_path: Path,
-        imgs_by_tex_set: Iterable[list[str]],
+        imgs_by_tex_set: typing.Iterable[list[str]],
     ) -> None:
         self.tex_path = tex_path
         self.preview_path = preview_path
@@ -139,7 +139,7 @@ class TexConverter:
         assert self.preview_path is not None
 
         @self._debug_out
-        def jpeg_cmd(root: Path, imgs: Sequence[str]) -> list[str]:
+        def jpeg_cmd(root: Path, imgs: typing.Sequence[str]) -> list[str]:
             dimx, dimy = self._img_dims(imgs[0])
 
             img_name = re.search(r"^(.*_)(.+)$", root.name)
@@ -161,7 +161,7 @@ class TexConverter:
             # fmt: on
 
         # construct list of grouped images
-        img_list: Dict[str, list[str]] = {}
+        img_list: dict[str, list[str]] = {}
         for imgs in self.imgs_by_tex_set:
             for img in imgs:
                 if img.endswith(".jpeg"):
@@ -204,7 +204,7 @@ class TexConverter:
 
     @staticmethod
     def _wait_and_check_cmds(
-        cmds: Sequence[list[str]], batch_size: int = 18, skip_check: bool = False
+        cmds: typing.Sequence[list[str]], batch_size: int = 18, skip_check: bool = False
     ) -> list[Path]:
         """Wait for list of processes to finish and print them to the debug log"""
 
@@ -248,7 +248,7 @@ class TexConverter:
 
         return finished_imgs
 
-    def _debug_out(self, func: Callable[..., RT]) -> Callable[..., RT]:
+    def _debug_out(self, func: typing.Callable[..., RT]) -> typing.Callable[..., RT]:
         """Decorator to debug print the output of the function"""
 
         def inner(self: TexConverter, *args, **kwargs) -> RT:

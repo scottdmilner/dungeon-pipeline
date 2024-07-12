@@ -9,13 +9,12 @@ from functools import partialmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, Optional, Protocol, Union
-    from typing import Sequence as typing_Sequence
+    import typing
+    from .typing import Filter
 
 from pipe.struct.db import Asset, AssetStub, Sequence, SequenceStub, Shot, ShotStub
 
 from .baseclass import DB
-from .typing import Filter
 
 from . import shotgun_api3
 
@@ -111,7 +110,7 @@ class SGaaDB(DB):
         with self._update_notifier:
             self._update_notifier.notify()
 
-    def get_asset_by_attr(self, attr: str, attr_val: Union[str, int]) -> Asset:
+    def get_asset_by_attr(self, attr: str, attr_val: str | int) -> Asset:
         attr = Asset.map_sg_field_names(attr)
         return Asset.from_sg(
             next((a for a in self._sg_asset_list if a[attr] == attr_val), None)
@@ -119,8 +118,8 @@ class SGaaDB(DB):
 
     if TYPE_CHECKING:
 
-        class GetAssetAttrPartial(Protocol):
-            def __call__(self, attr_val: Union[str, int]) -> Asset: ...
+        class GetAssetAttrPartial(typing.Protocol):
+            def __call__(self, attr_val: str | int) -> Asset: ...
 
     get_asset_by_name: GetAssetAttrPartial = partialmethod(
         get_asset_by_attr, "disp_name"
@@ -130,7 +129,7 @@ class SGaaDB(DB):
     def get_asset_by_stub(self, stub: AssetStub) -> Asset:
         return self.get_asset_by_id(stub.id)
 
-    def get_assets_by_stub(self, stubs: Iterable[AssetStub]) -> list[Asset]:
+    def get_assets_by_stub(self, stubs: typing.Iterable[AssetStub]) -> list[Asset]:
         ids = [s.id for s in stubs]
         return [Asset.from_sg(a) for a in self._sg_asset_list if a["id"] in ids]
 
@@ -163,7 +162,7 @@ class SGaaDB(DB):
 
     if TYPE_CHECKING:
 
-        class GetAssetAttrListPartial(Protocol):
+        class GetAssetAttrListPartial(typing.Protocol):
             def __call__(
                 self,
                 child_mode: DB.ChildQueryMode = DB.ChildQueryMode.LEAVES,
@@ -174,7 +173,7 @@ class SGaaDB(DB):
         get_asset_attr_list, "disp_name"
     )  # type: ignore[assignment]
 
-    def get_assets_by_name(self, names: Iterable[str]) -> list[Asset]:
+    def get_assets_by_name(self, names: typing.Iterable[str]) -> list[Asset]:
         self.get_asset_name_list()
         return [
             Asset.from_sg(i)
@@ -192,7 +191,7 @@ class SGaaDB(DB):
             self.expire_cache()
         return True
 
-    def get_sequence_by_attr(self, attr: str, attr_val: Union[int, str]) -> Sequence:
+    def get_sequence_by_attr(self, attr: str, attr_val: int | str) -> Sequence:
         attr = Sequence.map_sg_field_names(attr)
         return Sequence.from_sg(
             next((s for s in self._sg_sequence_list if s.get(attr) == attr_val), None)
@@ -200,8 +199,8 @@ class SGaaDB(DB):
 
     if TYPE_CHECKING:
 
-        class GetSequenceAttrPartial(Protocol):
-            def __call__(self, attr_val: Union[str, int]) -> Sequence: ...
+        class GetSequenceAttrPartial(typing.Protocol):
+            def __call__(self, attr_val: str | int) -> Sequence: ...
 
     get_sequence_by_code: GetSequenceAttrPartial = partialmethod(
         get_sequence_by_attr, "code"
@@ -223,14 +222,14 @@ class SGaaDB(DB):
 
     if TYPE_CHECKING:
 
-        class GetSequenceAttrListPartial(Protocol):
+        class GetSequenceAttrListPartial(typing.Protocol):
             def __call__(self, sorted: bool = False) -> list[str]: ...
 
     get_sequence_code_list: GetSequenceAttrListPartial = partialmethod(
         get_sequence_attr_list, "code"
     )  # type: ignore[assignment]
 
-    def get_shot_by_attr(self, attr: str, attr_val: Union[int, str]) -> Shot:
+    def get_shot_by_attr(self, attr: str, attr_val: int | str) -> Shot:
         attr = Shot.map_sg_field_names(attr)
         return Shot.from_sg(
             next((s for s in self._sg_shot_list if s.get(attr) == attr_val), None)
@@ -238,8 +237,8 @@ class SGaaDB(DB):
 
     if TYPE_CHECKING:
 
-        class GetShotAttrPartial(Protocol):
-            def __call__(self, attr_val: Union[int, str]) -> Shot: ...
+        class GetShotAttrPartial(typing.Protocol):
+            def __call__(self, attr_val: int | str) -> Shot: ...
 
     get_shot_by_code: GetShotAttrPartial = partialmethod(get_shot_by_attr, "code")  # type: ignore[assignment]
     get_shot_by_id: GetShotAttrPartial = partialmethod(get_shot_by_attr, "id")  # type: ignore[assignment]
@@ -256,7 +255,7 @@ class SGaaDB(DB):
 
     if TYPE_CHECKING:
 
-        class GetShotAttrListPartial(Protocol):
+        class GetShotAttrListPartial(typing.Protocol):
             def __call__(self, sorted: bool = False) -> list[str]: ...
 
     get_shot_code_list: GetShotAttrListPartial = partialmethod(
@@ -275,7 +274,7 @@ class _Query(ABC):
         self,
         project_id: int,
         *,
-        extra_fields: Optional[typing_Sequence[str]] = None,
+        extra_fields: typing.Sequence[str] | None = None,
         override_default_fields: bool = False,
     ) -> None:
         if extra_fields is None:
@@ -285,7 +284,7 @@ class _Query(ABC):
         self.filters = self._construct_filters()
 
     def _construct_fields(
-        self, extra_fields: typing_Sequence[str], override_default_fields: bool
+        self, extra_fields: typing.Sequence[str], override_default_fields: bool
     ) -> list[str]:
         """Construct the fields needed for the ShotGrid query"""
         if override_default_fields:
@@ -308,7 +307,7 @@ class _Query(ABC):
         self.filters.append(filter)
 
     @abstractmethod
-    def exec(self, sg: shotgun_api3.Shotgun) -> Any:
+    def exec(self, sg: shotgun_api3.Shotgun) -> typing.Any:
         pass
 
     @abstractproperty
