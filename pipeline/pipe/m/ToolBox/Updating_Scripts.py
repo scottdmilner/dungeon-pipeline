@@ -15,7 +15,7 @@ def get_locator_position(locator_name):
 
 # Function to update the script with the new locator positions
 def update_script():
-    script_path = "pipe.m.toolbox.Robin_Face_Locators.py"
+    script_path = "pipe.m.ToolBox.Robin_Face_Locators.py"
     with open(script_path, "w") as file:
         file.write("# Building the Face\n# Locators\n\n")
         file.write('import maya.cmds as cmds")\n\n')
