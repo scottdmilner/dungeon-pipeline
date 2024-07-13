@@ -1,6 +1,7 @@
 import maya.cmds as cmds
 from importlib import reload
 
+
 def Button_updateLocators(*args):
     import pipe.m.ToolBox.Updating_Scripts
 
@@ -8,6 +9,7 @@ def Button_updateLocators(*args):
         pipe.m.ToolBox.Updating_Scripts
     )  # Optional: Reload the module if it has changed
     pipe.m.ToolBox.Updating_Scripts.create_gui()
+
 
 def Button_eyelids(*args):
     import pipe.m.ToolBox.V2_EyeUIandBasics
@@ -26,10 +28,12 @@ def Button_eyesockets(*args):
     )  # Optional: Reload the module if it has changed
     pipe.m.ToolBox.EyeSocket_V1_01.eyesocket()
 
+
 def createUI():
     import pipe.util as pu
+
     pu.reload_pipe()
-    
+
     if cmds.window(
         "Katies_Toolbox", exists=True
     ):  # Check if the window already exists and delete it if true
