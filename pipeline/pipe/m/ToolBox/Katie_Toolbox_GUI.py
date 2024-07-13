@@ -45,7 +45,7 @@ def createUI():
 
     cmds.columnLayout(adj=True)  # Create a layout for UI elements
 
-    cmds.button(label="Update_Robin_Locators", command=Button_updateLocators)
+    cmds.button(label="Base Locators", command=Button_updateLocators)
     cmds.button(label="Eyeslids", command=Button_eyelids)
     cmds.button(label="Eyesockets", command=Button_eyesockets)
 

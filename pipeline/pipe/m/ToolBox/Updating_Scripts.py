@@ -15,7 +15,7 @@ def get_locator_position(locator_name):
 
 # Function to update the script with the new locator positions
 def update_script():
-    script_path = "/users/animation/jonesk15/MyResources/Rigging/RiggingScripts/MyToolbox/MyTestsAndHelpfulStuff/Robin_Face_Locators.py"
+    script_path = "/groups/dungeons/character/Rigging/Rigs/RobinFace/Base_Locators/Robin_Face_Locators.py"
     with open(script_path, "w") as file:
         file.write("# Building the Face\n# Locators\n\n")
         file.write('cmds.group(em=True, name="Locators")\n\n')
@@ -83,14 +83,13 @@ def create_gui():
     cmds.columnLayout(adjustableColumn=True)
     cmds.text(label="Create Locators:")
     cmds.button(
-        label="Create All Locators", command=lambda *args: create_all_locators()
+        label="Create generic Locators", command=lambda *args: create_all_locators()
     )
 
     cmds.text(label="Update Script:")
-    cmds.button(label="Update Script", command=update_script_button)
+    cmds.button(label="Update Robins Locators", command=update_script_button)
 
     cmds.showWindow(window)
-
 
 # Function to update the script with the new locator positions
 def update_script_button(*args):
