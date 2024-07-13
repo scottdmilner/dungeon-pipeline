@@ -91,6 +91,7 @@ def create_gui():
 
     cmds.showWindow(window)
 
+
 # Function to update the script with the new locator positions
 def update_script_button(*args):
     update_script()
