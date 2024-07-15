@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Mapping, Optional, Union
+    import typing
 
 from ..baseclass import DCC
 from env import Executables
@@ -28,7 +28,7 @@ class SubstancePainterDCC(DCC):
 
         system = platform.system()
 
-        env_vars: Optional[Mapping[str, Union[int, str, None]]]
+        env_vars: typing.Mapping[str, int | str | None] | None
         env_vars = {
             "DCC": str(this_path.parent.name),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
