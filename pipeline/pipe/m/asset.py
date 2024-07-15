@@ -156,3 +156,23 @@ class ModelChecker(MCUI):
                 return False
 
         return True
+
+    # Override
+    def sanityCheck(self, contextsUuids, refreshSelection=True) -> None:
+        """The `sanityCheck` function cannot handle transforms that do not
+        have children. This catches those errors and warns the modelers."""
+        try:
+            super().sanityCheck(contextsUuids, refreshSelection)
+        except RuntimeError as err:
+            if (
+                "(kInvalidParameter): Object is incompatible with this method"
+                in err.args
+            ):
+                MessageDialog(
+                    self.parent(),
+                    "The model checker could not run. Please ensure that you do "
+                    "not have any empty transforms.",
+                    "Model Checker Failed",
+                ).exec_()
+            else:
+                raise err
