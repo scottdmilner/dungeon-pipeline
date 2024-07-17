@@ -80,6 +80,7 @@ def create_joints_from_list(joint_radius, name_for_joint):
         index += 1
         selected_objects.remove(obj)
 
+
 def find_suffix(node_name):
     last_underscore_index = node_name.rfind("_")
     if last_underscore_index != -1:
