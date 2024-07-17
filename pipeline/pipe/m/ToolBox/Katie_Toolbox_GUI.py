@@ -1,6 +1,21 @@
 import maya.cmds as cmds
 from importlib import reload
 
+def grab_face_bind_joints(*args):
+    import pipe.m.ToolBox.select_face_bind_joints
+
+    reload(
+        pipe.m.ToolBox.select_face_bind_joints
+    )  # Optional: Reload the module if it has changed
+    pipe.m.ToolBox.select_face_bind_joints.face_bind_selection()
+
+def mark_face_bind_joints(*args):
+    import pipe.m.ToolBox.add_bind_joint_attribute
+
+    reload(
+        pipe.m.ToolBox.add_bind_joint_attribute
+    )  # Optional: Reload the module if it has changed
+    pipe.m.ToolBox.add_bind_joint_attribute.add_joints()
 
 def Button_updateLocators(*args):
     import pipe.m.ToolBox.Updating_Scripts
@@ -45,6 +60,9 @@ def createUI():
 
     cmds.columnLayout(adj=True)  # Create a layout for UI elements
 
+    cmds.button(label="Mark as face bind joint", command=mark_face_bind_joints)
+    cmds.button(label="Select face bind joints", command=grab_face_bind_joints)
+    cmds.separator(height=10, style='none') # Separate
     cmds.button(label="Base Locators", command=Button_updateLocators)
     cmds.button(label="Eyeslids", command=Button_eyelids)
     cmds.button(label="Eyesockets", command=Button_eyesockets)
