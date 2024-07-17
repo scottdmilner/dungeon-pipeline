@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import hmac
+import json
 import logging
 import os
 import platform
 import shutil
+
+from hashlib import sha1
+from urllib import request
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,8 +20,13 @@ import maya.cmds as mc
 
 import pipe
 from pipe.db import DB
-from pipe.glui.dialogs import FilteredListDialog, MessageDialog
+from pipe.glui.dialogs import (
+    FilteredListDialog,
+    MessageDialog,
+    MessageDialogCustomButtons,
+)
 from shared.util import get_production_path
+from env import PIPEBOT_SECRET, PIPEBOT_URL
 from env_sg import DB_Config
 
 from modelChecker.modelChecker_UI import UI as MCUI
@@ -58,13 +68,26 @@ class IOManager:
 
     def publish_asset(self) -> None:
         checker = ModelChecker.get()
+        override = False
         if not checker.check_selected():
-            cursor = QTextCursor(checker.reportOutputUI.textCursor())
-            cursor.setPosition(0)
-            cursor.insertHtml(
-                "<h1>Asset not exported. Please resolve model checks.</h1>"
+            checker_fail_dialog = MessageDialogCustomButtons(
+                self.window,
+                "Error. This asset did not pass the model checker. Please "
+                "ensure your model meets the requirements set by the model "
+                "checker.",
+                "Cannot export: Model Checker",
+                has_cancel_button=True,
+                ok_name="Override",
+                cancel_name="Ok",
             )
-            return
+            override = bool(checker_fail_dialog.exec_())
+            if not override:
+                cursor = QTextCursor(checker.reportOutputUI.textCursor())
+                cursor.setPosition(0)
+                cursor.insertHtml(
+                    "<h1>Asset not exported. Please resolve model checks.</h1>"
+                )
+                return
 
         dialog = PublishAssetDialog(
             self.window, self._conn.get_asset_name_list(sorted=True)
@@ -96,6 +119,25 @@ class IOManager:
             + ".usd"
         )
         temp_publish_path = os.getenv("TEMP", "") + asset.name + ".usd"
+
+        # notify webhook of override
+        if override:
+            override_info = {
+                "user": os.getlogin(),
+                "asset": asset.disp_name,
+                "path": publish_path,
+            }
+            data = bytes(json.dumps(override_info), encoding="utf-8")
+            hashcheck = (
+                "sha1=" + hmac.new(PIPEBOT_SECRET.encode(), data, sha1).hexdigest()
+            )
+
+            req = request.Request(
+                url=PIPEBOT_URL + "/model_checker",
+                data=data,
+            )
+            req.add_header("x-pipebot-signature", hashcheck)
+            request.urlopen(req)
 
         # save the file
         kwargs = {

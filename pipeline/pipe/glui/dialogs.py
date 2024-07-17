@@ -101,10 +101,39 @@ class MessageDialog(QtWidgets.QDialog, DialogButtons):
         parent: QtWidgets.QWidget | None,
         message: str,
         title: str = "Message",
+        /,
         has_cancel_button: bool = False,
     ) -> None:
         super(MessageDialog, self).__init__(parent)
         self._init_buttons(has_cancel_button)
+
+        self.setParent(parent)
+        self.setWindowTitle(title)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+
+        layout = QtWidgets.QVBoxLayout(self)
+
+        label = QtWidgets.QLabel(message)
+        layout.addWidget(label)
+
+        layout.addWidget(self.buttons)
+
+        self.setLayout(layout)
+
+
+class MessageDialogCustomButtons(QtWidgets.QDialog, DialogButtons):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None,
+        message: str,
+        title: str = "Message",
+        /,
+        has_cancel_button: bool = False,
+        ok_name: str = "",
+        cancel_name: str = "",
+    ) -> None:
+        super(MessageDialogCustomButtons, self).__init__(parent)
+        self._init_buttons(has_cancel_button, ok_name, cancel_name)
 
         self.setParent(parent)
         self.setWindowTitle(title)
