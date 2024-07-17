@@ -77,6 +77,8 @@ def create_joints_from_list(joint_radius, name_for_joint):
         joint_name = f"{name_for_joint}_{index:02}"  # Append index to the joint name
         cmds.select(obj)
         cmds.joint(radius=joint_radius, name=joint_name)
+        cmds.addAttr(obj,longName="face_bind_joint", attributeType="bool", defaultValue=True, keyable=False,
+        )
         index += 1
         selected_objects.remove(obj)
 
