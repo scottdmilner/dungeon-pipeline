@@ -79,7 +79,7 @@ def create_joints_from_list(joint_radius, name_for_joint):
         new_joint = cmds.joint(radius=joint_radius, name=joint_name)
 
         # Check if "face_bind_joint" attribute already exists
-        if not cmds.attributeQuery('face_bind_joint', node=new_joint, exists=True):
+        if not cmds.attributeQuery("face_bind_joint", node=new_joint, exists=True):
             cmds.addAttr(
                 new_joint,
                 longName="face_bind_joint",
