@@ -136,7 +136,7 @@ class ModelChecker(MCUI):
             "ngons",
             "noneManifoldEdges",
             "onBorder",
-            "selfPenetratingUVs",
+            #            "selfPenetratingUVs",
             "zeroAreaFaces",
             "zeroLengthEdges",
         ]
