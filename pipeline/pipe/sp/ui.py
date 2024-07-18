@@ -43,7 +43,7 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
     _conn: DB
     _main_layout: QLayout
     _mat_var_dropdown: QComboBox
-    _mat_var_enabled: QtWidgets.QCheckBox
+    # _mat_var_enabled: QtWidgets.QCheckBox
     _metadataManager: pipe.sp.metadata.MetadataUpdater
     _srgbChecker: pipe.sp.channels.sRGBChecker
     _tex_set_dict: typing.Mapping[sp.textureset.TextureSet, "TexSetWidget"]
@@ -127,24 +127,20 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         mat_var_layout = QtWidgets.QHBoxLayout(mat_var_widget)
         mat_var_layout.setContentsMargins(0, 0, 0, 0)
         mat_var_layout.setSpacing(0)
-        self._mat_var_enabled = QtWidgets.QCheckBox()
-        mat_var_layout.addWidget(self._mat_var_enabled, 10)
         mat_var_settings_widget = QtWidgets.QWidget()
         mat_var_settings_layout = QtWidgets.QHBoxLayout(mat_var_settings_widget)
         mat_var_label = QLabel("Material Variant:")
         mat_var_settings_layout.addWidget(mat_var_label, 30)
         self._mat_var_dropdown = QComboBox()
-        mv_items = list(self._asset.material_variants)
+        mv_set = set(self._asset.material_variants)
+        mv_set.add("default")
+        mv_items = list(mv_set)
         self._mat_var_dropdown.addItems(mv_items)
-        self._mat_var_dropdown.setCurrentText("")
+        self._mat_var_dropdown.setCurrentText("default")
         self._mat_var_dropdown.setEditable(True)
         mat_var_validator = QRegExpValidator("[a-z][a-z_\d]*")
         self._mat_var_dropdown.setValidator(mat_var_validator)
         mat_var_settings_layout.addWidget(self._mat_var_dropdown, 70)
-        self._mat_var_enabled.toggled.connect(
-            _checkbox_callback_helper(self._mat_var_enabled, mat_var_settings_widget)
-        )
-        mat_var_settings_widget.setEnabled(False)
         mat_var_layout.addWidget(mat_var_settings_widget, 90)
         self._main_layout.addWidget(mat_var_widget)
 
@@ -165,13 +161,11 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         return meta and srgb
 
     @property
-    def mat_var(self) -> str | None:
-        if self._mat_var_enabled.isChecked():
-            return self._mat_var_dropdown.currentText()
-        return None
+    def mat_var(self) -> str:
+        return self._mat_var_dropdown.currentText()
 
     def do_export(self) -> None:
-        if self.mat_var and (self.mat_var not in self._asset.material_variants):
+        if self.mat_var not in self._asset.material_variants:
             self._asset.material_variants.add(self.mat_var)
             log.info(f"Updating new material variant: {self.mat_var}")
             self._conn.update_asset(self._asset)
