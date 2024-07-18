@@ -107,7 +107,6 @@ def lnd_componentsetup(kwargs: dict) -> hou.Node:
     asset_name = hou.hscriptStringExpression("$HIP").split("/")[-1]
     out.parm("rootprim").set("/" + asset_name)
     out.parm("localize").set(False)
-    out.parm("variantlayers").set(True)
     out.parm("lopoutput").set('$HIP/export/`chs("filename")`')
     out.parm("thumbnailmode").set(2)
     out.parm("renderer").set("RenderMan RIS")
