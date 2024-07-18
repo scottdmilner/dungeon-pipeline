@@ -1,8 +1,4 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import typing
 
 from PySide2 import QtWidgets
 
@@ -12,7 +8,8 @@ import pipe.sp
 from pipe.sp.ui import SubstanceExportWindow
 from pipe.glui.dialogs import MessageDialog
 
-plugin_widgets: list[typing.Type[QtWidgets.QWidget]] = []
+
+plugin_widgets: list[QtWidgets.QWidget] = []
 
 
 def start_plugin():
