@@ -1,9 +1,15 @@
-"""Adapted/updated from 2024 (Accomplice) / 2022 (Cenote) pipelines"""
+from __future__ import annotations
 
 import logging
+import re
 
 from PySide2 import QtWidgets, QtCore
-from typing import Callable, Optional, Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typing
+
+"""Adapted/updated from 2024 (Accomplice) / 2022 (Cenote) pipelines"""
 
 log = logging.getLogger(__name__)
 
@@ -31,8 +37,8 @@ class ButtonPair:
 class DialogButtons(ButtonPair):
     # stubs for attributes that will be on class this is inherited by
     buttons: QtWidgets.QDialogButtonBox
-    accept: Callable[..., None]
-    reject: Callable[..., None]
+    accept: typing.Callable[..., None]
+    reject: typing.Callable[..., None]
 
     def _init_buttons(self, has_cancel_button: bool, *args) -> None:
         super(DialogButtons, self)._init_buttons(has_cancel_button, *args)
@@ -50,9 +56,9 @@ class DialogFilteredList:
 
     def _init_filtered_list(
         self,
-        items: Sequence[str],
-        list_label: Optional[str] = None,
-        include_filter_field: Optional[bool] = True,
+        items: typing.Sequence[str],
+        list_label: str | None = None,
+        include_filter_field: bool | None = True,
     ) -> None:
         self.filtered_list = QtWidgets.QVBoxLayout()
 
@@ -73,15 +79,16 @@ class DialogFilteredList:
 
     def _filter_items(self) -> None:
         filter_text = self._filter_field.text().lower()
+        reg = re.compile(".*".join(["", *filter_text.split(), ""]))
         for row in range(self._list_widget.count()):
             item = self._list_widget.item(row)
             item_text = item.text().lower()
-            if all(char in item_text for char in filter_text):
+            if reg.match(item_text):
                 item.setHidden(False)
             else:
                 item.setHidden(True)
 
-    def get_selected_item(self) -> Optional[str]:
+    def get_selected_item(self) -> str | None:
         selected_items = self._list_widget.selectedItems()
         if selected_items:
             return selected_items[0].text()
@@ -91,13 +98,42 @@ class DialogFilteredList:
 class MessageDialog(QtWidgets.QDialog, DialogButtons):
     def __init__(
         self,
-        parent: Optional[QtWidgets.QWidget],
+        parent: QtWidgets.QWidget | None,
         message: str,
         title: str = "Message",
+        /,
         has_cancel_button: bool = False,
     ) -> None:
         super(MessageDialog, self).__init__(parent)
         self._init_buttons(has_cancel_button)
+
+        self.setParent(parent)
+        self.setWindowTitle(title)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+
+        layout = QtWidgets.QVBoxLayout(self)
+
+        label = QtWidgets.QLabel(message)
+        layout.addWidget(label)
+
+        layout.addWidget(self.buttons)
+
+        self.setLayout(layout)
+
+
+class MessageDialogCustomButtons(QtWidgets.QDialog, DialogButtons):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None,
+        message: str,
+        title: str = "Message",
+        /,
+        has_cancel_button: bool = False,
+        ok_name: str = "",
+        cancel_name: str = "",
+    ) -> None:
+        super(MessageDialogCustomButtons, self).__init__(parent)
+        self._init_buttons(has_cancel_button, ok_name, cancel_name)
 
         self.setParent(parent)
         self.setWindowTitle(title)
@@ -121,13 +157,13 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 
     def __init__(
         self,
-        parent: Optional[QtWidgets.QWidget],
-        items: Sequence[str],
+        parent: QtWidgets.QWidget | None,
+        items: typing.Sequence[str],
         title: str = "Filtered List",
-        list_label: Optional[str] = None,
-        include_filter_field: Optional[bool] = True,
-        accept_button_name: Optional[str] = "OK",
-        reject_button_name: Optional[str] = "Cancel",
+        list_label: str | None = None,
+        include_filter_field: bool | None = True,
+        accept_button_name: str | None = "OK",
+        reject_button_name: str | None = "Cancel",
     ) -> None:
         super(FilteredListDialog, self).__init__(parent)
         self._init_buttons(True, accept_button_name, reject_button_name)
@@ -153,8 +189,8 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 #     def message(
 #         self,
 #         msg: str = " ",
-#         details: Optional[str] = None,
-#         title: Optional[str] = "Message",
+#         details: str | None = None,
+#         title: str | None = "Message",
 #     ) -> None:
 #         """Reports a message"""
 #         log.info(msg)
@@ -176,7 +212,7 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 #         msgBox.exec_()
 
 #     def error(
-#         self, errMsg: str, details: Optional[str] = None, title: Optional[str] = "Error"
+#         self, errMsg: str, details: str | None = None, title: str | None = "Error"
 #     ) -> None:
 #         """Reports a critical error"""
 #         self.message(errMsg, details=details, title=title)
@@ -184,21 +220,21 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 #     def warning(
 #         self,
 #         warnMsg: str,
-#         details: Optional[str] = None,
-#         title: Optional[str] = "Warning",
+#         details: str | None = None,
+#         title: str | None = "Warning",
 #     ) -> None:
 #         """Reports a non-critical warning"""
 #         self.message(warnMsg, details=details, title=title)
 
-#     def info(self, infoMsg: str, title: Optional[str] = "Info") -> None:
+#     def info(self, infoMsg: str, title: str | None = "Info") -> None:
 #         """Reports an informational message"""
 #         self.message(msg=infoMsg, title=title)
 
 #     def yes_or_no(
 #         self,
 #         question: str,
-#         details: Optional[str] = None,
-#         title: Optional[str] = "Question",
+#         details: str | None = None,
+#         title: str | None = "Question",
 #     ) -> bool:
 #         """Asks a question that can be resolved with a yes or no
 #         returns True if yes, otherwise False"""
@@ -223,8 +259,8 @@ class FilteredListDialog(QtWidgets.QDialog, DialogButtons, DialogFilteredList):
 #             return False
 
 #     def input(
-#         self, label: str, title: Optional[str] = "Input", text: Optional[str] = None
-#     ) -> Optional[str]:
+#         self, label: str, title: str | None = "Input", text: str | None = None
+#     ) -> str | None:
 #         """
 #         Allows the user to respond with a text input
 #         If the okay button is pressed it returns the inputed text, otherwise None
@@ -487,7 +523,7 @@ class CheckboxSelect(QtWidgets.QDialog):
 #         self.env = env()
 #         self.baseDir = os.path.abspath(os.path.join(self.env.project_dir, os.pardir, "Editing", "Animation"))
 
-#         self.sequences = self.getSequences()
+#         self.sequences = self.gettyping.Sequences()
 #         self.shots = []
 
 #         self.setupUI()
@@ -512,7 +548,7 @@ class CheckboxSelect(QtWidgets.QDialog):
 #         self.sequenceLayout = QtWidgets.QVBoxLayout()
 #         self.listLayout.addLayout(self.sequenceLayout)
 
-#         self.sequenceLabel = QtWidgets.QLabel("Sequences")
+#         self.sequenceLabel = QtWidgets.QLabel("typing.Sequences")
 #         self.sequenceLabel.setAlignment(QtCore.Qt.AlignCenter)
 #         self.sequenceLayout.addWidget(self.sequenceLabel)
 
@@ -565,7 +601,7 @@ class CheckboxSelect(QtWidgets.QDialog):
 #             self.sequenceListWidget.addItems([s for s in self.sequences if search in s])
 #             self.shotListWidget.addItems([s for s in self.getAllShots() if search in s])
 
-#     def getSequences(self):
+#     def gettyping.Sequences(self):
 #         """Returns an alphabetically sorted list of sequences in the project.
 #         @return: list of sequences"""
 
@@ -580,10 +616,10 @@ class CheckboxSelect(QtWidgets.QDialog):
 #         if self.sequenceListWidget.currentItem() is None:
 #             return []
 
-#         currentSequence = self.sequenceListWidget.currentItem().text()[-1]
-#         # shots = os.listdir(os.path.join(self.baseDir, currentSequence))
+#         currenttyping.Sequence = self.sequenceListWidget.currentItem().text()[-1]
+#         # shots = os.listdir(os.path.join(self.baseDir, currenttyping.Sequence))
 #         shots = os.listdir(self.env.get_shot_dir())
-#         shots = [shot for shot in shots if shot.startswith(currentSequence)]
+#         shots = [shot for shot in shots if shot.startswith(currenttyping.Sequence)]
 #         shots.sort()
 #         return shots
 

@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
 import shutil
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typing
 
 from ..baseclass import DCC
-from pipe.util import get_rigging_path
+from shared.util import get_rigging_path
 from env import Executables
 
 log = logging.getLogger(__name__)
@@ -28,7 +33,7 @@ class MayaDCC(DCC):
             Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve() / "shelves"
         )
 
-        env_vars: Optional[Mapping[str, Union[int, str, None]]]
+        env_vars: typing.Mapping[str, int | str | None] | None
         env_vars = {
             "DCC": str(this_path.parent.name),
             "DWPICKER_PROJECT_DIRECTORY": str(get_rigging_path() / "Pickers"),
@@ -46,13 +51,22 @@ class MayaDCC(DCC):
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             "QT_FONT_DPI": os.getenv("MAYA_FONT_DPI") if system == "Linux" else None,
             "QT_PLUGIN_PATH": None,
+            # USD Plugins
+            "PXR_PLUGINPATH_NAME": os.pathsep.join(
+                [
+                    str(pipe_path / "lib/usd/kinds"),
+                    os.environ.get("PXR_PLUGINPATH_NAME", ""),
+                ]
+            ),
+            # Icons
             "XBMLANGPATH": os.pathsep.join(
                 [
-                    str(
+                    str(pth) + ("/%B" if system == "Linux" else "")
+                    for pth in [
                         this_path.parent
-                        / "scripts/studiolibrary/src/studiolibrary/resource/icons"
-                    )
-                    + ("/%B" if system == "Linux" else ""),
+                        / "scripts/studiolibrary/src/studiolibrary/resource/icons",
+                        pipe_path / "lib/icon",
+                    ]
                 ]
             ),
         }
@@ -63,7 +77,7 @@ class MayaDCC(DCC):
         else:
             launch_command = str(Executables.maya)
 
-        launch_args: List[str] = []
+        launch_args: list[str] = []
 
         super().__init__(
             launch_command, launch_args, env_vars, lambda: self.set_up_shelf_path()

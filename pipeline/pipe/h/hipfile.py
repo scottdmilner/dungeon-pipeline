@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hou
 import logging
 from pathlib import Path
@@ -5,7 +7,10 @@ from pathlib import Path
 import pipe.h
 from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog
-from env import SG_Config
+
+from shared.util import get_production_path
+
+from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +19,7 @@ class FileManager:
     _conn: DB
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
 
     def _check_unsaved_changes(self) -> bool:
         """Returns True if safe to proceed, False otherwise"""
@@ -80,7 +85,7 @@ class FileManager:
             )
             return
 
-        asset_path = pipe.util.get_production_path() / asset.path
+        asset_path = get_production_path() / asset.path
 
         if not self._prompt_create_if_not_exist(asset_path):
             return
@@ -96,8 +101,8 @@ class FileManager:
         self.populate_asset_file()
 
     def populate_asset_file(self) -> None:
-        # TODO: create starting nodes
-        pass
+        hip_path = Path(hou.hscriptStringExpression("$HIP"))
+        hou.setContextOption("ASSET", hip_path.name)
 
     def open_shot_file(self) -> None:
         pass

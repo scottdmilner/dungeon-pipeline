@@ -1,29 +1,35 @@
-"""Baseclasses for interacting with DCCs"""
+from __future__ import annotations
 
 import logging
 import os
 import subprocess
 
-from typing import Callable, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typing
+
+from shared.util import fix_launcher_metadata, get_production_path
 
 from .interface import DCCInterface, DCCLocalizerInterface
-from pipe.util import fix_launcher_metadata
+
+"""Baseclasses for interacting with DCCs"""
 
 log = logging.getLogger(__name__)
 
 
 class DCC(DCCInterface):
     command: str
-    args: Optional[List[str]]
-    env_vars: Mapping[str, Optional[Union[int, str]]]
-    pre_launch_tasks: Callable[[], None]
+    args: list[str] | None
+    env_vars: typing.Mapping[str, int | str | None]
+    pre_launch_tasks: typing.Callable[[], None]
 
     def __init__(
         self,
         command: str,
-        args: Optional[List[str]] = [],
-        env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None,
-        pre_launch_tasks: Optional[Callable[[], None]] = None,
+        args: typing.Sequence[str] | None = None,
+        env_vars: typing.Mapping[str, int | str | None] | None = None,
+        pre_launch_tasks: typing.Callable[[], None] | None = None,
     ) -> None:
         """Initialize DCC object.
 
@@ -32,13 +38,16 @@ class DCC(DCCInterface):
         - args    -- the arguments to pass to the command
         """
 
+        if args is None:
+            args = []
+
         self.command = command
-        self.args = args
+        self.args = list(args) if args else None
         self.env_vars = env_vars or {}
         self.pre_launch_tasks = pre_launch_tasks or (lambda: None)
 
     def _set_env_vars(
-        self, env_vars: Optional[Mapping[str, Optional[Union[int, str]]]] = None
+        self, env_vars: typing.Mapping[str, int | str | None] | None = None
     ) -> None:
         """(Un)Set environment variables to their associated values.
 
@@ -57,11 +66,21 @@ class DCC(DCCInterface):
             else:
                 os.environ[key] = str(val)
 
+        if not os.environ["PYTHONPATH"]:
+            os.environ["PYTHONPATH"] = ""
+        os.environ["PYTHONPATH"] = os.pathsep.join(
+            [
+                os.environ["PYTHONPATH"],
+                str(get_production_path() / "../pipeline/pipeline/lib/python"),
+            ]
+        )
+        print(os.environ["PYTHONPATH"])
+
     def launch(
         self,
-        command: Optional[str] = None,
-        args: Optional[List[str]] = None,
-        pre_launch_tasks: Optional[Callable[[], None]] = None,
+        command: str | None = None,
+        args: typing.Sequence[str] | None = None,
+        pre_launch_tasks: typing.Callable[[], None] | None = None,
     ) -> None:
         """Launch the software with the specified arguments.
 
@@ -82,7 +101,7 @@ class DCC(DCCInterface):
 
         log.info("Launching the software")
         log.debug(f"Command: {command}, Args: {args}")
-        subprocess.call([command] + (args or []))
+        subprocess.call([command] + list(args or []))
 
 
 class DCCLocalizer(DCCLocalizerInterface):

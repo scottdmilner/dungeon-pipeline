@@ -1,19 +1,22 @@
+from __future__ import annotations
+
 from PySide2 import QtWidgets
 
 import maya.cmds as mc
 import os
-from typing import Optional
 
-import pipe.util as pu
+import shared.util as su
 from pipe.m.local import get_main_qt_window
 
 rig_list = [
+    "select rig",
     "Robin",
     "RobinFace",
     "Rayden",
     "RaydenFace",
     "DungeonMonster",
     "Crossbow",
+    "Cipher",
     "LootBag",
     "Door",
     "test",
@@ -37,8 +40,8 @@ class RigPublishUI(QtWidgets.QDialog):
 
         self.anim_check = QtWidgets.QCheckBox("Update Anim Symlink")
         self.pvis_check = QtWidgets.QCheckBox("Update Previs Symlink")
-        self.anim_check.setChecked(True)
-        self.pvis_check.setChecked(True)
+        self.anim_check.setChecked(False)
+        self.pvis_check.setChecked(False)
 
         self.publish_btn = QtWidgets.QPushButton("Publish")
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
@@ -65,10 +68,15 @@ class RigPublishUI(QtWidgets.QDialog):
 
     def on_publish(self):
         file_name = self.rig_options.currentText()
+
+        if file_name == "select rig":
+            mc.warning("Select a rig to publish.")
+            return
+
         update_anim = self.anim_check.isChecked()
         update_pvis = self.pvis_check.isChecked()
 
-        dir_path = pu.get_rigging_path() / "Rigs" / file_name / "RigVersions"
+        dir_path = su.get_rigging_path() / "Rigs" / file_name / "RigVersions"
 
         # search directory for all versions and determine new version number
         ls_dir = dir_path.iterdir()
@@ -93,7 +101,7 @@ class RigPublishUI(QtWidgets.QDialog):
 
         # create symlinks
         if update_anim:
-            anim_link_dir_path = pu.get_anim_path() / "Rigs"
+            anim_link_dir_path = su.get_anim_path() / "Rigs"
             temp_name = f"{anim_link_dir_path}\\tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{anim_link_dir_path}/{file_name}.mb")
@@ -102,7 +110,7 @@ class RigPublishUI(QtWidgets.QDialog):
                 f"Link to file created or updated at '{anim_link_dir_path}/{file_name}.mb'\n"
             )
         if update_pvis:
-            pvis_link_dir_path = pu.get_previs_path() / "Rigs"
+            pvis_link_dir_path = su.get_previs_path() / "Rigs"
             temp_name = f"{pvis_link_dir_path}\\tmp"
             os.symlink(full_name, temp_name)
             os.rename(temp_name, f"{pvis_link_dir_path}/{file_name}.mb")
@@ -117,7 +125,7 @@ class RigPublishUI(QtWidgets.QDialog):
         self.close()
 
 
-rig_pub: Optional[RigPublishUI] = None
+rig_pub: RigPublishUI | None = None
 
 
 def run():

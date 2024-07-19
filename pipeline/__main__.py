@@ -1,4 +1,13 @@
 #!/usr/bin/env python3.9
+from __future__ import annotations
+
+import logging
+import os
+
+from argparse import ArgumentParser
+
+from shared.util import find_implementation
+from software.interface import DCCInterface
 
 r"""Launch the BYU 2025 Capstone pipeline ("Love & Dungeons")
 
@@ -8,16 +17,7 @@ When run as a script, parse the software from the command line
 arguments, then run launch().
 """
 
-import logging
-import os
-
-from argparse import ArgumentParser
-
-from pipe.util import find_implementation
-from software.interface import DCCInterface
-
 pipe_true_root = os.path.realpath(os.path.dirname(__file__))
-
 
 # Configure logging
 log = logging.getLogger(__name__)

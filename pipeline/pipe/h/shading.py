@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 from itertools import count
 from pathlib import Path
-from typing import cast, Generator, Iterable, List, Optional
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    import typing
 
 import hou
 
 from pipe.h.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import (
     DisplacementSource,
     MaterialInfo,
@@ -16,7 +21,7 @@ from pipe.struct.material import (
 )
 from pipe.glui.dialogs import MessageDialog
 
-from env import SG_Config
+from env_sg import DB_Config
 
 _MATLIB_NAME = "Material_Library"
 _MATNAME = "matname"
@@ -26,8 +31,8 @@ _MATNAME = "matname"
 class MatlibManager:
     _conn: DB
 
-    def __init__(self, node: Optional[hou.LopNode] = None) -> None:
-        self._conn = DB(SG_Config)
+    def __init__(self, node: hou.LopNode | None = None) -> None:
+        self._conn = DB.Get(DB_Config)
         if node:
             self._init_hda(node)
 
@@ -49,18 +54,21 @@ class MatlibManager:
             return
 
         # set default variant on the hda
-        var2 = self._conn.get_asset_by_stub(self._asset.variants[0])
-        assert var2 is not None
-        assert var2.variant_name is not None
-        assert var2.id is not None
-        var_name.set(var2.variant_name)
-        var_id.set(var2.id)
+        default_geo_var = self._conn.get_asset_by_stub(self._asset.variants[0])
+        assert default_geo_var.variant_name is not None
+        assert default_geo_var.id is not None
+        var_name.set(default_geo_var.variant_name)
+        var_id.set(default_geo_var.id)
+
+        self._update_default_mat_var(default_geo_var, node=node)
+
+        self.update_base_path(node=node)
 
     @property
     def _asset(self) -> Asset:
         """Get asset based off of the path of the current hipfile"""
-        a = self._conn.get_asset_by_attr("sg_pipe_name", self._hip.name)
-        assert a is not None
+        asset_name = str(hou.contextOption("ASSET"))
+        a = self._conn.get_asset_by_attr("name", asset_name)
         return a
 
     @property
@@ -74,11 +82,10 @@ class MatlibManager:
         return Path(hou.hscriptStringExpression("$HSITE"))
 
     @property
-    def material_info(self) -> Optional[MaterialInfo]:
+    def material_info(self) -> MaterialInfo | None:
         """Attempt to get mat.json file for selected variant"""
         try:
-            variant = self._conn.get_asset_by_id(self.variant_id)
-            assert variant is not None
+            variant = self._conn.get_asset_by_id(self.geo_variant_id)
 
             if not (variant_name := variant.variant_name):
                 variant_name = "main"
@@ -103,25 +110,24 @@ class MatlibManager:
         return node
 
     @property
-    def variant_id(self) -> int:
-        """Get the id of the current variant"""
-        var_id = self.node.parm("variant_id")
-        assert var_id is not None
+    def geo_variant_id(self) -> int:
+        """Get the id of the current geo variant"""
+        geo_var_id = self.node.parm("variant_id")
+        assert geo_var_id is not None
         # if it hasn't been set yet, set it to the default value
-        if (node_val := var_id.evalAsInt()) == -1:
+        if (node_val := geo_var_id.evalAsInt()) == -1:
             default = int(self.get_variant_list()[0])
-            var_id.set(default)
+            geo_var_id.set(default)
             return default
         return node_val
 
-    @variant_id.setter
-    def variant_id(self, id: int) -> None:
+    @geo_variant_id.setter
+    def geo_variant_id(self, id: int) -> None:
         """Set the variant ID and update the variant name"""
-        var_id = self.node.parm("variant_id")
-        assert var_id is not None
-        var_id.set(id)
+        geo_var_id = self.node.parm("variant_id")
+        assert geo_var_id is not None
+        geo_var_id.set(id)
         asset = self._conn.get_asset_by_id(id)
-        assert asset is not None
         assert asset.variant_name is not None
         var_name = self.node.parm("variant_name")
         assert var_name is not None
@@ -129,6 +135,9 @@ class MatlibManager:
             var_name.set(asset.variant_name)
         else:
             var_name.set("main")
+
+        self._update_default_mat_var(asset)
+        self.update_base_path()
 
     @property
     def variant_name(self) -> str:
@@ -139,7 +148,6 @@ class MatlibManager:
             variant_name: str
             if variants:
                 var1 = self._conn.get_asset_by_stub(variants[0])
-                assert var1 is not None
                 assert var1.variant_name is not None
                 variant_name = var1.variant_name
             else:
@@ -148,10 +156,41 @@ class MatlibManager:
             return variant_name
         return node_val
 
+    def _update_default_mat_var(
+        self, default_geo_var: Asset, /, node: hou.Node | None = None
+    ) -> None:
+        # this may be called before initialization, so `self.node` may not work
+        if not node:
+            node = self.node
+        # update mat_variant on the hda
+        mat_var = node.parm("mat_var")
+        assert mat_var is not None
+        mat_var.set(
+            next(iter(default_geo_var.material_variants), "NO EXPORTED TEXTURES")
+        )
+
+    def update_base_path(self, node: hou.LopNode | None = None) -> None:
+        if not node:
+            # this lets us call update_base_path from inside self._init_hda
+            node = self.node
+
+        base_path = node.parm("base_path")
+        assert base_path is not None
+
+        var_name = node.parm("variant_name")
+        assert var_name is not None
+
+        mat_var_name = node.parm("mat_var")
+        assert mat_var_name is not None
+
+        base_path.set(
+            f"tex/{var_name.evalAsString()}/variants/{mat_var_name.evalAsString()}"
+        )
+
     @staticmethod
     def _get_map_paths(
         node: hou.Node, parm: str = "filename"
-    ) -> Generator[Path, None, None]:
+    ) -> typing.Generator[Path, None, None]:
         """Helper function to get all the maps referred to by a <UDIM>
         wildcard as Path objects"""
         filename_parm = node.parm(parm)
@@ -160,14 +199,16 @@ class MatlibManager:
         return Path(dir).glob(filename.replace("<UDIM>", "*"))
 
     def _cleanup_matnet(
-        self, new_items: Iterable[hou.NetworkMovableItem], tex_set_info: TexSetInfo
+        self,
+        new_items: typing.Iterable[hou.NetworkMovableItem],
+        tex_set_info: TexSetInfo,
     ) -> None:
         """Clean up a matnet after it has been imported from cpio"""
 
         # locate relevant nodes
         control_node: hou.Node
         displacement_map: hou.Node
-        displacement_nodes: List[hou.Node] = []
+        displacement_nodes: list[hou.Node] = []
         emissive_node: hou.Node
         ior_node: hou.Node
         normal_node: hou.Node
@@ -235,7 +276,7 @@ class MatlibManager:
 
     def load_items_from_file(
         self, dest_node: hou.LopNode, file_path: str
-    ) -> List[hou.NetworkMovableItem]:
+    ) -> list[hou.NetworkMovableItem]:
         """Loads a VOP network into a LOP node. Returns list of added items"""
         before = dest_node.allItems()
         dest_node.loadItemsFromFile(file_path)
@@ -244,7 +285,7 @@ class MatlibManager:
         return list(set(after) - set(before))
 
     def _move_matnet(
-        self, new_items: Iterable[hou.NetworkMovableItem], x_pos: int
+        self, new_items: typing.Iterable[hou.NetworkMovableItem], x_pos: int
     ) -> None:
         # find the master netbox
         master_box = next(
@@ -262,7 +303,7 @@ class MatlibManager:
 
     def _rename_matnet(
         self,
-        new_items: Iterable[hou.NetworkMovableItem],
+        new_items: typing.Iterable[hou.NetworkMovableItem],
         name: str,
         name_placeholder: str = _MATNAME,
     ) -> None:
@@ -284,13 +325,20 @@ class MatlibManager:
                 if item.comment() == name_placeholder:
                     item.setComment(name)
 
-    def get_variant_list(self) -> List[str]:
+    def get_variant_list(self) -> list[str]:
         """Gets list of variants in the way that the HDA interface expects:
         [id1, label1, id2, label2, ...]"""
         if len(self._asset.variants):
             return [s for v in self._asset.variants for s in (str(v.id), v.disp_name)]
         else:
             return [str(self._asset.id), "Main"]
+
+    def get_mat_variant_list(self) -> list[str]:
+        """Gets list of mat variants in the way that the HDA interface
+        expects: [id1, label1, id2, label2, ...]"""
+        current_geo_var = self._conn.get_asset_by_id(self.geo_variant_id)
+        mvs = list(current_geo_var.material_variants) or ["NO EXPORTED TEXTURES"]
+        return [s for v in mvs for s in (v, v)]
 
     def export_selected_to_path(
         self, path: str, curr_name: str = _MATNAME, new_name: str = _MATNAME

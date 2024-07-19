@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -6,13 +8,17 @@ import time
 
 from math import ceil, floor, log2, sqrt
 from pathlib import Path
-from typing import cast, Callable, Dict, Iterable, List, Tuple, TypeVar
+from typing import TYPE_CHECKING, cast
 
-from .util import silent_startupinfo
+if TYPE_CHECKING:
+    import typing
+
+    RT = typing.TypeVar("RT")  # return type
+
+from pipe.util import silent_startupinfo
 
 from env import Executables
 
-RT = TypeVar("RT")  # return type
 
 log = logging.getLogger(__name__)
 
@@ -24,19 +30,19 @@ class TexConversionError(ChildProcessError):
 class TexConverter:
     tex_path: Path
     preview_path: Path
-    imgs_by_tex_set: Iterable[List[str]]
+    imgs_by_tex_set: typing.Iterable[list[str]]
 
     def __init__(
         self,
         tex_path: Path,
         preview_path: Path,
-        imgs_by_tex_set: Iterable[List[str]],
+        imgs_by_tex_set: typing.Iterable[list[str]],
     ) -> None:
         self.tex_path = tex_path
         self.preview_path = preview_path
         self.imgs_by_tex_set = imgs_by_tex_set
 
-    def convert_tex(self) -> List[Path]:
+    def convert_tex(self) -> list[Path]:
         """Convert all .png textures in the most recent export to .tex"""
 
         assert self.tex_path is not None
@@ -105,8 +111,8 @@ class TexConverter:
             ]
             # fmt: on
 
-        pre_cmdlines: List[List[str]] = []
-        cmdlines: List[List[str]] = []
+        pre_cmdlines: list[list[str]] = []
+        cmdlines: list[list[str]] = []
         for imgs in self.imgs_by_tex_set:
             log.debug(imgs)
             for img in imgs:
@@ -127,13 +133,13 @@ class TexConverter:
 
         return finished_imgs
 
-    def convert_previewsurface(self) -> List[Path]:
+    def convert_previewsurface(self) -> list[Path]:
         """Compile all .jpeg textures in the most recent export to UDIM-less tiles"""
 
         assert self.preview_path is not None
 
         @self._debug_out
-        def jpeg_cmd(root: Path, imgs: List[str]) -> list[str]:
+        def jpeg_cmd(root: Path, imgs: typing.Sequence[str]) -> list[str]:
             dimx, dimy = self._img_dims(imgs[0])
 
             img_name = re.search(r"^(.*_)(.+)$", root.name)
@@ -150,17 +156,12 @@ class TexConverter:
                 *imgs,
                 "--mosaic", f"{grid_base}x{grid_height}",
                 "--resize", f"{dimx}x{dimy}",
-                *(
-                    ["--colorconvert", "srgb-ap1", "sRGB-Texture"] 
-                    if color_space == "srgb-ap1" 
-                    else []
-                ),
-                "-o", f"{str(self.preview_path / name_base)}{'sRGB' if color_space == 'srgb-ap1' else 'Linear'}.jpeg",
+                "-o", f"{str(self.preview_path / name_base)}{'sRGB' if color_space == 'sRGB-Texture' else 'Linear'}.jpeg",
             ]
             # fmt: on
 
         # construct list of grouped images
-        img_list: Dict[str, List[str]] = {}
+        img_list: dict[str, list[str]] = {}
         for imgs in self.imgs_by_tex_set:
             for img in imgs:
                 if img.endswith(".jpeg"):
@@ -186,7 +187,7 @@ class TexConverter:
         return finished_imgs
 
     @staticmethod
-    def _img_dims(img: str) -> Tuple[str, str]:
+    def _img_dims(img: str) -> tuple[str, str]:
         img_info = subprocess.check_output(
             [
                 str(Executables.oiiotool),
@@ -203,15 +204,15 @@ class TexConverter:
 
     @staticmethod
     def _wait_and_check_cmds(
-        cmds: List[List[str]], batch_size: int = 18, skip_check: bool = False
-    ) -> List[Path]:
+        cmds: typing.Sequence[list[str]], batch_size: int = 18, skip_check: bool = False
+    ) -> list[Path]:
         """Wait for list of processes to finish and print them to the debug log"""
 
         batched_cmds = (
             cmds[i : i + batch_size] for i in range(0, len(cmds), batch_size)
         )
 
-        finished_imgs: List[Path] = []
+        finished_imgs: list[Path] = []
 
         while batch := next(batched_cmds, None):
             start_time = time.time()
@@ -247,7 +248,7 @@ class TexConverter:
 
         return finished_imgs
 
-    def _debug_out(self, func: Callable[..., RT]) -> Callable[..., RT]:
+    def _debug_out(self, func: typing.Callable[..., RT]) -> typing.Callable[..., RT]:
         """Decorator to debug print the output of the function"""
 
         def inner(self: TexConverter, *args, **kwargs) -> RT:

@@ -1,4 +1,4 @@
-from typing import Sequence, Type
+from __future__ import annotations
 
 from PySide2 import QtWidgets
 
@@ -8,7 +8,8 @@ import pipe.sp
 from pipe.sp.ui import SubstanceExportWindow
 from pipe.glui.dialogs import MessageDialog
 
-plugin_widgets: Sequence[Type[QtWidgets.QWidget]] = []
+
+plugin_widgets: list[QtWidgets.QWidget] = []
 
 
 def start_plugin():

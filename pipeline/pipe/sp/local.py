@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from substance_painter import ui
-from typing import Optional
 
 from PySide2 import QtWidgets
 
@@ -10,7 +11,7 @@ class _SubstancePainterLocalizer(DCCLocalizer):
     def __init__(self) -> None:
         super().__init__("substance_painter")
 
-    def get_main_qt_window(self) -> Optional[QtWidgets.QWidget]:
+    def get_main_qt_window(self) -> QtWidgets.QWidget | None:
         return ui.get_main_window()
 
     def is_headless(self) -> bool:

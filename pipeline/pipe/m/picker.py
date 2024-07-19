@@ -1,6 +1,6 @@
 import dwpicker
 
-from pipe.util import get_rigging_path
+from shared.util import get_rigging_path
 
 picker_filenames = [
     "Rayden_Picker.json",

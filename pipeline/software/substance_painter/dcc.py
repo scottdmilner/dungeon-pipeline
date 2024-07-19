@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typing
 
 from ..baseclass import DCC
 from env import Executables
@@ -23,7 +28,7 @@ class SubstancePainterDCC(DCC):
 
         system = platform.system()
 
-        env_vars: Optional[Mapping[str, Union[int, str, None]]]
+        env_vars: typing.Mapping[str, int | str | None] | None
         env_vars = {
             "DCC": str(this_path.parent.name),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
@@ -47,6 +52,6 @@ class SubstancePainterDCC(DCC):
                 f"The operating system {system} is not a supported OS for this DCC software"
             )
 
-        launch_args: List[str] = []
+        launch_args: list[str] = []
 
         super().__init__(launch_command, launch_args, env_vars)

@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import substance_painter as sp
-from typing import List
 
 from pipe.sp.local import get_main_qt_window
 from pipe.glui.dialogs import MessageDialog
 
 
 class sRGBChecker:
-    srgb_channels: List[sp.textureset.Channel]
+    srgb_channels: list[sp.textureset.Channel]
 
     def __init__(self) -> None:
         self.srgb_channels = []

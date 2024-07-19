@@ -1,7 +1,11 @@
-"""Interfaces for interacting with DCCs"""
-
+from __future__ import annotations
 from abc import ABCMeta, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typing
+
+"""Interfaces for interacting with DCCs"""
 
 
 class DCCInterface(metaclass=ABCMeta):
@@ -27,7 +31,7 @@ class DCCLocalizerInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_main_qt_window(self) -> Any:
+    def get_main_qt_window(self) -> typing.Any:
         """Get the QT object representing the main application window.
         Use for the parent of other QT popups"""
         raise NotImplementedError

@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import substance_painter as sp
 
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Set, TypeVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typing
+
+    RT = typing.TypeVar("RT")  # return type
 
 from pipe.sp.local import get_main_qt_window
 from pipe.db import DB
-from pipe.struct.asset import Asset
+from pipe.struct.db import Asset
 from pipe.struct.material import (
     DisplacementSource,
     NormalSource,
@@ -18,10 +25,9 @@ from pipe.struct.material import (
 )
 from pipe.glui.dialogs import MessageDialog
 from pipe.texconverter import TexConverter, TexConversionError
-from pipe.util import get_production_path, resolve_mapped_path
-from env import SG_Config
+from shared.util import get_production_path, resolve_mapped_path
+from env_sg import DB_Config
 
-RT = TypeVar("RT")  # return type
 
 lib_path = resolve_mapped_path(Path(__file__).parents[1] / "lib")
 log = logging.getLogger(__name__)
@@ -30,7 +36,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class TexSetExportSettings:
     tex_set: sp.textureset.TextureSet
-    extra_channels: Set[sp.textureset.Channel]
+    extra_channels: set[sp.textureset.Channel]
     resolution: int
     displacement_source: DisplacementSource
     normal_type: NormalType
@@ -48,16 +54,17 @@ class Exporter:
     _tex_path: Path
 
     def __init__(self) -> None:
-        self._conn = DB(SG_Config)
+        self._conn = DB.Get(DB_Config)
         id = sp.project.Metadata("LnD").get("asset_id")
         assert (a := self._conn.get_asset_by_id(id)) is not None
         self._asset = a
 
+    def _init_paths(self, mat_var: str) -> None:
         # initialize paths, pulling from SG database
         assert self._asset.tex_path is not None
-        self._out_path = resolve_mapped_path(
-            get_production_path() / self._asset.tex_path
-        )
+        base_path = get_production_path() / self._asset.tex_path / "variants" / mat_var
+
+        self._out_path = resolve_mapped_path(base_path)
         self._src_path = self._out_path / "src"
         self._tex_path = self._out_path / "tex"
         self._preview_path = self._out_path / "preview"
@@ -67,9 +74,14 @@ class Exporter:
         self._tex_path.mkdir(parents=True, exist_ok=True)
         self._preview_path.mkdir(parents=True, exist_ok=True)
 
-    def export(self, exp_setting_arr: List[TexSetExportSettings]) -> bool:
+    def export(
+        self,
+        exp_setting_arr: typing.Sequence[TexSetExportSettings],
+        mat_var: str,
+    ) -> bool:
         """Export all the textures of the given Texture Sets"""
-        self._src_path.mkdir(parents=True, exist_ok=True)
+        self._init_paths(mat_var)
+
         try:
             [tss.tex_set.get_stack() for tss in exp_setting_arr]
         except ValueError:
@@ -112,7 +124,7 @@ class Exporter:
         return True
 
     def write_mat_info(
-        self, export_settings_arr: Iterable[TexSetExportSettings]
+        self, export_settings_arr: typing.Iterable[TexSetExportSettings]
     ) -> bool:
         """Write out JSON file with information about the texturesets"""
         mat_info_path = self._out_path / "mat.json"
@@ -124,7 +136,7 @@ class Exporter:
             old_mat_info = MaterialInfo()
 
         all_tex_sets = [ts.name() for ts in sp.textureset.all_texture_sets()]
-        for tex_set in old_mat_info.tex_sets.keys():
+        for tex_set in list(old_mat_info.tex_sets.keys()):
             if tex_set not in all_tex_sets:
                 del old_mat_info.tex_sets[tex_set]
 
@@ -148,7 +160,7 @@ class Exporter:
 
     @staticmethod
     def _generate_config(
-        asset_path: Path, export_settings_arr: Iterable[TexSetExportSettings]
+        asset_path: Path, export_settings_arr: typing.Iterable[TexSetExportSettings]
     ) -> dict:
         return {
             "exportPath": str(asset_path),
@@ -212,7 +224,7 @@ class Exporter:
         }
 
     @staticmethod
-    def _shader_maps(export_settings: TexSetExportSettings) -> List:
+    def _shader_maps(export_settings: TexSetExportSettings) -> list:
         maps = [
             {
                 "fileName": "$textureSet_BaseColor(_$colorSpace)(.$udim)",
@@ -378,7 +390,7 @@ class Exporter:
         return maps
 
     @staticmethod
-    def _preview_surface_maps() -> List:
+    def _preview_surface_maps() -> list:
         return [
             {
                 "fileName": "$textureSet_DiffuseColor(_$colorSpace)(.$udim)",
@@ -386,8 +398,8 @@ class Exporter:
                     {
                         "destChannel": ch,
                         "srcChannel": ch,
-                        "srcMapType": "virtualMap",
-                        "srcMapName": "Diffuse",
+                        "srcMapType": "documentMap",
+                        "srcMapName": "baseColor",
                     }
                     for ch in "RGB"
                 ],
