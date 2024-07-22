@@ -53,7 +53,7 @@ class Diffable(JsonSerializable):
         object.__setattr__(self, "_initial_state", state)
 
     def diff(self) -> dict[str, Any]:
-        if self._initial_state is {}:
+        if self._initial_state == {}:
             return {}
 
         # loop through keys and find changes
