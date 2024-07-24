@@ -59,6 +59,13 @@ class HoudiniDCC(DCC):
             ),
             # Package loading debug logging
             "HOUDINI_PACKAGE_VERBOSE": 1 if log.isEnabledFor(logging.DEBUG) else None,
+            # Houdini Path
+            "HOUDINI_PATH": os.pathsep.join(
+                [
+                    str(pipe_path / "lib/usd/kinds"),
+                    "&",
+                ]
+            ),
             # Splash file
             "HOUDINI_SPLASH_FILE": str(pipe_path / "lib/splash/dunginisplash19.5.png"),
             # Project-specific preference overrides
