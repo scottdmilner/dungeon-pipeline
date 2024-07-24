@@ -25,6 +25,7 @@ from env_sg import DB_Config
 
 _MATLIB_NAME = "Material_Library"
 _MATNAME = "matname"
+_NO_TEXTURES = "NO_EXPORTED_TEXTURES"
 
 
 # https://github.com/Student-Accomplice-Pipeline-Team/accomplice_pipe/blob/prod/pipe/accomplice/software/houdini/pipe/tools/shading/edit_shader.py
@@ -165,9 +166,7 @@ class MatlibManager:
         # update mat_variant on the hda
         mat_var = node.parm("mat_var")
         assert mat_var is not None
-        mat_var.set(
-            next(iter(default_geo_var.material_variants), "NO EXPORTED TEXTURES")
-        )
+        mat_var.set(next(iter(default_geo_var.material_variants), _NO_TEXTURES))
 
     def update_base_path(self, node: hou.LopNode | None = None) -> None:
         if not node:
@@ -337,7 +336,7 @@ class MatlibManager:
         """Gets list of mat variants in the way that the HDA interface
         expects: [id1, label1, id2, label2, ...]"""
         current_geo_var = self._conn.get_asset_by_id(self.geo_variant_id)
-        mvs = list(current_geo_var.material_variants) or ["NO EXPORTED TEXTURES"]
+        mvs = list(current_geo_var.material_variants) or [_NO_TEXTURES]
         return [s for v in mvs for s in (v, v)]
 
     def export_selected_to_path(
