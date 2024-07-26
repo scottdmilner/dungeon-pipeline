@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 from pathlib import Path
-from pxr import Usd, UsdGeom, Vt
+from pxr import Sdf, Usd, UsdGeom, UsdShade, Vt
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -70,6 +70,24 @@ class RiggedExporter:
                 data *= 0.01
                 attr.Set(data)
 
+        # Update material bindings to what Houdini will expect
+        bindings = UsdShade.MaterialBindingAPI(stage.GetPrimAtPath("/CHAR/MODEL"))
+        for rel in bindings.GetCollectionBindingRels():
+            t1, t2 = rel.GetTargets()
+            # strip the namespace because the USD exporter strips the geo namespace but not the material namespace
+            new_name = t2.name.split("_", 1)[1]
+            # Change the material binding to match how it will look in Houdini
+            rel.SetTargets(
+                (
+                    t1,
+                    Sdf.Path(
+                        str(t2.GetParentPath()).replace("/CHAR", "/CHAR/MODEL")
+                        + "/MAT_"
+                        + new_name
+                    ),
+                )
+            )
+
         UsdGeom.SetStageMetersPerUnit(stage, 1.0)
         stage.Save()
 
@@ -83,7 +101,10 @@ class RiggedExporter:
                 return
 
         kwargs = {
+            "exportCollectionBasedBindings": True,
+            "exportMaterialCollections": True,
             "file": str(path),
+            "materialCollectionsPath": "/CHAR/MODEL",
             "pythonPostCallback": f"{type(self).__name__}.{self.convert_to_houdini_scale.__name__}('{str(path)}')",
             "selection": True,
             "shadingMode": "useRegistry",
@@ -94,6 +115,7 @@ class RiggedExporter:
             kwargs.update(
                 {
                     "exportColorSets": False,
+                    "exportComponentTags": False,
                     "exportUVs": False,
                     "frameRange": [1, 20],
                     "frameStride": 1.0,
