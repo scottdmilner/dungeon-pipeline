@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 import os
 import platform
+import sys
 
 from pathlib import Path
 
-from shared.util import resolve_mapped_path
+from shared.util import get_production_path, resolve_mapped_path
 
 from ..baseclass import DCC
 from env import Executables
@@ -32,6 +33,10 @@ class NukeDCC(DCC):
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(pipe_path),
+                    str(
+                        get_production_path()
+                        / f"../pipeline/pipeline/lib/python/3.9/{sys.platform}"
+                    ),
                 ]
             ),
             "QT_SCALE_FACTOR": os.getenv("NUKE_SCALE_FACTOR")
