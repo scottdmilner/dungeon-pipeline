@@ -4,6 +4,7 @@ import logging
 import os
 import platform
 import shutil
+import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     import typing
 
 from ..baseclass import DCC
-from shared.util import get_rigging_path
+from shared.util import get_production_path, get_rigging_path
 from env import Executables
 
 log = logging.getLogger(__name__)
@@ -46,6 +47,10 @@ class MayaDCC(DCC):
                     str(this_path.parent / "scripts"),
                     str(this_path.parent / "userSetup"),
                     str(this_path.parent / "scripts/studiolibrary/src"),
+                    str(
+                        get_production_path()
+                        / f"../pipeline/pipeline/lib/python/3.10/{sys.platform}"
+                    ),
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),

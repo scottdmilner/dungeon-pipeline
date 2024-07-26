@@ -71,7 +71,7 @@ class DCC(DCCInterface):
         os.environ["PYTHONPATH"] = os.pathsep.join(
             [
                 os.environ["PYTHONPATH"],
-                str(get_production_path() / "../pipeline/pipeline/lib/python"),
+                str(get_production_path() / "../pipeline/pipeline/lib/python/any"),
             ]
         )
         print(os.environ["PYTHONPATH"])
