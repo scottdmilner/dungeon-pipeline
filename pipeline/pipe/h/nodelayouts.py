@@ -117,3 +117,121 @@ def lnd_componentsetup(kwargs: dict) -> hou.Node:
     geo.setSelected(True, clear_all_selected=True)
 
     return out
+
+
+def _hide_contextoptions_folders(node: hou.Node) -> None:
+    ptg = node.parmTemplateGroup()
+    for f in ("Basic Options", "Time Based Options", "Pattern Matching Options"):
+        ptg.hideFolder(f, True)
+    node.setParmTemplateGroup(ptg)
+
+
+def lnd_layoutgroup(kwargs: dict) -> hou.Node:
+    contextoptions: hou.LopNode = loptoolutils.genericTool(kwargs, "editcontextoptions")
+
+    pos = contextoptions.position()
+    p = contextoptions.parent()
+    beginblock = p.createNode("begincontextoptionsblock")
+    groupprim = p.createNode("primitive")
+
+    if old_inputs := contextoptions.inputs():
+        beginblock.setInput(0, old_inputs[0])
+    contextoptions.setInput(0, groupprim)
+    contextoptions.parm("createoptionsblock").set(True)
+    groupprim.setInput(0, beginblock)
+
+    for n in (beginblock, groupprim, contextoptions):
+        n.setColor(hou.Color(0.565, 0.494, 0.863))
+
+    groupprim.setUserData("nodeshape", "chevron_down")
+    contextoptions.setUserData("nodeshape", "chevron_up")
+
+    beginblock.setName("beginlayoutgroup", True)
+    groupprim.setName("layoutprim", True)
+    contextoptions.setName("layoutgroup", True)
+
+    groupprim.parm("primpath").set("`@PATH`")
+    groupprim.parm("primkind").set("Group")
+    groupprim.parm("parentprimtype").set("Scope")
+
+    contextoptions.addSpareParmTuple(
+        hou.StringParmTemplate(
+            name="group", label="Group Name", num_components=1, default_value=("$OS",)
+        )
+    )
+    contextoptions.parm("optioncount").insertMultiParmInstance(0)
+    contextoptions.parm("optionname1").set("GROUP")
+    contextoptions.parm("optionstrvalue1").set('`chs("./group")`')
+    contextoptions.parm("optionname2").set("PATH")
+    contextoptions.parm("optionstrvalue2").set(
+        '/environment/`@ASSEMBLY`/`chs("./group")`'
+    )
+
+    contextoptions.parm("createoptionsblock").hide(True)
+    _hide_contextoptions_folders(contextoptions)
+
+    beginblock_move = hou.Vector2(0, 2.0)
+    groupprim_move = hou.Vector2(0, 1.5)
+    beginblock.setPosition(beginblock_move + pos)
+    groupprim.setPosition(groupprim_move + pos)
+
+    return contextoptions
+
+
+def lnd_layout(kwargs: dict) -> hou.Node:
+    contextoptions: hou.Node = loptoolutils.genericTool(kwargs, "editcontextoptions")
+
+    pos = contextoptions.position()
+    p = contextoptions.parent()
+    envprim = p.createNode("primitive")
+    layoutprim = p.createNode("primitive")
+    merge = p.createNode("merge")
+
+    contextoptions.setInput(0, merge)
+    merge.setInput(0, layoutprim)
+    layoutprim.setInput(0, envprim)
+
+    contextoptions.setName("layout_name", True)
+    envprim.setName("environment_scope", True)
+    layoutprim.setName("assembly_prim", True)
+
+    for n in (contextoptions, envprim, layoutprim, merge):
+        n.setColor(hou.Color(0.188, 0.529, 0.45))
+
+    envprim.setUserData("nodeshape", "chevron_down")
+    layoutprim.setUserData("nodeshape", "chevron_down")
+    contextoptions.setUserData("nodeshape", "chevron_up")
+
+    envprim.parm("primpath").set("/environment")
+    envprim.parm("parentprimtype").set("None")
+    envprim.parm("primtype").set("Scope")
+
+    layoutprim.parm("primpath").set("`@PATH`")
+    layoutprim.parm("primkind").set("Assembly")
+    layoutprim.parm("parentprimtype").set("Scope")
+
+    contextoptions.addSpareParmTuple(
+        hou.StringParmTemplate(
+            name="assembly",
+            label="Assembly Name",
+            num_components=1,
+            default_value=("$OS",),
+        )
+    )
+    contextoptions.parm("optioncount").insertMultiParmInstance(0)
+    contextoptions.parm("optionname1").set("ASSEMBLY")
+    contextoptions.parm("optionstrvalue1").set('`chs("./assembly")`')
+    contextoptions.parm("optionname2").set("PATH")
+    contextoptions.parm("optionstrvalue2").set('/environment/`chs("./assembly")`')
+
+    contextoptions.parm("createoptionsblock").hide(True)
+    _hide_contextoptions_folders(contextoptions)
+
+    envprim_move = hou.Vector2(0, 6.7)
+    layoutprim_move = hou.Vector2(0, 6.0)
+    merge_move = hou.Vector2(0, 1.0)
+    envprim.setPosition(envprim_move + pos)
+    layoutprim.setPosition(layoutprim_move + pos)
+    merge.setPosition(merge_move + pos)
+
+    return contextoptions
