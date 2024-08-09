@@ -36,6 +36,10 @@ def update_destination_prim(
     # this callback only needs to run once
     node.removeEventCallback([event_type], callback=update_destination_prim)  # type: ignore[list-item]
 
+    # don't mess with this if we're inside a Layout node
+    if node.parent().name() == "ASSETS":
+        return
+
     primpath = parm_tuple.evalAsStrings()[0]
     parm_tuple.set((f"`@PATH`{primpath}",))
 
