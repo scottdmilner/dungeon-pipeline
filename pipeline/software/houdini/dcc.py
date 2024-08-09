@@ -31,10 +31,8 @@ class HoudiniDCC(DCC):
         env_vars: typing.Mapping[str, int | str | None] | None
         env_vars = {
             "DCC": str(this_path.parent.name),
-            # Asset Gallery sqlite db
-            "HOUDINI_ASSETGALLERY_DB_FILE": str(
-                resolve_mapped_path(get_production_path() / "asset/assetGallery.db")
-            ),
+            # Asset Gallery sqlite db (set in 456.py)
+            "HOUDINI_ASSETGALLERY_DATA_SOURCE": "$JOB/asset/assetGallery.db",
             # Backup directory
             "HOUDINI_BACKUP_DIR": "./.backup",
             # Dump the core on crash to help debugging
