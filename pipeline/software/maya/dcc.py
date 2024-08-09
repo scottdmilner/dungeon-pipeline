@@ -71,6 +71,7 @@ class MayaDCC(DCC):
                         this_path.parent
                         / "scripts/studiolibrary/src/studiolibrary/resource/icons",
                         pipe_path / "lib/icon",
+                        pipe_path / "lib/splash",
                     ]
                 ]
             ),
