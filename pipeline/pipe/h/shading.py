@@ -90,8 +90,15 @@ class MatlibManager:
 
             if not (variant_name := variant.variant_name):
                 variant_name = "main"
-
-            with open(self._hip / "tex" / variant_name / "mat.json", "r") as f:
+            with open(
+                self._hip
+                / "tex"
+                / variant_name
+                / "variants"
+                / self.mat_variant_name
+                / "mat.json",
+                "r",
+            ) as f:
                 return MaterialInfo.from_json(f.read())
         except Exception:
             return None
@@ -156,6 +163,12 @@ class MatlibManager:
             var_name.set(variant_name)
             return variant_name
         return node_val
+
+    @property
+    def mat_variant_name(self) -> str:
+        mat_var_name = self.node.parm("mat_var")
+        assert mat_var_name is not None
+        return mat_var_name.evalAsString()
 
     def _update_default_mat_var(
         self, default_geo_var: Asset, /, node: hou.Node | None = None
