@@ -4,14 +4,8 @@ set -e
 
 LOCAL_DIR=$(git rev-parse --show-toplevel)
 
-# Set up venv if it doesn't exist
-if [[ ! -d "${LOCAL_DIR}/venv" ]]; then
-    source "${LOCAL_DIR}/.githooks/setup-venv"
-fi
+source "${LOCAL_DIR}/.githooks/update-venv"
 
-if [ -z "${VIRTUAL_ENV}" ]; then
-    source "${LOCAL_DIR}/venv/bin/activate"
-fi
 
 echo "Static type checking (mypy)..."
 mypy
