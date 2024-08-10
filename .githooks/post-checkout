@@ -18,4 +18,4 @@ if [[ "${PROD_DIR}" != "${LOCAL_DIR}" ]]; then
 fi
 
 # Update the venv and set it up if it doesn't exist
-source "${LOCAL_DIR}/.githooks/update-venv
+source "${LOCAL_DIR}/.githooks/update-venv"
