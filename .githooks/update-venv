@@ -1,0 +1,13 @@
+#!/bin/bash
+echo "Updating dev venv..."
+
+command -v pipx || pip --user install pipx
+command -v poetry || pipx install poetry
+pipx upgrade poetry
+poetry install
+
+if [ -z "${VIRTUAL_ENV}" ]; then
+    source "${LOCAL_DIR}/.venv/bin/activate"
+fi
+
+cat "${LOCAL_DIR}/.githooks/shotgun.pyi" > "${LOCAL_DIR}/pipeline/lib/shotgun_api3/shotgun_api3/__init__.pyi"

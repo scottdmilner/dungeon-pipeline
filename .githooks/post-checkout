@@ -17,11 +17,5 @@ if [[ "${PROD_DIR}" != "${LOCAL_DIR}" ]]; then
     cp "${PROD_DIR}/pipeline/env_sg.py" "${LOCAL_DIR}/pipeline/env_sg.py"
 fi
 
-# Set up venv if it doesn't exist
-if [[ ! -d "${LOCAL_DIR}/venv" ]]; then
-    source "${LOCAL_DIR}/.githooks/setup-venv"  
-fi
-
-if [ -z "${VIRTUAL_ENV}" ]; then
-    source "${LOCAL_DIR}/venv/bin/activate"
-fi
+# Update the venv and set it up if it doesn't exist
+source "${LOCAL_DIR}/.githooks/update-venv
