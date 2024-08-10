@@ -45,3 +45,32 @@ exclude = [
     "studiolibrary",
     "timeline_marker",
 ]
+
+[tool.poetry]
+name = "dungeon-pipeline"
+version = "0.1.0"
+description = "Pipeline for BYU Animation's Class of 2025 capstone film"
+license = "BSD-3"
+authors = ["Scott Milner <scottdmilner@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+attrs = "^24.2.0"
+cattrs = "^23.2.3"
+numpy = "1.26.4"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.7"
+mypy = "^1.11.1"
+maya-stubs = "^0.4.1"
+types-usd = "^24.5.1"
+types-houdini = "^19.5.1"
+types-katana = "^5.0.5.0"
+types-mari = "^5.0.5.0"
+types-nuke = "^13.2.8.0"
+types-opencolorio = "^2.2.1.2"
+types-pyside2 = "^5.15.2.1.7"
+types-substance-painter = "^2023.8.3.0.0"
+nptyping = "^2.5.0"
