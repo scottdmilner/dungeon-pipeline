@@ -6,6 +6,8 @@ command -v poetry || pipx install poetry
 pipx upgrade poetry
 poetry install
 
+LOCAL_DIR=$(git rev-parse --show-toplevel)
+
 if [ -z "${VIRTUAL_ENV}" ]; then
     source "${LOCAL_DIR}/.venv/bin/activate"
 fi
