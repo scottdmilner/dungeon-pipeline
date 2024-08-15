@@ -69,21 +69,30 @@ class SGDiffable(Diffable):
         return sg_diff
 
 
+@attrs.define
+class SGEntity(SGDiffable):
+    code: str
+    id: int = field(on_setattr=attrs.setters.frozen)
+    path: Optional[str] = field(metadata={_SG_NAME: "sg_path"})
+
+
+@attrs.define
+class SGEntityStub(SGDiffable):
+    id: int
+
+
 @attrs.frozen
-class AssetStub(SGDiffable):
+class AssetStub(SGEntityStub):
     """Represent "stubs" that come from ShotGrid
     Stubs are JSON objects with 3 fields: id, name, and type (which is always Asset in this case)
     """
 
     disp_name: str = field(metadata={_SG_NAME: "name"})
-    id: int
 
 
 @attrs.define
-class Asset(SGDiffable):
-    disp_name: Optional[str] = field(metadata={_SG_NAME: "code"})
+class Asset(SGEntity):
     name: str = field(metadata={_SG_NAME: "sg_pipe_name"})
-    id: Optional[int] = field(on_setattr=attrs.setters.frozen)
     material_variants: set[str] = field(
         metadata={
             _SG_NAME: "sg_material_variants",
@@ -91,7 +100,6 @@ class Asset(SGDiffable):
             _UNSTRUCT_HOOK: lambda mv, _: ",".join(mv) if mv else "",
         }
     )
-    path: Optional[str] = field(metadata={_SG_NAME: "sg_path"})
     parent: Optional[AssetStub] = field(
         metadata={
             _SG_NAME: "parents",
@@ -102,6 +110,11 @@ class Asset(SGDiffable):
     )
     variants: list[AssetStub] = field(metadata={_SG_NAME: "assets"})
     version = None
+
+    @property
+    def disp_name(self) -> str:
+        """Alias for code"""
+        return self.code or ""
 
     @property
     def is_variant(self) -> bool:
@@ -119,33 +132,29 @@ class Asset(SGDiffable):
 
 
 @attrs.frozen
-class SequenceStub(SGDiffable):
+class SequenceStub(SGEntityStub):
     """Represent sequence "stubs" that come from ShotGrid"""
 
     code: str = field(metadata={_SG_NAME: "name"})
-    id: int
 
 
 @attrs.define
-class Sequence(SGDiffable):
+class Sequence(SGEntity):
     code: str = field(on_setattr=attrs.setters.frozen)
-    id: int = field(on_setattr=attrs.setters.frozen)
     shots: list[ShotStub]
 
 
 @attrs.frozen
-class ShotStub(SGDiffable):
+class ShotStub(SGEntityStub):
     """Represent shot "stubs" that come from ShotGrid"""
 
     code: str = field(metadata={_SG_NAME: "name"})
-    id: int
 
 
 @attrs.define
-class Shot(SGDiffable):
+class Shot(SGEntity):
     code: str = field(on_setattr=attrs.setters.frozen)
     cut_in: int = field(metadata={_SG_NAME: "sg_cut_in"})
     cut_out: int = field(metadata={_SG_NAME: "sg_cut_out"})
     cut_duration: int = field(metadata={_SG_NAME: "sg_cut_duration"})
-    id: int = field(on_setattr=attrs.setters.frozen)
     sequence: SequenceStub = field(metadata={_SG_NAME: "sg_sequence"})
