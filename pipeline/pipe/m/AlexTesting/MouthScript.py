@@ -245,6 +245,7 @@ for each in controlGroup:
     cmds.CenterPivot()  # type: ignore[attr-defined]
 
     # make offset and driver group
+    cmds.group(n=nameBase + "_offset2")
     cmds.group(n=nameBase + "_offset")
     cmds.CenterPivot()  # type: ignore[attr-defined]
     cmds.group(n=nameBase + "_ctrl_driver")
@@ -285,13 +286,20 @@ cmds.group(
     "R_Upper_Main_Mouth_ctrl_driver",
     "L_Corner_Main_Mouth_ctrl_driver",
     "R_Corner_Main_Mouth_ctrl_driver",
-    n="MainMouthCtronolsGroup",
+    n="MainMouthControlsGroup",
 )
 cmds.parent("MainMouthControlsGroup", "Mouth_Global_ctrl")
 
 
 cmds.delete("upperLipRibbon", constructionHistory=True)
 cmds.delete("bottomLipRibbon", constructionHistory=True)
+
+cmds.xform("L_Corner_Main_Mouth_offset", ro=(17.168, 48.089, 3.472))
+cmds.xform("R_Corner_Main_Mouth_offset", ro=(17.168, -48.089, -3.472))
+cmds.xform("L_Upper_Main_Mouth_offset", ro=(0, 35, 0))
+cmds.xform("L_Lower_Main_Mouth_offset", ro=(0, 35, 0))
+cmds.xform("R_Upper_Main_Mouth_offset", ro=(0, -35, 0))
+cmds.xform("R_Lower_Main_Mouth_offset", ro=(0, -35, 0))
 
 
 cmds.skinCluster(
@@ -310,3 +318,147 @@ cmds.skinCluster(
     "L_Corner_Main_Mouth_jnt",
     "R_Corner_Main_Mouth_jnt",
 )
+
+#####                         #####
+##### Corrections and Updates #####
+#####                         #####
+
+cmds.delete("upperLipRibbonFollicle5094")
+cmds.delete("upperLipRibbonFollicle5006")
+
+cmds.parent("nurbsCircle37", world=True)
+cmds.parent("nurbsCircle21", world=True)
+
+cmds.xform("nurbsCircle37", ws=True, t=(0, 0, 0))
+cmds.xform("nurbsCircle21", ws=True, t=(0, 0, 0))
+
+emptyGroup = cmds.group(empty=True)
+cmds.parent("nurbsCircle21", "null1")
+AGFunctions.snapTo("null1", "R_Corner_Main_Mouth_jnt")
+
+emptyGroup = cmds.group(empty=True)
+cmds.parent("nurbsCircle37", "null2")
+AGFunctions.snapTo("null2", "L_Corner_Main_Mouth_jnt")
+
+
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5017",
+    AGFunctions.offsetGroupMaker("nurbsCircle23"),
+    mo=True,
+)
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5028",
+    AGFunctions.offsetGroupMaker("nurbsCircle25"),
+    mo=True,
+)
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5039",
+    AGFunctions.offsetGroupMaker("nurbsCircle27"),
+    mo=True,
+)
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5050",
+    AGFunctions.offsetGroupMaker("nurbsCircle29"),
+    mo=True,
+)
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5061",
+    AGFunctions.offsetGroupMaker("nurbsCircle31"),
+    mo=True,
+)
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5072",
+    AGFunctions.offsetGroupMaker("nurbsCircle33"),
+    mo=True,
+)
+cmds.parentConstraint(
+    "bottomLipRibbonFollicle5083",
+    AGFunctions.offsetGroupMaker("nurbsCircle35"),
+    mo=True,
+)
+
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5017", AGFunctions.offsetGroupMaker("nurbsCircle4"), mo=True
+)
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5028", AGFunctions.offsetGroupMaker("nurbsCircle6"), mo=True
+)
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5039", AGFunctions.offsetGroupMaker("nurbsCircle8"), mo=True
+)
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5050", AGFunctions.offsetGroupMaker("nurbsCircle10"), mo=True
+)
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5061", AGFunctions.offsetGroupMaker("nurbsCircle12"), mo=True
+)
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5072", AGFunctions.offsetGroupMaker("nurbsCircle14"), mo=True
+)
+cmds.parentConstraint(
+    "upperLipRibbonFollicle5083", AGFunctions.offsetGroupMaker("nurbsCircle16"), mo=True
+)
+
+
+cmds.rename("nurbsCircle29", "M_Lower_Minor_Mouth_ctrl")
+cmds.rename("nurbsCircle31", "L_Lower_Minor_Mouth_01_ctrl")
+cmds.rename("nurbsCircle33", "L_Lower_Minor_Mouth_02_ctrl")
+cmds.rename("nurbsCircle35", "L_Lower_Minor_Mouth_03_ctrl")
+cmds.rename("nurbsCircle37", "L_Corner_Minor_Mouth_ctrl")
+cmds.rename("nurbsCircle27", "R_Lower_Minor_Mouth_01_ctrl")
+cmds.rename("nurbsCircle25", "R_Lower_Minor_Mouth_02_ctrl")
+cmds.rename("nurbsCircle23", "R_Lower_Minor_Mouth_03_ctrl")
+cmds.rename("nurbsCircle21", "R_Corner_Minor_Mouth_ctrl")
+cmds.rename("nurbsCircle8", "R_Upper_Minor_Mouth_01_ctrl")
+cmds.rename("nurbsCircle6", "R_Upper_Minor_Mouth_02_ctrl")
+cmds.rename("nurbsCircle4", "R_Upper_Minor_Mouth_03_ctrl")
+cmds.rename("nurbsCircle10", "M_Upper_Minor_Mouth_ctrl")
+cmds.rename("nurbsCircle12", "L_Upper_Minor_Mouth_01_ctrl")
+cmds.rename("nurbsCircle14", "L_Upper_Minor_Mouth_02_ctrl")
+cmds.rename("nurbsCircle16", "L_Upper_Minor_Mouth_03_ctrl")
+
+cmds.rename("null1", "M_Lower_Minor_Mouth_offset")
+cmds.rename("null2", "L_Lower_Minor_Mouth_01_offset")
+cmds.rename("null3", "L_Lower_Minor_Mouth_02_offset")
+cmds.rename("null4", "L_Lower_Minor_Mouth_03_offset")
+cmds.rename("null5", "L_Corner_Minor_Mouth_offset")
+cmds.rename("null6", "R_Lower_Minor_Mouth_01_offset")
+cmds.rename("null7", "R_Lower_Minor_Mouth_02_offset")
+cmds.rename("null8", "R_Lower_Minor_Mouth_03_offset")
+cmds.rename("null9", "R_Corner_Minor_Mouth_offset")
+cmds.rename("null10", "R_Upper_Minor_Mouth_01_offset")
+cmds.rename("null11", "R_Upper_Minor_Mouth_02_offset")
+cmds.rename("null12", "R_Upper_Minor_Mouth_03_offset")
+cmds.rename("null13", "M_Upper_Minor_Mouth_offset")
+cmds.rename("null14", "L_Upper_Minor_Mouth_01_offset")
+cmds.rename("null15", "L_Upper_Minor_Mouth_02_offset")
+cmds.rename("null16", "L_Upper_Minor_Mouth_03_offset")
+
+
+cmds.group(
+    "M_Lower_Minor_Mouth_offset",
+    "L_Lower_Minor_Mouth_01_offset",
+    "L_Lower_Minor_Mouth_02_offset",
+    "L_Lower_Minor_Mouth_03_offset",
+    "L_Corner_Minor_Mouth_offset",
+    "R_Lower_Minor_Mouth_01_offset",
+    "R_Lower_Minor_Mouth_02_offset",
+    "R_Lower_Minor_Mouth_03_offset",
+    "R_Corner_Minor_Mouth_offset",
+    "R_Upper_Minor_Mouth_01_offset",
+    "R_Upper_Minor_Mouth_02_offset",
+    "R_Upper_Minor_Mouth_03_offset",
+    "M_Upper_Minor_Mouth_offset",
+    "L_Upper_Minor_Mouth_01_offset",
+    "L_Upper_Minor_Mouth_02_offset",
+    "L_Upper_Minor_Mouth_03_offset",
+    n="MinorMouthControlsGroup",
+)
+
+cmds.parent("MinorMouthControlsGroup", "Mouth_Global_offset")
+cmds.parent("jaw_offset", "Mouth_Global_offset")
+cmds.parent("hairSystem1Follicles", "Mouth_Global_offset")
+cmds.parent("hairSystem2Follicles", "Mouth_Global_offset")
+
+
+# cmds.shadingNode("multiplyDivide", au=1, n="L_CornerLiptoUpper" + "_multi")

@@ -58,6 +58,11 @@ def makeCurve(edges, name):
     cmds.rename(cmds.ls(selection=True), name)
 
 
+def snapTo(startingLocation, endLocation):
+    wS = cmds.xform(endLocation, query=True, rotatePivot=True, worldSpace=True)
+    cmds.xform(startingLocation, ws=True, t=(wS[0], wS[1], wS[2]))
+
+
 def snapJointTo(listGroup, jntSize):
     jointList = []
     for each in listGroup:
@@ -137,3 +142,11 @@ def jawControllerLinker(controls=cmds.ls(sl=1)):
         cmds.connectAttr(
             controlList[0] + "_multi.output", controlList[1] + "_driver.rotate", f=1
         )
+
+
+def offsetGroupMaker(thingToOffset):
+    cmds.parent(thingToOffset, world=True)
+    emptyGroup = cmds.group(empty=True)
+    snapTo(emptyGroup, thingToOffset)
+    cmds.parent(thingToOffset, emptyGroup)
+    return emptyGroup
