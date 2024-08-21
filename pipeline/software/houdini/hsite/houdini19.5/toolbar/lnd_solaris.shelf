@@ -7,6 +7,7 @@
 
   <toolshelf name="lnd_assets" label="LnD Assets">
     <memberTool name="open_asset"/>
+    <memberTool name="open_set"/>
   </toolshelf>
 
   <toolshelf name="test_geometry" label="Test Geometry">
@@ -23,6 +24,12 @@
   <tool name="open_asset" label="Open Asset" icon="OBJ_geo">
     <script scriptType="python"><![CDATA[from pipe.h.hipfile import HFileManagerAsset
 fm = HFileManagerAsset()
+fm.open_file()]]></script>
+  </tool>
+
+  <tool name="open_set" label="Open Set" icon="LOP_layout">
+    <script scriptType="python"><![CDATA[from pipe.h.hipfile import HFileManagerEnv
+fm = HFileManagerEnv()
 fm.open_file()]]></script>
   </tool>
 

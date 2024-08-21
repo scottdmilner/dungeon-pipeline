@@ -6,6 +6,8 @@ from typing_extensions import NotRequired, Unpack
 from pipe.struct.db import (
     Asset,
     AssetStub,
+    Environment,
+    EnvironmentStub,
     Sequence,
     SequenceStub,
     SGEntity,
@@ -117,6 +119,26 @@ class T_GetEntityCodeList(Protocol):
         sorted: bool = False,
         **kwargs: Unpack[AttrMappingKwargs],
     ) -> list[str]: ...
+
+
+class T_GetEnvByAttr(Protocol):
+    def __call__(self, attr: str, attr_val: str | int) -> Environment: ...
+
+
+class T_GetEnvByCode(Protocol):
+    def __call__(self, code: str) -> Environment: ...
+
+
+class T_GetEnvById(Protocol):
+    def __call__(self, id: int) -> Environment: ...
+
+
+class T_GetEnvByStub(Protocol):
+    def __call__(self, stub: EnvironmentStub) -> Environment: ...
+
+
+class T_GetEnvsByStub(Protocol):
+    def __call__(self, stubs: Iterable[EnvironmentStub]) -> list[Environment]: ...
 
 
 class T_GetSeqByAttr(Protocol):

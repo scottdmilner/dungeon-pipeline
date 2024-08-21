@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pipe.h
 from pipe.db import DB
-from pipe.struct.db import Asset, SGEntity
+from pipe.struct.db import Asset, Environment, SGEntity
 from pipe.util import FileManager
 
 from env_sg import DB_Config
@@ -57,3 +57,19 @@ class HFileManagerAsset(HFileManager):
 
         hip_path = Path(hou.hscriptStringExpression("$HIP"))
         hou.setContextOption("ASSET", hip_path.name)
+
+
+class HFileManagerEnv(HFileManager):
+    def __init__(self) -> None:
+        super().__init__(Environment)
+
+    @staticmethod
+    def _generate_filename(env: Environment) -> str:  # type: ignore[override] # Can't do proper generics here
+        return env.name + ".hipnc"
+
+    @staticmethod
+    def _setup_file(path: Path) -> None:
+        super(HFileManagerEnv, HFileManagerEnv)._setup_file(path)
+
+        hip_path = Path(hou.hscriptStringExpression("$HIP"))
+        hou.setContextOption("ENVIRON", hip_path.name)
