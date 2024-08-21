@@ -5,16 +5,26 @@ import threading
 
 from abc import ABC, abstractmethod, abstractproperty
 from dataclasses import dataclass
-from functools import partialmethod
+from functools import partialmethod as pm
 from typing import TYPE_CHECKING
+
+from pipe.struct.db import (
+    Asset,
+    Environment,
+    Sequence,
+    SGEntity,
+    SGEntityStub,
+    Shot,
+)
 
 if TYPE_CHECKING:
     import typing
-    from .typing import Filter
+    from typing import Any, Callable, Iterable
+    from typing_extensions import Unpack
+    from .typing import AttrMappingKwargs, Filter
+    from .typing import *  # noqa: F403
 
-from pipe.struct.db import Asset, AssetStub, Sequence, SequenceStub, Shot, ShotStub
-
-from .baseclass import DB
+from .interface import DBInterface
 
 from . import shotgun_api3
 
@@ -31,14 +41,12 @@ class SG_Config:
     sg_server: str
 
 
-class SGaaDB(DB):
+class SGaaDB(DBInterface):
     """ShotGrid as a Database"""
 
     _sg: shotgun_api3.Shotgun
     _id: int
-    _sg_asset_list: list[dict]
-    _sg_sequence_list: list[dict]
-    _sg_shot_list: list[dict]
+    _sg_entity_lists: dict[str, list[dict]]
     _cache_lock: threading.Lock
     _update_notifier: threading.Condition
     _update_thread: threading.Thread
@@ -63,7 +71,9 @@ class SGaaDB(DB):
         self._cache_lock = threading.Lock()
         self._update_notifier = threading.Condition()
 
+        self._sg_entity_lists = {}
         self._load_sg_asset_list()
+        self._load_sg_env_list()
         self._load_sg_sequence_list()
         self._load_sg_shot_list()
 
@@ -71,8 +81,6 @@ class SGaaDB(DB):
             target=self._threaded_updater, daemon=True
         )
         self._update_thread.start()
-
-        super().__init__()
 
     def _threaded_updater(self) -> None:
         while True:
@@ -84,7 +92,8 @@ class SGaaDB(DB):
                     pass
 
                 log.debug("Cache expired, refreshing list")
-                # sequences don't update freqently, so we just pull them once
+                # sequences and environments don't update freqently, so we
+                #   just pull them once
                 self._load_sg_asset_list()
                 self._load_sg_shot_list()
 
@@ -92,92 +101,142 @@ class SGaaDB(DB):
         """Load the list of assets from SG to local cache"""
         with self._cache_lock:
             query = _AssetListQuery(self._id)
-            self._sg_asset_list = query.exec(self._sg)
+            self._sg_entity_lists[Asset.__name__] = query.exec(self._sg)
+
+    def _load_sg_env_list(self) -> None:
+        """Load the list of environments from SG to local cache"""
+        with self._cache_lock:
+            query = _EnvironmentListQuery(self._id)
+            self._sg_entity_lists[Environment.__name__] = query.exec(self._sg)
 
     def _load_sg_sequence_list(self) -> None:
         """Load the list of sequences from SG to local cache"""
         with self._cache_lock:
             query = _SequenceListQuery(self._id)
-            self._sg_sequence_list = query.exec(self._sg)
+            self._sg_entity_lists[Sequence.__name__] = query.exec(self._sg)
 
     def _load_sg_shot_list(self) -> None:
         """Load the list of shots from SG to local cache"""
         with self._cache_lock:
             query = _ShotListQuery(self._id)
-            self._sg_shot_list = query.exec(self._sg)
+            self._sg_entity_lists[Shot.__name__] = query.exec(self._sg)
 
     def expire_cache(self) -> None:
         with self._update_notifier:
             self._update_notifier.notify()
 
-    def get_asset_by_attr(self, attr: str, attr_val: str | int) -> Asset:
-        attr = Asset.map_sg_field_names(attr)
-        return Asset.from_sg(
-            next((a for a in self._sg_asset_list if a[attr] == attr_val), None)
+    def get_entity_by_attr(
+        self, entity_type: type[SGEntity], attr: str, attr_val: str | int
+    ) -> SGEntity:
+        internal_attr = entity_type.map_sg_field_names(attr)
+        return entity_type.from_sg(
+            next(
+                e
+                for e in self._sg_entity_lists[entity_type.__name__]
+                if e[internal_attr] == attr_val
+            )
         )
 
-    if TYPE_CHECKING:
+    def _get_entity_by_attr_swap(
+        self, attr: str, entity_type: type[SGEntity], attr_val: str | int
+    ) -> SGEntity:
+        return self.get_entity_by_attr(entity_type, attr, attr_val)
 
-        class GetAssetAttrPartial(typing.Protocol):
-            def __call__(self, attr_val: str | int) -> Asset: ...
+    def get_entity_by_stub(
+        self, entity_type: type[SGEntity], stub: SGEntityStub
+    ) -> SGEntity:
+        return self.get_entity_by_attr(entity_type, "id", stub.id)
 
-    get_asset_by_name: GetAssetAttrPartial = partialmethod(
-        get_asset_by_attr, "disp_name"
-    )  # type: ignore[assignment]
-    get_asset_by_id: GetAssetAttrPartial = partialmethod(get_asset_by_attr, "id")  # type: ignore[assignment]
-
-    def get_asset_by_stub(self, stub: AssetStub) -> Asset:
-        return self.get_asset_by_id(stub.id)
-
-    def get_assets_by_stub(self, stubs: typing.Iterable[AssetStub]) -> list[Asset]:
+    def get_entities_by_stub(
+        self, entity_type: type[SGEntity], stubs: Iterable[SGEntityStub]
+    ) -> list[SGEntity]:
         ids = [s.id for s in stubs]
-        return [Asset.from_sg(a) for a in self._sg_asset_list if a["id"] in ids]
+        return [
+            entity_type.from_sg(e)
+            for e in self._sg_entity_lists[entity_type.__name__]
+            if e["id"] in ids
+        ]
 
-    def get_asset_attr_list(
-        self,
-        attr: str,
-        *,
-        child_mode: DB.ChildQueryMode = DB.ChildQueryMode.LEAVES,
-        sorted: bool = False,
+    @staticmethod
+    def _default_entity_attr_mapper(
+        entity_list: list[dict], attr: str, **kwargs
     ) -> list[str]:
-        """Get a list of a single attribute on the asset list"""
-        attr = Asset.map_sg_field_names(attr)
+        return [e[attr] for e in entity_list]
 
-        if child_mode == DB.ChildQueryMode.ALL:
-            arr = [a[attr] for a in self._sg_asset_list]
-        elif child_mode == DB.ChildQueryMode.CHILDREN:
-            arr = [a[attr] for a in self._sg_asset_list if a["parents"]]
-        elif child_mode == DB.ChildQueryMode.ROOTS:
-            arr = [a[attr] for a in self._sg_asset_list if not a["parents"]]
-        elif child_mode == DB.ChildQueryMode.PARENTS:
-            arr = [a[attr] for a in self._sg_asset_list if a["assets"]]
-        elif child_mode == DB.ChildQueryMode.LEAVES:
-            arr = [a[attr] for a in self._sg_asset_list if not a["assets"]]
+    @staticmethod
+    def _asset_attr_mapper(
+        asset_list: list[dict],
+        attr: str,
+        child_mode: DBInterface.ChildQueryMode = DBInterface.ChildQueryMode.LEAVES,
+    ) -> list[str]:
+        if child_mode == DBInterface.ChildQueryMode.ALL:
+            arr = [a[attr] for a in asset_list]
+        elif child_mode == DBInterface.ChildQueryMode.CHILDREN:
+            arr = [a[attr] for a in asset_list if a["parents"]]
+        elif child_mode == DBInterface.ChildQueryMode.ROOTS:
+            arr = [a[attr] for a in asset_list if not a["parents"]]
+        elif child_mode == DBInterface.ChildQueryMode.PARENTS:
+            arr = [a[attr] for a in asset_list if a["assets"]]
+        elif child_mode == DBInterface.ChildQueryMode.LEAVES:
+            arr = [a[attr] for a in asset_list if not a["assets"]]
         else:
             raise IndexError("Not a valid ChildQueryMode", child_mode)
 
+        return arr
+
+    _entity_attr_custom_mappers: dict[
+        str, Callable[[list[dict], str, Unpack[AttrMappingKwargs]], list[str]]
+    ] = {
+        Asset.__name__: _asset_attr_mapper.__func__,  # type: ignore[attr-defined]
+    }
+
+    def get_entity_attr_list(
+        self,
+        entity_type: type[SGEntity],
+        attr: str,
+        *,
+        sorted: bool = False,
+        **kwargs,
+    ) -> list[str]:
+        mapper = self._entity_attr_custom_mappers.get(
+            entity_type.__name__, self._default_entity_attr_mapper
+        )
+        internal_attr = entity_type.map_sg_field_names(attr)
+        entity_list = self._sg_entity_lists[entity_type.__name__]
+        arr = mapper(entity_list, internal_attr, **kwargs)
         if sorted:
             arr.sort()
         return arr
 
-    if TYPE_CHECKING:
+    def _get_entity_attr_list_swap(
+        self,
+        attr: str,
+        entity_type: type[SGEntity],
+        **kwargs,
+    ) -> list[str]:
+        return self.get_entity_attr_list(entity_type, attr, **kwargs)
 
-        class GetAssetAttrListPartial(typing.Protocol):
-            def __call__(
-                self,
-                child_mode: DB.ChildQueryMode = DB.ChildQueryMode.LEAVES,
-                sorted: bool = False,
-            ) -> list[str]: ...
+    get_entity_code_list: T_GetEntityCodeList = pm(_get_entity_attr_list_swap, "code")  # type: ignore[assignment] # noqa: F405
+    get_entity_by_code: T_GetEntityByCode = pm(_get_entity_by_attr_swap, "code")  # type: ignore[assignment] # noqa: F405
 
-    get_asset_name_list: GetAssetAttrListPartial = partialmethod(
-        get_asset_attr_list, "disp_name"
-    )  # type: ignore[assignment]
+    get_asset_attr_list: T_GetAssetAttrList = pm(get_entity_attr_list, Asset)  # type: ignore[assignment] # noqa: F405
+    get_asset_by_attr: T_GetAssetByAttr = pm(get_entity_by_attr, Asset)  # type: ignore[assignment] # noqa: F405
+    get_asset_by_name: T_GetAssetByName = pm(get_asset_by_attr, "code")  # type: ignore[assignment] # noqa: F405
+    get_asset_by_id: T_GetAssetById = pm(get_asset_by_attr, "id")  # type: ignore[assignment] # noqa: F405
+    get_asset_by_stub: T_GetAssetByStub = pm(get_entity_by_stub, Asset)  # type: ignore[assignment] # noqa: F405
+    get_asset_name_list: T_GetCodeList = pm(get_asset_attr_list, "code")  # type: ignore[assignment] # noqa: F405
+    get_assets_by_stub: T_GetAssetsByStub = pm(get_entities_by_stub, Asset)  # type: ignore[assignment] # noqa: F405
 
-    def get_assets_by_name(self, names: typing.Iterable[str]) -> list[Asset]:
-        self.get_asset_name_list()
+    def get_assets_by_name(self, names: Iterable[str]) -> list[Asset]:
         return [
             Asset.from_sg(i)
-            for i in set([a for a in self._sg_asset_list if a["code"] in names])
+            for i in set(
+                [
+                    a
+                    for a in self._sg_entity_lists[Asset.__name__]
+                    if a["code"] in list(names)
+                ]
+            )
         ]
 
     def update_asset(self, asset: Asset) -> bool:
@@ -191,76 +250,29 @@ class SGaaDB(DB):
             self.expire_cache()
         return True
 
-    def get_sequence_by_attr(self, attr: str, attr_val: int | str) -> Sequence:
-        attr = Sequence.map_sg_field_names(attr)
-        return Sequence.from_sg(
-            next((s for s in self._sg_sequence_list if s.get(attr) == attr_val), None)
-        )
+    get_env_attr_list: T_GetAttrList = pm(get_entity_attr_list, Environment)  # type: ignore[assignment] # noqa: F405
+    get_env_by_attr: T_GetEnvByAttr = pm(get_entity_by_attr, Environment)  # type: ignore[assignment] # noqa: F405
+    get_env_by_code: T_GetEnvByCode = pm(get_env_by_attr, "code")  # type: ignore[assignment] # noqa: F405
+    get_env_by_id: T_GetEnvById = pm(get_env_by_attr, "id")  # type: ignore[assignment] # noqa: F405
+    get_env_by_stub: T_GetEnvByStub = pm(get_entity_by_stub, Environment)  # type: ignore[assignment] # noqa: F405
+    get_env_code_list: T_GetCodeList = pm(get_env_attr_list, "code")  # type: ignore[assignment] # noqa: F405
+    get_envs_by_stub: T_GetEnvsByStub = pm(get_entities_by_stub, Environment)  # type: ignore[assignment] # noqa: F405
 
-    if TYPE_CHECKING:
+    get_sequence_attr_list: T_GetAttrList = pm(get_entity_attr_list, Sequence)  # type: ignore[assignment] # noqa: F405
+    get_sequence_by_attr: T_GetSeqByAttr = pm(get_entity_by_attr, Sequence)  # type: ignore[assignment] # noqa: F405
+    get_sequence_by_code: T_GetSeqByCode = pm(get_sequence_by_attr, "code")  # type: ignore[assignment] # noqa: F405
+    get_sequence_by_id: T_GetSeqById = pm(get_sequence_by_attr, "id")  # type: ignore[assignment] # noqa: F405
+    get_sequence_by_stub: T_GetSeqByStub = pm(get_entity_by_stub, Sequence)  # type: ignore[assignment] # noqa: F405
+    get_sequence_code_list: T_GetCodeList = pm(get_sequence_attr_list, "code")  # type: ignore[assignment] # noqa: F405
+    get_sequences_by_stub: T_GetSeqsByStub = pm(get_entities_by_stub, Sequence)  # type: ignore[assignment] # noqa: F405
 
-        class GetSequenceAttrPartial(typing.Protocol):
-            def __call__(self, attr_val: str | int) -> Sequence: ...
-
-    get_sequence_by_code: GetSequenceAttrPartial = partialmethod(
-        get_sequence_by_attr, "code"
-    )  # type: ignore[assignment]
-    get_sequence_by_id: GetSequenceAttrPartial = partialmethod(
-        get_sequence_by_attr, "id"
-    )  # type: ignore[assignment]
-
-    def get_sequence_by_stub(self, stub: SequenceStub) -> Sequence:
-        return self.get_sequence_by_id(stub.id)
-
-    def get_sequence_attr_list(self, attr: str, *, sorted: bool = False) -> list[str]:
-        """Get a list of a single attribute on the sequence list"""
-        attr = Sequence.map_sg_field_names(attr)
-        arr = [s[attr] for s in self._sg_sequence_list]
-        if sorted:
-            arr.sort()
-        return arr
-
-    if TYPE_CHECKING:
-
-        class GetSequenceAttrListPartial(typing.Protocol):
-            def __call__(self, sorted: bool = False) -> list[str]: ...
-
-    get_sequence_code_list: GetSequenceAttrListPartial = partialmethod(
-        get_sequence_attr_list, "code"
-    )  # type: ignore[assignment]
-
-    def get_shot_by_attr(self, attr: str, attr_val: int | str) -> Shot:
-        attr = Shot.map_sg_field_names(attr)
-        return Shot.from_sg(
-            next((s for s in self._sg_shot_list if s.get(attr) == attr_val), None)
-        )
-
-    if TYPE_CHECKING:
-
-        class GetShotAttrPartial(typing.Protocol):
-            def __call__(self, attr_val: int | str) -> Shot: ...
-
-    get_shot_by_code: GetShotAttrPartial = partialmethod(get_shot_by_attr, "code")  # type: ignore[assignment]
-    get_shot_by_id: GetShotAttrPartial = partialmethod(get_shot_by_attr, "id")  # type: ignore[assignment]
-
-    def get_shot_by_stub(self, stub: ShotStub) -> Shot:
-        return self.get_shot_by_id(stub.id)
-
-    def get_shot_attr_list(self, attr: str, *, sorted: bool = False) -> list[str]:
-        attr = Shot.map_sg_field_names(attr)
-        arr = [s[attr] for s in self._sg_shot_list]
-        if sorted:
-            arr.sort()
-        return arr
-
-    if TYPE_CHECKING:
-
-        class GetShotAttrListPartial(typing.Protocol):
-            def __call__(self, sorted: bool = False) -> list[str]: ...
-
-    get_shot_code_list: GetShotAttrListPartial = partialmethod(
-        get_shot_attr_list, "code"
-    )  # type: ignore[assignment]
+    get_shot_attr_list: T_GetAttrList = pm(get_entity_attr_list, Shot)  # type: ignore[assignment] # noqa: F405
+    get_shot_by_attr: T_GetShotByAttr = pm(get_entity_by_attr, Shot)  # type: ignore[assignment] # noqa: F405
+    get_shot_by_code: T_GetShotByCode = pm(get_shot_by_attr, "code")  # type: ignore[assignment] # noqa: F405
+    get_shot_by_id: T_GetShotById = pm(get_shot_by_attr, "id")  # type: ignore[assignment] # noqa: F405
+    get_shot_by_stub: T_GetShotByStub = pm(get_entity_by_stub, Shot)  # type: ignore[assignment] # noqa: F405
+    get_shot_code_list: T_GetCodeList = pm(get_shot_attr_list, "code")  # type: ignore[assignment] # noqa: F405
+    get_shots_by_stub: T_GetShotsByStub = pm(get_entities_by_stub, Shot)  # type: ignore[assignment] # noqa: F405
 
 
 class _Query(ABC):
@@ -307,7 +319,7 @@ class _Query(ABC):
         self.filters.append(filter)
 
     @abstractmethod
-    def exec(self, sg: shotgun_api3.Shotgun) -> typing.Any:
+    def exec(self, sg: shotgun_api3.Shotgun) -> Any:
         pass
 
     @abstractproperty
@@ -323,6 +335,7 @@ class _AssetListQuery(_Query):
     """Helper class for making queries about assets to a SG connection instance"""
 
     _untracked_asset_types = [
+        "Environment",
         "FX",
         "Graphic",
         "Matte Painting",
@@ -366,6 +379,33 @@ class _AssetListQuery(_Query):
         return filters
 
 
+class _EnvironmentListQuery(_Query):
+    # Override
+    def exec(self, sg: shotgun_api3.Shotgun) -> list[dict]:
+        return sg.find("Asset", self.filters, self.fields)
+
+    # Override
+    @property
+    def _base_fields(self) -> list[str]:
+        return [
+            "code",  # display name
+            "sg_pipe_name",  # internal name
+            "sg_path",  # environment path
+            "id",  # asset id
+            "shots",  # shots environment present in
+        ]
+
+    # Override
+    @property
+    def _base_filters(self) -> list[Filter]:
+        filters: list[Filter] = [
+            ("sg_status_list", "is_not", "oop"),
+            ("sg_asset_type", "is", "Environment"),
+        ]
+
+        return filters
+
+
 class _ShotListQuery(_Query):
     """Helper class for making queries about shots to a SG connection instance"""
 
@@ -382,6 +422,7 @@ class _ShotListQuery(_Query):
             "sg_cut_in",
             "sg_cut_out",
             "sg_cut_duration",
+            "sg_path",
             "sg_sequence",
         ]
 
@@ -406,6 +447,7 @@ class _SequenceListQuery(_Query):
         return [
             "code",
             "id",
+            "sg_path",
             "shots",
         ]
 
