@@ -8,12 +8,12 @@ exclude = [
     'lib/python',
     'maya-timeline-marker_git',
     'modelChecker',
+    'pin_shift.py',
     'rjg',
     'shotgun_api3',
     'studiolibrary',
     'timeline_marker',
 ]
-
 files = 'pipeline'
 
 [[tool.mypy.overrides]]
@@ -40,6 +40,7 @@ exclude = [
     "maya-timeline-marker_git",
     "modelChecker",
     "modelChecker_git",
+    'pin_shift.py',
     "rjg",
     "shotgun_api3",
     "studiolibrary",
