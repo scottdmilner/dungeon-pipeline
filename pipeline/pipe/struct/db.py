@@ -38,10 +38,10 @@ _con.register_structure_hook_factory(
 @attrs.define
 class SGDiffable(Diffable):
     @classmethod
-    def from_sg(cls: Type[_S], sg_stub: Optional[dict]) -> _S:
-        if not sg_stub:
+    def from_sg(cls: Type[_S], sg_dict: Optional[dict]) -> _S:
+        if not sg_dict:
             raise TypeError(f"Cannot create {cls.__name__} from empty dict")
-        return _con.structure(sg_stub, cls)
+        return _con.structure(sg_dict, cls)
 
     @classmethod
     def map_sg_field_names(cls: Type[attrs.AttrsInstance], name: str) -> str:
@@ -73,7 +73,9 @@ class SGDiffable(Diffable):
 class SGEntity(SGDiffable):
     code: str
     id: int = field(on_setattr=attrs.setters.frozen)
-    path: Optional[str] = field(metadata={_SG_NAME: "sg_path"})
+    path: Optional[str] = field(
+        default=None, kw_only=True, metadata={_SG_NAME: "sg_path"}
+    )
 
 
 @attrs.define
@@ -157,6 +159,12 @@ class SequenceStub(SGEntityStub):
 class Sequence(SGEntity):
     code: str = field(on_setattr=attrs.setters.frozen)
     shots: list[ShotStub]
+    set: Optional[EnvironmentStub] = field(
+        metadata={
+            _SG_NAME: "sg_set",
+            _STRUCT_HOOK: lambda e, _: EnvironmentStub.from_sg(e) if e else None,
+        }
+    )
 
 
 @attrs.frozen
@@ -172,4 +180,15 @@ class Shot(SGEntity):
     cut_in: int = field(metadata={_SG_NAME: "sg_cut_in"})
     cut_out: int = field(metadata={_SG_NAME: "sg_cut_out"})
     cut_duration: int = field(metadata={_SG_NAME: "sg_cut_duration"})
-    sequence: SequenceStub = field(metadata={_SG_NAME: "sg_sequence"})
+    sequence: SequenceStub = field(
+        metadata={
+            _SG_NAME: "sg_sequence",
+            _STRUCT_HOOK: lambda s, _: SequenceStub.from_sg(s),
+        }
+    )
+    set: Optional[EnvironmentStub] = field(
+        metadata={
+            _SG_NAME: "sg_set",
+            _STRUCT_HOOK: lambda e, _: EnvironmentStub.from_sg(e) if e else None,
+        }
+    )

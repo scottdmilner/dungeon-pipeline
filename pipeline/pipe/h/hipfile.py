@@ -3,6 +3,7 @@ from __future__ import annotations
 import hou
 import logging
 from pathlib import Path
+from typing import cast
 
 import pipe.h
 from pipe.db import DB
@@ -37,39 +38,38 @@ class HFileManager(FileManager):
     def _open_file(path: Path) -> None:
         hou.hipFile.load(str(path), suppress_save_prompt=True)
 
-    @staticmethod
-    def _setup_file(path: Path) -> None:
+    def _setup_file(self, path: Path, entity: SGEntity) -> None:
         hou.hipFile.clear(suppress_save_prompt=True)
         hou.hipFile.save(str(path))
 
 
-class HFileManagerAsset(HFileManager):
+class HAssetFileManager(HFileManager):
     def __init__(self) -> None:
         super().__init__(Asset)
 
     @staticmethod
-    def _generate_filename(asset: Asset) -> str:  # type: ignore[override] # Can't do proper generics here
+    def _generate_filename(entity) -> str:
+        asset = cast(Asset, entity)
         return asset.name + ".hipnc"
 
-    @staticmethod
-    def _setup_file(path: Path) -> None:
-        super(HFileManagerAsset, HFileManagerAsset)._setup_file(path)
+    def _setup_file(self, path: Path, entity: SGEntity) -> None:
+        super(HAssetFileManager, HAssetFileManager)._setup_file(self, path, entity)
 
         hip_path = Path(hou.hscriptStringExpression("$HIP"))
         hou.setContextOption("ASSET", hip_path.name)
 
 
-class HFileManagerEnv(HFileManager):
+class HEnvFileManager(HFileManager):
     def __init__(self) -> None:
         super().__init__(Environment)
 
     @staticmethod
-    def _generate_filename(env: Environment) -> str:  # type: ignore[override] # Can't do proper generics here
+    def _generate_filename(entity) -> str:
+        env = cast(Environment, entity)
         return env.name + ".hipnc"
 
-    @staticmethod
-    def _setup_file(path: Path) -> None:
-        super(HFileManagerEnv, HFileManagerEnv)._setup_file(path)
+    def _setup_file(self, path: Path, entity: SGEntity) -> None:
+        super(HEnvFileManager, HEnvFileManager)._setup_file(self, path, entity)
 
         hip_path = Path(hou.hscriptStringExpression("$HIP"))
         hou.setContextOption("ENVIRON", hip_path.name)

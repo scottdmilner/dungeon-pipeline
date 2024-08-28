@@ -4,40 +4,35 @@ import hmac
 import json
 import logging
 import os
-import platform
-import shutil
-
 from hashlib import sha1
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 from urllib import request
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import typing
 from PySide2.QtWidgets import QCheckBox, QWidget
 from PySide2.QtGui import QTextCursor
 
-import maya.cmds as mc
+if TYPE_CHECKING:
+    from typing import Any, Sequence
 
-import pipe
-from pipe.db import DB
+from pipe.m.publish import Publisher
 from pipe.glui.dialogs import (
     FilteredListDialog,
     MessageDialog,
     MessageDialogCustomButtons,
 )
+from pipe.struct.db import Asset, SGEntity
 from shared.util import get_production_path
 from env import PIPEBOT_SECRET, PIPEBOT_URL
-from env_sg import DB_Config
 
 from modelChecker.modelChecker_UI import UI as MCUI
 
 log = logging.getLogger(__name__)
 
 
-class PublishAssetDialog(FilteredListDialog):
+class _PublishAssetDialog(FilteredListDialog):
     _substance_only: QCheckBox
 
-    def __init__(self, parent: QWidget | None, items: typing.Sequence[str]) -> None:
+    def __init__(self, parent: QWidget | None, items: Sequence[str]) -> None:
         super().__init__(
             parent,
             items,
@@ -56,22 +51,18 @@ class PublishAssetDialog(FilteredListDialog):
         return self._substance_only.isChecked()
 
 
-class IOManager:
-    _conn: DB
-    system: str
-    window: QWidget | None
+class AssetPublisher(Publisher):
+    _override: bool
 
     def __init__(self) -> None:
-        self._conn = DB.Get(DB_Config)
-        self.system = platform.system()
-        self.window = pipe.m.local.get_main_qt_window()
+        super().__init__(_PublishAssetDialog)
 
-    def publish_asset(self) -> None:
+    def _prepublish(self) -> bool:
         checker = ModelChecker.get()
-        override = False
+        self._override = False
         if not checker.check_selected():
             checker_fail_dialog = MessageDialogCustomButtons(
-                self.window,
+                self._window,
                 "Error. This asset did not pass the model checker. Please "
                 "ensure your model meets the requirements set by the model "
                 "checker.",
@@ -80,52 +71,40 @@ class IOManager:
                 ok_name="Override",
                 cancel_name="Ok",
             )
-            override = bool(checker_fail_dialog.exec_())
-            if not override:
+            self._override = bool(checker_fail_dialog.exec_())
+            if not self._override:
                 cursor = QTextCursor(checker.reportOutputUI.textCursor())
                 cursor.setPosition(0)
                 cursor.insertHtml(
                     "<h1>Asset not exported. Please resolve model checks.</h1>"
                 )
-                return
+                return False
+        return True
 
-        dialog = PublishAssetDialog(
-            self.window, self._conn.get_asset_name_list(sorted=True)
-        )
+    def _get_entity_list(self) -> list[str]:
+        return self._conn.get_asset_name_list(sorted=True)
 
-        if not dialog.exec_():
-            return
+    def _get_entity_from_name(self, name: str) -> SGEntity | None:
+        return self._conn.get_asset_by_name(name)
 
-        asset_display_name = dialog.get_selected_item()
-        if asset_display_name is None:
-            error = MessageDialog(
-                self.window, "Error: No asset selected. Nothing exported", "Error"
-            )
-            error.exec_()
-            return
-
-        asset = self._conn.get_asset_by_name(asset_display_name)
-        assert asset is not None
-
-        log.debug(asset)
-
+    def _get_save_path(self) -> Path | None:
+        dialog = cast(_PublishAssetDialog, self._dialog)
+        asset = cast(Asset, self._entity)
         assert asset.path is not None
-        publish_dir = get_production_path() / asset.path
-        publish_dir.mkdir(parents=True, exist_ok=True)
-
-        publish_path = (
-            str(publish_dir / asset.name)
-            + ("_SUBSTANCE" if dialog.is_substance_only else "")
-            + ".usd"
+        return (
+            get_production_path()
+            / asset.path
+            / (asset.name + ("_SUBSTANCE" if dialog.is_substance_only else "") + ".usd")
         )
-        temp_publish_path = os.getenv("TEMP", "") + asset.name + ".usd"
 
+    def _presave(self) -> bool:
         # notify webhook of override
-        if override:
+        if self._override:
+            asset = cast(Asset, self._entity)
             override_info = {
                 "user": os.getlogin(),
                 "asset": asset.disp_name,
-                "path": publish_path,
+                "path": str(self._publish_path),
             }
             data = bytes(json.dumps(override_info), encoding="utf-8")
             hashcheck = (
@@ -138,27 +117,12 @@ class IOManager:
             )
             req.add_header("x-pipebot-signature", hashcheck)
             request.urlopen(req)
+        return True
 
-        # save the file
-        kwargs = {
-            "file": temp_publish_path if self.system == "Windows" else publish_path,
-            "selection": True,
+    def _get_mayausd_kwargs(self) -> dict[str, Any]:
+        return {
             "shadingMode": "useRegistry",
-            "stripNamespaces": True,
         }
-        mc.mayaUSDExport(**kwargs)  # type: ignore[attr-defined]
-
-        # if on Windows, work around this bug: https://github.com/PixarAnimationStudios/OpenUSD/issues/849
-        # TODO: check if this is still needed in Maya 2025
-        if self.system == "Windows":
-            shutil.move(temp_publish_path, publish_path)
-
-        confirm = MessageDialog(
-            self.window,
-            f"The selected objects have been exported to {publish_path}",
-            "Export Complete",
-        )
-        confirm.exec_()
 
 
 class ModelChecker(MCUI):
@@ -178,7 +142,7 @@ class ModelChecker(MCUI):
             "ngons",
             "noneManifoldEdges",
             "onBorder",
-            #            "selfPenetratingUVs",
+            # "selfPenetratingUVs",
             "zeroAreaFaces",
             "zeroLengthEdges",
         ]

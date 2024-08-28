@@ -1,4 +1,4 @@
-global proc shelf_LnD_Assets () {
+global proc shelf_LnD_RLO () {
     global string $gBuffStr;
     global string $gBuffStr0;
     global string $gBuffStr1;
@@ -13,26 +13,26 @@ global proc shelf_LnD_Assets () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Model Checker" 
+        -annotation "Open RLO File" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "Model Chcker" 
+        -label "OpenRLO" 
         -labelOffset 0
         -rotation 0
         -flipX 0
         -flipY 0
         -useAlpha 1
-        -imageOverlayLabel "Checker" 
+        -imageOverlayLabel "Open RLO" 
         -overlayLabelColor 2.624876 0.801436 0.012446 
         -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
-        -image "monocle.png" 
-        -image1 "monocle.png" 
+        -image "openLoadGeneric.png" 
+        -image1 "openLoadGeneric.png" 
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.asset import ModelChecker; chck = ModelChecker.get(); chck.configure(); chck.show_UI();" 
+        -command "from pipe.m.shotfile import MRLOShotFileManager; fm = MRLOShotFileManager(); fm.open_file()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -47,26 +47,26 @@ global proc shelf_LnD_Assets () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Tool for L&D asset publishing" 
+        -annotation "Tool for shifting around timelines" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "Publish" 
+        -label "PinShift" 
         -labelOffset 0
         -rotation 0
         -flipX 0
         -flipY 0
         -useAlpha 1
-        -imageOverlayLabel "Publish Asset" 
+        -imageOverlayLabel "Pin Shift" 
         -overlayLabelColor 2.624876 0.801436 0.012446 
         -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
-        -image "createContainer.png" 
-        -image1 "createContainer.png" 
+        -image "pin.png" 
+        -image1 "pin.png" 
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.asset import AssetPublisher; AssetPublisher().publish();" 
+        -command "import pin_shift; pin_shift.run();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -81,7 +81,7 @@ global proc shelf_LnD_Assets () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Rayden Export" 
+        -annotation "Tool for L&D camera publishing" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
@@ -92,51 +92,18 @@ global proc shelf_LnD_Assets () {
         -flipX 0
         -flipY 0
         -useAlpha 1
-        -imageOverlayLabel "Rayden Export" 
+        -imageOverlayLabel "Publish Camera" 
         -overlayLabelColor 2.624876 0.801436 0.012446 
         -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
-        -image "createContainer.png" 
-        -image1 "createContainer.png" 
+        -image "camera.closed.svg" 
+        -image1 "camera.closed.svg" 
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.anim import RiggedExporter; RiggedExporter(char='rayden').publish();" 
+        -command "from pipe.m.camera import CameraPublisher; CameraPublisher().publish();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
     ;
-    shelfButton
-        -enableCommandRepeat 1
-        -flexibleWidthType 3
-        -flexibleWidthValue 32
-        -enable 1
-        -width 35
-        -height 34
-        -manage 1
-        -visible 1
-        -preventOverride 0
-        -annotation "Robin Export" 
-        -enableBackground 0
-        -backgroundColor 0 0 0 
-        -highlightColor 0.321569 0.521569 0.65098 
-        -align "center" 
-        -label "Publish" 
-        -labelOffset 0
-        -rotation 0
-        -flipX 0
-        -flipY 0
-        -useAlpha 1
-        -imageOverlayLabel "Robin Export" 
-        -overlayLabelColor 2.624876 0.801436 0.012446 
-        -overlayLabelBackColor 0.227129 0.227129 0.227129 0.5 
-        -image "createContainer.png" 
-        -image1 "createContainer.png" 
-        -style "iconOnly" 
-        -marginWidth 0
-        -marginHeight 1
-        -command "from pipe.m.anim import RiggedExporter; RiggedExporter(char='robin').publish();" 
-        -sourceType "python" 
-        -commandRepeatable 1
-        -flat 1
-    ;
+    
 } 

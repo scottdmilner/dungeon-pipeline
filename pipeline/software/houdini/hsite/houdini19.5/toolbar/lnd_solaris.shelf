@@ -22,14 +22,14 @@
   </toolshelf>
 
   <tool name="open_asset" label="Open Asset" icon="OBJ_geo">
-    <script scriptType="python"><![CDATA[from pipe.h.hipfile import HFileManagerAsset
-fm = HFileManagerAsset()
+    <script scriptType="python"><![CDATA[from pipe.h.hipfile import HAssetFileManager
+fm = HAssetFileManager()
 fm.open_file()]]></script>
   </tool>
 
   <tool name="open_set" label="Open Set" icon="LOP_layout">
-    <script scriptType="python"><![CDATA[from pipe.h.hipfile import HFileManagerEnv
-fm = HFileManagerEnv()
+    <script scriptType="python"><![CDATA[from pipe.h.hipfile import HEnvFileManager
+fm = HEnvFileManager()
 fm.open_file()]]></script>
   </tool>
 
