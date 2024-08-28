@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 from pipe.struct.db import (
     Asset,
     AssetStub,
+    Environment,
+    EnvironmentStub,
     SGEntity,
     SGEntityStub,
     Sequence,
@@ -161,6 +163,43 @@ class DBInterface(metaclass=ABCMeta):
     @abstractmethod
     def update_asset(self, asset: Asset) -> bool:
         """Update an asset in the DB"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_env_by_attr(self, attr: str, attr_val: str | int) -> Environment:
+        """Get an environment based off of an attribute"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_env_by_code(self, code: str) -> Environment:
+        """Get an environment based of its code"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_env_by_id(self, id: int) -> Environment:
+        """Get an environment based off its id"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_env_by_stub(self, stub: EnvironmentStub) -> Environment:
+        """Get an environment from its stub"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_envs_by_stub(
+        self, stubs: typing.Iterable[EnvironmentStub]
+    ) -> list[Environment]:
+        """Get a list of environments from a list of EnvironmentStubs"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_env_attr_list(self, attr: str, *, sorted: bool) -> list[str]:
+        """Get a list of values of an attribute on the environments"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_env_code_list(self, sorted: bool) -> list[str]:
+        """Get a list of environment codes"""
         raise NotImplementedError
 
     @abstractmethod

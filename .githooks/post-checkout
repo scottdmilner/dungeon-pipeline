@@ -22,6 +22,6 @@ source "${LOCAL_DIR}/.githooks/update-venv"
 
 # copy the pin shift tool over
 if [[ "${PROD_DIR}" != "${LOCAL_DIR}" ]]; then
-    cp "${PROD_DIR}/pipeline/software/maya/script/pin_shift.py" \
-      "${LOCAL_DIR}/pipeline/software/maya/script/pin_shift.py"
+    cp "${PROD_DIR}/pipeline/software/maya/scripts/pin_shift.py" \
+      "${LOCAL_DIR}/pipeline/software/maya/scripts/pin_shift.py"
 fi

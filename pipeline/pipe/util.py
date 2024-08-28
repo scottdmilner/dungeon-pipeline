@@ -65,14 +65,17 @@ class FileManager(metaclass=ABCMeta):
         pass
 
     @staticmethod
+    def _get_subpath() -> str:
+        return ""
+
+    @staticmethod
     @abstractmethod
     def _open_file(path: Path) -> None:
         """Opens the file into the current session"""
         pass
 
-    @staticmethod
     @abstractmethod
-    def _setup_file(path: Path) -> None:
+    def _setup_file(self, path: Path, entity: SGEntity) -> None:
         """Setup a new file in the current session"""
         pass
 
@@ -128,7 +131,7 @@ class FileManager(metaclass=ABCMeta):
             ).exec_()
             return
 
-        entity_path = get_production_path() / entity.path
+        entity_path = get_production_path() / entity.path / self._get_subpath()
         if not self._prompt_create_if_not_exist(entity_path):
             return
 
@@ -136,7 +139,7 @@ class FileManager(metaclass=ABCMeta):
         if file_path.is_file():
             self._open_file(file_path)
         else:
-            self._setup_file(file_path)
+            self._setup_file(file_path, entity)
 
 
 def dict_index(d: dict[KT, VT], v: VT) -> KT:

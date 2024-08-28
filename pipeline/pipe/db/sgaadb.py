@@ -424,6 +424,7 @@ class _ShotListQuery(_Query):
             "sg_cut_duration",
             "sg_path",
             "sg_sequence",
+            "sg_set",
         ]
 
     # Override
@@ -448,6 +449,7 @@ class _SequenceListQuery(_Query):
             "code",
             "id",
             "sg_path",
+            "sg_set",
             "shots",
         ]
 
