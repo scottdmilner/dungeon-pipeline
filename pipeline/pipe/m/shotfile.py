@@ -172,13 +172,6 @@ class MShotFileManager(FileManager):
         mc.file(save=True)
 
 
-RIG_MAP = {
-    6660: "anim/Rigs/Rayden.mb",
-    6661: "anim/Rigs/Robin.mb",
-    6662: "anim/Rigs/DungeonMonster.mb",
-}
-
-
 class MAnimShotFileManager(MShotFileManager):
     @staticmethod
     def _get_subpath() -> str:
