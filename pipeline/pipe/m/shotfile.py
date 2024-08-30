@@ -172,6 +172,13 @@ class MShotFileManager(FileManager):
         mc.file(save=True)
 
 
+RIG_MAP = {
+    6660: "anim/Rigs/Rayden.mb",
+    6661: "anim/Rigs/Robin.mb",
+    6662: "anim/Rigs/DungeonMonster.mb",
+}
+
+
 class MAnimShotFileManager(MShotFileManager):
     @staticmethod
     def _get_subpath() -> str:
@@ -182,7 +189,9 @@ class MAnimShotFileManager(MShotFileManager):
         self._import_env(shot, stage)
 
         # Import Rigs
-        # TODO
+        for asset_stub in shot.assets:
+            if rig_path := RIG_MAP.get(asset_stub.id):
+                mc.file(rig_path, reference=True, namespace=Path(rig_path).stem)
 
     def _setup_file(self, path: Path, entity) -> None:
         mc.file(newFile=True, force=True)
