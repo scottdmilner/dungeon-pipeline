@@ -11,7 +11,7 @@ from pxr import Sdf, Usd, UsdGeom, UsdShade, Vt
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import typing
+    from typing import Iterable
 
 log = logging.getLogger(__name__)
 
@@ -59,17 +59,17 @@ class ExportChaser(mayaUsdLib.ExportChaser):
         root_prim = self._stage.GetPseudoRoot()
 
         for prim in (it := iter(Usd.PrimRange(root_prim))):
-            if not prim.IsA(UsdGeom.Mesh):
+            if not (prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.BasisCurves)):
                 continue
             # don't recurse deeper than this
             it.PruneChildren()
 
-            for attr_name in ["points", "extent"]:
+            for attr_name in ("points", "extent"):
                 attr = prim.GetAttribute(attr_name)
                 if not attr.IsValid():
                     continue
 
-                frames: typing.Iterable[Usd.TimeCode]
+                frames: Iterable[Usd.TimeCode]
                 if attr.ValueMightBeTimeVarying():
                     frames = (Usd.TimeCode(f) for f in attr.GetTimeSamples())
                 else:
@@ -80,7 +80,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
                     data *= scale_factor
                     attr.Set(Vt.Vec3fArray.FromNumpy(data), frame)  # type: ignore[arg-type]
 
-            for attr_name in ["xformOp:translate:pivot"]:
+            for attr_name in ("xformOp:translate", "xformOp:translate:pivot"):
                 attr = prim.GetAttribute(attr_name)
                 if not attr.IsValid():
                     continue

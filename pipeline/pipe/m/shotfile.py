@@ -190,8 +190,14 @@ class MAnimShotFileManager(MShotFileManager):
 
         # Import Rigs
         for asset_stub in shot.assets:
-            if rig_path := RIG_MAP.get(asset_stub.id):
-                mc.file(rig_path, reference=True, namespace=Path(rig_path).stem)
+            asset = self._conn.get_asset_by_stub(asset_stub)
+            if not asset.path:
+                continue
+            rig_path = "/".join(("production", asset.path, "rig", "rig.mb"))
+            if (get_production_path() / ".." / rig_path).exists():
+                mc.file(rig_path, reference=True, namespace=asset.name)
+            else:
+                print(f'Unable to find rig for asset "{asset.disp_name}"')
 
     def _setup_file(self, path: Path, entity) -> None:
         mc.file(newFile=True, force=True)
