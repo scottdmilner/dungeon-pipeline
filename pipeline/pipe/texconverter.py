@@ -47,6 +47,11 @@ class TexConverter:
 
         assert self.tex_path is not None
 
+        # Remove any corrupted tex files from a previous export
+        for file in self.tex_path.iterdir():
+            if file.name.endswith(".temp.tex"):
+                file.unlink()
+
         @self._debug_out
         def tex_cmd(img: str, is_color: bool = False) -> list[str]:
             # currently using oiiotool so txmake doesn't freak out at the color space
