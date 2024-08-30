@@ -176,6 +176,9 @@ class ShotStub(SGEntityStub):
 
 @attrs.define
 class Shot(SGEntity):
+    assets: list[AssetStub] = field(
+        metadata={_STRUCT_HOOK: lambda aa, _: [AssetStub.from_sg(a) for a in aa]}
+    )
     code: str = field(on_setattr=attrs.setters.frozen)
     cut_in: int = field(metadata={_SG_NAME: "sg_cut_in"})
     cut_out: int = field(metadata={_SG_NAME: "sg_cut_out"})

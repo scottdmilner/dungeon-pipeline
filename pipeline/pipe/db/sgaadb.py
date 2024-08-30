@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import partialmethod as pm
 from typing import TYPE_CHECKING
@@ -322,11 +322,13 @@ class _Query(ABC):
     def exec(self, sg: shotgun_api3.Shotgun) -> Any:
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def _base_fields(self) -> list[str]:
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def _base_filters(self) -> list[Filter]:
         pass
 
@@ -417,6 +419,7 @@ class _ShotListQuery(_Query):
     @property
     def _base_fields(self) -> list[str]:
         return [
+            "assets",
             "code",
             "id",
             "sg_cut_in",
