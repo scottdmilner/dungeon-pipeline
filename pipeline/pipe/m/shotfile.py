@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import mayaUsd  # type: ignore[import-not-found]
+import maya.api.OpenMaya as om
 import maya.cmds as mc
 
 from abc import abstractmethod
@@ -66,6 +67,10 @@ def shot_timeline_generator(
 
 
 class MShotFileManager(FileManager):
+    shot: Shot
+    stage: Usd.Stage
+    stage_shape: str
+
     def __init__(self) -> None:
         conn = DB.Get(DB_Config)
         window = get_main_qt_window()
@@ -95,69 +100,100 @@ class MShotFileManager(FileManager):
     def _open_file(path: Path) -> None:
         mc.file(str(path), open=True, force=True)
 
-    def _import_camera(self, shot: Shot, stage: Usd.Stage) -> None:
-        assert shot.path is not None
-        root_layer = stage.GetRootLayer()
+    def _post_open_file(self) -> None:
+        def saveEditTargetLayer(clientData: dict[str, str]) -> None:
+            print(clientData)
+            stage: Usd.Stage = mayaUsd.ufe.getStage(clientData["stage_shape"])
+            stage.GetEditTarget().GetLayer().Save()
+
+        om.MSceneMessage.addCallback(
+            om.MSceneMessage.kBeforeSave,
+            saveEditTargetLayer,
+            {"stage_shape": mc.ls(type="mayaUsdProxyShape", long=True)[0]},
+        )
+
+    def _import_camera(self) -> None:
+        assert self.shot.path is not None
+        root_layer = self.stage.GetRootLayer()
 
         cam_layer = Sdf.Layer.CreateAnonymous(tag="Camera")
         root_layer.subLayerPaths.append(cam_layer.identifier)
+        # mc.mayaUsdLayerEditor(cam_layer.identifier, edit=True, lockLayer=(2, 0, stageShape))
+
         cam_file_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
-            root_layer, "/".join((shot.path, "cam", "cam.usd"))
+            root_layer, "/".join((self.shot.path, "cam", "cam.usd"))
         )
         cam_layer.subLayerPaths.append(cam_file_layer.identifier)
+
         # Fix Camera Scale
-        stage.SetEditTarget(Usd.EditTarget(cam_layer))
-        cam_prim = stage.GetPrimAtPath(Sdf.Path("/LnD_shotCam"))
+        self.stage.SetEditTarget(Usd.EditTarget(cam_layer))
+        cam_prim = self.stage.GetPrimAtPath(Sdf.Path("/LnD_shotCam"))
         cam_xformable = UsdGeom.Xformable(cam_prim)
         cam_xformable.AddScaleOp().Set((0.01, 0.01, 0.01))
 
-    def _import_env(self, shot: Shot, stage: Usd.Stage) -> None:
-        assert shot.path is not None
-        root_layer = stage.GetRootLayer()
+    def _import_env(self) -> None:
+        assert self.shot.path is not None
+        root_layer = self.stage.GetRootLayer()
+        locked_layers: list[str] = []
 
         env_layer = Sdf.Layer.CreateAnonymous(tag="Environment")
         root_layer.subLayerPaths.append(env_layer.identifier)
-        env_stub = shot.set or self._conn.get_sequence_by_stub(shot.sequence).set
+        locked_layers.append(env_layer.identifier)
+
+        env_stub = (
+            self.shot.set or self._conn.get_sequence_by_stub(self.shot.sequence).set
+        )
         if env_stub and (env := self._conn.get_env_by_stub(env_stub)) and env.path:
             env_file_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
                 root_layer, "/".join((env.path, "main.usd"))
             )
             env_layer.subLayerPaths.append(env_file_layer.identifier)
+            locked_layers.append(env_file_layer.identifier)
+
         # Set up shot-level overrides
-        env_override_layer = Sdf.Layer.CreateNew(
-            str(get_production_path() / shot.path / "set" / "maya_override.usd")
+        Sdf.Layer.CreateNew(
+            str(get_production_path() / self.shot.path / "set" / "maya_override.usd")
+        ).Save()
+        env_override_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
+            root_layer, "/".join((self.shot.path, "set", "maya_override.usd"))
         )
-        env_override_layer.Save()
         env_layer.subLayerPaths.insert(0, env_override_layer.identifier)
-        stage.SetEditTarget(Usd.EditTarget(env_override_layer))
+        self.stage.SetEditTarget(Usd.EditTarget(env_override_layer))
+
+        # for id in locked_layers:
+        #     mc.mayaUsdLayerEditor(id, edit=True, lockLayer=(2, 0, stageShape))
+        print(self.stage.GetLayerStack())
 
     @abstractmethod
-    def _setup_scene(self, shot: Shot, stage: Usd.Stage) -> None:
+    def _setup_scene(self) -> None:
         pass
 
     def _setup_file(self, path: Path, entity) -> None:
         mc.file(rename=str(path))
 
-        shot = cast(Shot, entity)
+        self.shot = cast(Shot, entity)
 
         # Create USD Stage
         transform = mc.createNode("transform", name="stage_transform")
         mc.scale(100, 100, 100, transform, absolute=True)
         mc.createNode("mayaUsdProxyShape", name="stage", parent=transform)
-        stage_node = mc.ls(selection=True, long=True)[0]
-        mc.connectAttr("time1.outTime", f"{stage_node}.time")
+        self.stage_shape = mc.ls(selection=True, long=True)[0]
+        mc.connectAttr("time1.outTime", f"{self.stage_shape}.time")
 
         rel_root_path = (
             Path("../" * (len(path.relative_to(get_production_path()).parents) - 1))
             / "root.usda"
         )
-        mc.setAttr(f"{stage_node}.filePath", str(rel_root_path), type="string")
+        mc.setAttr(f"{self.stage_shape}.filePath", str(rel_root_path), type="string")
+
+        self.stage = mayaUsd.ufe.getStage(self.stage_shape)
+        # mc.mayaUsdLayerEditor(str(get_production_path() / "root.usda"), edit=True, lockLayer=(2, 0, stage_shape))
 
         # Set up stage
-        self._setup_scene(shot, mayaUsd.ufe.getStage(stage_node))
+        self._setup_scene()
 
         # Import Timeline
-        frames, colors, comments = shot_timeline_generator(shot.cut_duration)
+        frames, colors, comments = shot_timeline_generator(self.shot.cut_duration)
         TimelineMarker.set(frames, colors, comments)
         mc.playbackOptions(
             animationStartTime=frames[0],
@@ -177,12 +213,12 @@ class MAnimShotFileManager(MShotFileManager):
     def _get_subpath() -> str:
         return "anim"
 
-    def _setup_scene(self, shot: Shot, stage: Usd.Stage) -> None:
-        self._import_camera(shot, stage)
-        self._import_env(shot, stage)
+    def _setup_scene(self) -> None:
+        self._import_camera()
+        self._import_env()
 
         # Import Rigs
-        for asset_stub in shot.assets:
+        for asset_stub in self.shot.assets:
             asset = self._conn.get_asset_by_stub(asset_stub)
             if not asset.path:
                 continue
@@ -206,8 +242,8 @@ class MRLOShotFileManager(MShotFileManager):
     def _get_subpath() -> str:
         return "rlo"
 
-    def _setup_scene(self, shot: Shot, stage: Usd.Stage) -> None:
-        self._import_env(shot, stage)
+    def _setup_scene(self) -> None:
+        self._import_env()
 
     def _setup_file(self, path: Path, entity: SGEntity) -> None:
         if not path.exists():

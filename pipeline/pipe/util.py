@@ -79,6 +79,10 @@ class FileManager(metaclass=ABCMeta):
         """Setup a new file in the current session"""
         pass
 
+    def _post_open_file(self) -> None:
+        """Execute additional code after opening or creating a scene"""
+        pass
+
     def _prompt_create_if_not_exist(self, path: Path) -> bool:
         """Returns True if safe to proceed, False otherwise"""
         if not path.exists():
@@ -140,6 +144,8 @@ class FileManager(metaclass=ABCMeta):
             self._open_file(file_path)
         else:
             self._setup_file(file_path, entity)
+
+        self._post_open_file()
 
 
 def dict_index(d: dict[KT, VT], v: VT) -> KT:
