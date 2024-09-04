@@ -43,11 +43,12 @@ class Diffable(JsonSerializable):
             object.__setattr__(self, "_initial_state", {})
 
         # get a deepcopy of each slot
+        name: str
         state: dict[str, Any] = {}
-        for k in self.__slots__:
-            if k == "_initial_state":
+        for name in (f.name for f in attrs.fields(self.__class__)):
+            if name == "_initial_state":
                 continue
-            state[k] = deepcopy(getattr(self, k))
+            state[name] = deepcopy(getattr(self, name))
 
         # save the initial state
         object.__setattr__(self, "_initial_state", state)
