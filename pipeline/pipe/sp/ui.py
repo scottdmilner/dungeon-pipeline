@@ -147,7 +147,6 @@ class SubstanceExportWindow(QMainWindow, ButtonPair):
         # Buttons
         self._init_buttons(has_cancel_button=True, ok_name="Export")
         self.buttons.rejected.connect(self.close)
-        # self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
         self.buttons.accepted.connect(self.do_export)
         self._main_layout.addWidget(self.buttons)
 
