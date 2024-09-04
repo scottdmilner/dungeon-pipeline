@@ -3,6 +3,7 @@ import dwpicker
 from shared.util import get_rigging_path
 
 picker_filenames = [
+    "Ray_Facial_Picker.json",
     "Rayden_Picker.json",
     "Robin_Picker.json",
 ]
