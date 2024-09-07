@@ -22,10 +22,14 @@ class RiggedExporter(Publisher):
 
     _char: str
     _anim: bool
+    _frames: tuple[int, int]
 
-    def __init__(self, char: str, anim: bool = False) -> None:
+    def __init__(
+        self, char: str, anim: bool = False, frames: tuple[int, int] | None = None
+    ) -> None:
         self._char = char
         self._anim = anim
+        self._frames = frames or (940, 1100)
         super().__init__()
 
     def _get_mayausd_kwargs(self) -> dict[str, Any]:
@@ -44,7 +48,7 @@ class RiggedExporter(Publisher):
                     "exportColorSets": False,
                     "exportComponentTags": False,
                     "exportUVs": False,
-                    "frameRange": [1, 20],
+                    "frameRange": self._frames,
                     "frameStride": 1.0,
                     "shadingMode": "none",
                 }
