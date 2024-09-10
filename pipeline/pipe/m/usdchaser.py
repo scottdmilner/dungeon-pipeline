@@ -123,19 +123,32 @@ class ExportChaser(mayaUsdLib.ExportChaser):
             # editor.MovePrimAtPath(Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"))
             # editor.ApplyEdits()
 
+            WORLD = Sdf.Path("/WORLD")
+            new_shotCam_path = Sdf.Path("/LnD_shotCam")
             with Sdf.ChangeBlock():
+                layer = self._stage.GetEditTarget().GetLayer()
+
+                prim_paths: list[Sdf.Path] = []
+
+                def traverse_kernel(path: Sdf.Path):
+                    if path.IsPrimPath() and (path.name == "world_CTRL"):
+                        prim_paths.append(path)
+
+                layer.Traverse(WORLD, traverse_kernel)
+                world_ctrl_path = prim_paths.pop()
+
+                prim_spec = Sdf.CreatePrimInLayer(layer, new_shotCam_path)
+                prim_spec.SetInfo(prim_spec.SpecifierKey, Sdf.SpecifierDef)
+
                 edit = Sdf.BatchNamespaceEdit()
                 edit.Add(
-                    Sdf.NamespaceEdit.Reparent(
-                        Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"), -1
-                    )
+                    Sdf.NamespaceEdit.Reparent(world_ctrl_path, new_shotCam_path, -1)
                 )
-                edit.Add(Sdf.NamespaceEdit.Remove(Sdf.Path("/WORLD")))
-                self._stage.GetEditTarget().GetLayer().Apply(edit)
+                edit.Add(Sdf.NamespaceEdit.Remove(WORLD))
+                if not layer.Apply(edit):
+                    raise Exception("Failed to apply layer edit!")
 
-            self._stage.SetDefaultPrim(
-                self._stage.GetPrimAtPath(Sdf.Path("/LnD_shotCam"))
-            )
+            self._stage.SetDefaultPrim(self._stage.GetPrimAtPath(new_shotCam_path))
         else:
             raise ValueError(
                 f"{self._chaser_args.mode} is not a valid LnD chaser mode."
