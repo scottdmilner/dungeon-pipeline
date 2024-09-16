@@ -68,6 +68,7 @@ def shot_timeline_generator(
 
 
 class MShotFileManager(FileManager):
+    MAYA_OVERRIDE = "maya_override.usd"
     shot: Shot
 
     def __init__(self) -> None:
@@ -109,7 +110,8 @@ class MShotFileManager(FileManager):
     def _open_file(path: Path) -> None:
         mc.file(str(path), open=True, force=True)
 
-    def _post_open_file(self) -> None:
+    def _post_open_file(self, entity: SGEntity) -> None:
+        self.shot = cast(Shot, entity)
         STAGE_SHAPE = "stage_shape"
 
         def saveEditTargetLayer(clientData: dict[str, str]) -> None:
@@ -124,6 +126,14 @@ class MShotFileManager(FileManager):
             },
         )
 
+        mc.mayaUsdEditTarget(  # type: ignore[attr-defined]
+            self.stage_shape,
+            edit=True,
+            editTarget="/".join(
+                ["shot", self.shot.code, "set", MShotFileManager.MAYA_OVERRIDE]
+            ),
+        )
+
     def _import_camera(self) -> None:
         assert self.shot.path is not None
         root_layer = self.stage.GetRootLayer()
@@ -133,6 +143,10 @@ class MShotFileManager(FileManager):
         cam_file_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
             root_layer, "/".join((self.shot.path, "cam", "cam.usd"))
         )
+        if not cam_file_layer:
+            mc.warning("No exported camera found")
+            return
+
         root_layer.subLayerPaths.append(cam_file_layer.identifier)
 
         # Fix Camera Scale
@@ -147,10 +161,16 @@ class MShotFileManager(FileManager):
 
         # Set up shot-level overrides
         Sdf.Layer.CreateNew(
-            str(get_production_path() / self.shot.path / "set" / "maya_override.usd")
+            str(
+                get_production_path()
+                / self.shot.path
+                / "set"
+                / MShotFileManager.MAYA_OVERRIDE
+            )
         ).Save()
         env_override_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
-            root_layer, "/".join((self.shot.path, "set", "maya_override.usd"))
+            root_layer,
+            "/".join((self.shot.path, "set", MShotFileManager.MAYA_OVERRIDE)),
         )
         root_layer.subLayerPaths.append(env_override_layer.identifier)
         self.stage.SetEditTarget(Usd.EditTarget(env_override_layer))
@@ -187,7 +207,7 @@ class MShotFileManager(FileManager):
         mc.connectAttr("time1.outTime", f"{self.stage_shape}.time")
 
         ROOT_LAYER = "maya_root.usd"
-        root_layer = Sdf.Layer.CreateNew(
+        root_layer = Sdf.Layer.FindOrOpen(
             str(get_production_path() / self.shot.path / ROOT_LAYER)
         )
         mc.setAttr(f"{self.stage_shape}.filePath", "../" + ROOT_LAYER, type="string")

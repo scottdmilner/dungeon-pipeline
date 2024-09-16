@@ -38,7 +38,7 @@ class RiggedExporter(Publisher):
             "chaserArgs": [(ExportChaser.ID, "mode", ChaserMode.RIG)],
             "exportCollectionBasedBindings": True,
             "exportMaterialCollections": True,
-            "materialCollectionsPath": "/CHAR/MODEL",
+            "materialCollectionsPath": "/ROOT/MODEL",
             "shadingMode": "useRegistry",
         }
 

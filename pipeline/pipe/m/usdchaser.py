@@ -94,7 +94,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
         """Update material bindings to what Houdini will expect"""
 
         bindings = UsdShade.MaterialBindingAPI(
-            self._stage.GetPrimAtPath(Sdf.Path("/CHAR/MODEL"))
+            self._stage.GetPrimAtPath(Sdf.Path("/ROOT/MODEL"))
         )
         for rel in bindings.GetCollectionBindingRels():
             t1, t2 = rel.GetTargets()
@@ -105,7 +105,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
                 (
                     t1,
                     Sdf.Path(
-                        str(t2.GetParentPath()).replace("/CHAR", "/CHAR/MODEL")
+                        str(t2.GetParentPath()).replace("/ROOT", "/ROOT/MODEL")
                         + "/MAT_"
                         + new_name
                     ),
