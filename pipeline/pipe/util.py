@@ -79,7 +79,7 @@ class FileManager(metaclass=ABCMeta):
         """Setup a new file in the current session"""
         pass
 
-    def _post_open_file(self) -> None:
+    def _post_open_file(self, entity: SGEntity) -> None:
         """Execute additional code after opening or creating a scene"""
         pass
 
@@ -145,7 +145,7 @@ class FileManager(metaclass=ABCMeta):
         else:
             self._setup_file(file_path, entity)
 
-        self._post_open_file()
+        self._post_open_file(entity)
 
 
 def dict_index(d: dict[KT, VT], v: VT) -> KT:
