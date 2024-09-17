@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import platform
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -71,9 +70,9 @@ class HoudiniDCC(DCC):
             # Job directory
             "JOB": str(resolve_mapped_path(get_production_path())),
             # Manually set LD_LIBRARY_PATH to integrated Houdini libraries (for Axiom)
-            "LD_LIBRARY_PATH": str(Executables.hfs / "dsolib")
-            if platform.system() == "Linux"
-            else None,
+            # "LD_LIBRARY_PATH": str(Executables.hfs / "dsolib")
+            # if platform.system() == "Linux"
+            # else None,
             # Set project OCIO config
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
             # Pass log level defined on commandline
