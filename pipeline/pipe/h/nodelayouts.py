@@ -192,7 +192,7 @@ def lnd_layout(kwargs: dict) -> hou.Node:
     layoutprim.setInput(0, envprim)
 
     contextoptions.setName("layout_name", True)
-    envprim.setName("environment_scope", True)
+    envprim.setName("environment_xform", True)
     layoutprim.setName("assembly_prim", True)
 
     for n in (contextoptions, envprim, layoutprim, merge):
@@ -204,11 +204,11 @@ def lnd_layout(kwargs: dict) -> hou.Node:
 
     envprim.parm("primpath").set("/environment")
     envprim.parm("parentprimtype").set("None")
-    envprim.parm("primtype").set("Scope")
+    envprim.parm("primtype").set("UsdGeomXform")
 
     layoutprim.parm("primpath").set("`@PATH`")
     layoutprim.parm("primkind").set("Assembly")
-    layoutprim.parm("parentprimtype").set("Scope")
+    layoutprim.parm("parentprimtype").set("UsdGeomXform")
 
     contextoptions.addSpareParmTuple(
         hou.StringParmTemplate(

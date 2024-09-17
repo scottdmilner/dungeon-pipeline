@@ -149,11 +149,6 @@ class MShotFileManager(FileManager):
 
         root_layer.subLayerPaths.append(cam_file_layer.identifier)
 
-        # Fix Camera Scale
-        cam_prim = self.stage.GetPrimAtPath(Sdf.Path("/LnD_shotCam"))
-        cam_xformable = UsdGeom.Xformable(cam_prim)
-        cam_xformable.AddScaleOp().Set((0.01, 0.01, 0.01))
-
     def _import_env(self) -> None:
         assert self.shot.path is not None
         root_layer = self.stage.GetRootLayer()
@@ -173,6 +168,11 @@ class MShotFileManager(FileManager):
             "/".join((self.shot.path, "set", MShotFileManager.MAYA_OVERRIDE)),
         )
         root_layer.subLayerPaths.append(env_override_layer.identifier)
+        # Fix env scale
+        env_prim = self.stage.OverridePrim(Sdf.Path("/environment"))
+        env_xformable = UsdGeom.Xformable(env_prim)
+        env_xformable.AddScaleOp().Set((100, 100, 100))
+
         self.stage.SetEditTarget(Usd.EditTarget(env_override_layer))
 
         env_stub = (
@@ -201,7 +201,6 @@ class MShotFileManager(FileManager):
 
         # Create USD Stage
         transform = mc.createNode("transform", name="stage_transform")
-        mc.scale(100, 100, 100, transform, absolute=True)
         mc.createNode("mayaUsdProxyShape", name="stage", parent=transform)
         self.stage_shape = mc.ls(selection=True, long=True)[0]
         mc.connectAttr("time1.outTime", f"{self.stage_shape}.time")
@@ -233,6 +232,9 @@ class MShotFileManager(FileManager):
         # Save USD Edits to the scene file and don't prompt about it
         mc.optionVar(intValue=("mayaUsd_SerializedUsdEditsLocationPrompt", 0))
         mc.optionVar(intValue=("mayaUsd_SerializedUsdEditsLocation", 2))
+
+        # Save shot code to file
+        mc.fileInfo("code", self.shot.code)
         mc.file(save=True)
 
 
