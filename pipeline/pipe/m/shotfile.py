@@ -155,18 +155,18 @@ class MShotFileManager(FileManager):
         # locked_layers: list[str] = []
 
         # Set up shot-level overrides
-        Sdf.Layer.CreateNew(
+        env_override_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
+            root_layer,
+            "/".join((self.shot.path, "set", MShotFileManager.MAYA_OVERRIDE)),
+        ) or Sdf.Layer.CreateNew(
             str(
                 get_production_path()
                 / self.shot.path
                 / "set"
                 / MShotFileManager.MAYA_OVERRIDE
             )
-        ).Save()
-        env_override_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
-            root_layer,
-            "/".join((self.shot.path, "set", MShotFileManager.MAYA_OVERRIDE)),
         )
+        env_override_layer.Save()
         root_layer.subLayerPaths.append(env_override_layer.identifier)
         # Fix env scale
         env_prim = self.stage.OverridePrim(Sdf.Path("/environment"))
@@ -210,6 +210,7 @@ class MShotFileManager(FileManager):
         root_layer = Sdf.Layer.FindOrOpen(root_layer_path) or Sdf.Layer.CreateNew(
             root_layer_path
         )
+        root_layer.Save()
         mc.setAttr(f"{self.stage_shape}.filePath", "../" + ROOT_LAYER, type="string")
 
         # mc.mayaUsdLayerEditor(str(get_production_path() / "root.usda"), edit=True, lockLayer=(2, 0, stage_shape))
