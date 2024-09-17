@@ -207,8 +207,9 @@ class MShotFileManager(FileManager):
         mc.connectAttr("time1.outTime", f"{self.stage_shape}.time")
 
         ROOT_LAYER = "maya_root.usd"
-        root_layer = Sdf.Layer.FindOrOpen(
-            str(get_production_path() / self.shot.path / ROOT_LAYER)
+        root_layer_path = str(get_production_path() / self.shot.path / ROOT_LAYER)
+        root_layer = Sdf.Layer.FindOrOpen(root_layer_path) or Sdf.Layer.CreateNew(
+            root_layer_path
         )
         mc.setAttr(f"{self.stage_shape}.filePath", "../" + ROOT_LAYER, type="string")
 
