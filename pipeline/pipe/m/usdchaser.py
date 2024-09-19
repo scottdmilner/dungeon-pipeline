@@ -69,11 +69,11 @@ class ExportChaser(mayaUsdLib.ExportChaser):
                 if not attr.IsValid():
                     continue
 
-                frames: Iterable[Usd.TimeCode]
-                if attr.GetVariability() == Sdf.VariabilityVarying:
-                    frames = (Usd.TimeCode(f) for f in attr.GetTimeSamples())
-                else:
-                    frames = (Usd.TimeCode.Default(),)
+                frames: Iterable[Usd.TimeCode] = (
+                    (Usd.TimeCode(f) for f in attr.GetTimeSamples())
+                    if attr.GetNumTimeSamples()
+                    else (Usd.TimeCode.Default(),)
+                )
 
                 for frame in frames:
                     data = np.array(attr.Get(frame))
