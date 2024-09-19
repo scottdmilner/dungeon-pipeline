@@ -70,7 +70,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
                     continue
 
                 frames: Iterable[Usd.TimeCode]
-                if attr.ValueMightBeTimeVarying():
+                if attr.GetVariability() == Sdf.VariabilityVarying:
                     frames = (Usd.TimeCode(f) for f in attr.GetTimeSamples())
                 else:
                     frames = (Usd.TimeCode.Default(),)
