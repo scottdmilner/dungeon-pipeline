@@ -78,6 +78,12 @@ class HoudiniDCC(DCC):
             # Pass log level defined on commandline
             "PIPE_LOG_LEVEL": log.getEffectiveLevel(),
             "PIPE_PATH": str(pipe_path),
+            # Configure Asset Resolver
+            "PXR_AR_DEFAULT_SEARCH_PATH": os.pathsep.join(
+                [
+                    str(get_production_path()),
+                ]
+            ),
             # USD Plugins
             "PXR_PLUGINPATH_NAME": os.pathsep.join(
                 [
