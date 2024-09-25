@@ -12,7 +12,7 @@ m = toolbar.addMenu("Nungeon", icon="nungeonIcon.png")
 m.addCommand("Lens", "nuke.createNode('Lens')", icon="nungeonIcon.png")
 m.addCommand(
     "Template",
-    "nuke.nodePaste('./pipeline/software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')",
+    "nuke.nodePaste('/groups/dungeons/pipeline/software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')",
     icon="nungeonIcon.png",
 )
 
