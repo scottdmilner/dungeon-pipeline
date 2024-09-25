@@ -1198,7 +1198,7 @@ push $Na9dfa540
  Read {
   inputs 0
   file_type jpeg
-  file /groups/dungeons/pipeline/pipeline/software/nuke/tools/DungeonLensv1/lensdirt.jpg
+  file /groups/dungeons/pipeline/pipeline/software/nuke/tools/NungeonTools/images/lensdirt.jpg
   format "2048 1024 0 0 2048 1024 1 2K_LatLong"
   origset true
   name Read6
