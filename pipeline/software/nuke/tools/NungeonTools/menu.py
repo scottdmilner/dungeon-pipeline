@@ -1,4 +1,5 @@
 import nuke
+from shared.util import get_pipe_path
 
 nuke.pluginAddPath("./gizmos")
 nuke.pluginAddPath("./icons")
@@ -10,9 +11,12 @@ nuke.pluginAddPath("./toolsets")
 toolbar = nuke.menu("Nodes")
 m = toolbar.addMenu("Nungeon", icon="nungeonIcon.png")
 m.addCommand("Lens", "nuke.createNode('Lens')", icon="nungeonIcon.png")
+print(
+    f"nuke.nodePaste({str(get_pipe_path() / 'software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')})"
+)
 m.addCommand(
     "Template",
-    "nuke.nodePaste('./pipeline/software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')",
+    f"nuke.nodePaste(\"{str(get_pipe_path() / 'software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')}\")",
     icon="nungeonIcon.png",
 )
 
