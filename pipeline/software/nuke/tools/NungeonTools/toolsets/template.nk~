@@ -1,0 +1,269 @@
+#! /opt/Nuke14.0v5/libnuke-14.0.5.so -nx
+version 14.0 v5
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="0" w="2495" h="1337" screen="0">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1832" stretch="1"/>
+            <splitter orientation="2">
+                <split size="760"/>
+                <dock id="" activePageId="Viewer.1">
+                    <page id="Viewer.1"/>
+                    <page id="Viewer.2"/>
+                </dock>
+                <split size="534"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+            </splitter>
+            <split size="615"/>
+            <dock id="" activePageId="Properties.1">
+                <page id="Properties.1"/>
+                <page id="uk.co.thefoundry.backgroundrenderview.1"/>
+                <page id="Scenegraph.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name /users/animation/ijc23/Documents/dungeon-pipeline/pipeline/software/nuke/tools/NungeonTools/toolsets/template.nk
+ frame 1013
+ first_frame 1001
+ last_frame 1101
+ lock_range true
+ format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement OCIO
+ OCIO_config aces_1.2
+ defaultViewerLUT "OCIO LUTs"
+ workingSpaceLUT scene_linear
+ monitorLut "Show Look (Display Rec.709)"
+ monitorOutLUT "Show Look (Display Rec.709)"
+ int8Lut matte_paint
+ int16Lut texture_paint
+ logLut compositing_log
+ floatLut scene_linear
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode1
+ label Read
+ note_font_size 40
+ xpos 172
+ ypos -961
+ bdwidth 1210
+ bdheight 789
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode2
+ tile_color 0x72895bff
+ label Rotopaint
+ note_font_size 40
+ xpos 449
+ ypos -63
+ bdwidth 911
+ bdheight 659
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode3
+ tile_color 0x4f6877ff
+ label "Color correction"
+ note_font_size 40
+ note_font_color 0xc9eaffff
+ xpos 446
+ ypos 765
+ bdwidth 907
+ bdheight 557
+}
+Read {
+ inputs 0
+ file_type exr
+ format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ first 1001
+ last 1101
+ origfirst 1001
+ origlast 1101
+ origset true
+ colorspace data
+ name Read2
+ xpos 350
+ ypos -514
+}
+Grade {
+ name Grade2
+ xpos 350
+ ypos -430
+ disable true
+}
+Dot {
+ name Dot3
+ xpos 384
+ ypos -307
+}
+Read {
+ inputs 0
+ file_type exr
+ format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ first 1001
+ last 1101
+ origfirst 1001
+ origlast 1101
+ origset true
+ colorspace data
+ name Read1
+ xpos 817
+ ypos -856
+}
+Dot {
+ name Dot2
+ xpos 851
+ ypos -733
+}
+set N1f5e1e60 [stack 0]
+Merge2 {
+ inputs 2
+ name Merge1
+ xpos 817
+ ypos -311
+}
+RotoPaint {
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 0}
+    {t x44800000 x43d98000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}}}}}
+ toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+ toolbar_source_transform_center {1024 435}
+ name RotoPaint1
+ xpos 817
+ ypos 194
+ disable true
+}
+Grade {
+ name Grade1
+ xpos 817
+ ypos 929
+ disable true
+}
+HueCorrect {
+ name HueCorrect1
+ selected true
+ xpos 817
+ ypos 955
+ disable true
+}
+set N1df4c9f0 [stack 0]
+OCIODisplay {
+ colorspace scene_linear
+ display "Display Rec.709"
+ view "Show Look"
+ name OCIODisplay1
+ xpos 817
+ ypos 1916
+}
+Dot {
+ name Dot1
+ xpos 851
+ ypos 1942
+}
+set N17928b80 [stack 0]
+Write {
+ colorspace data
+ file_type exr
+ first_part rgba
+ in_colorspace scene_linear
+ out_colorspace scene_linear
+ name Write2
+ label "Write .exrs"
+ xpos 911
+ ypos 1977
+}
+push $N17928b80
+Write {
+ colorspace data
+ file_type mov
+ mov64_codec h264
+ mov_h264_codec_profile "High 4:2:0 8-bit"
+ mov64_pixel_format {{0}}
+ mov64_quality High
+ mov64_fast_start true
+ mov64_write_timecode true
+ mov64_gop_size 12
+ mov64_b_frames 0
+ mov64_bitrate 28000
+ mov64_bitrate_tolerance 0
+ mov64_quality_min 1
+ mov64_quality_max 3
+ checkHashOnRead false
+ name Write1
+ label "Write .movs"
+ xpos 724
+ ypos 1981
+}
+StickyNote {
+ inputs 0
+ name StickyNote2
+ label "check layers are good"
+ xpos 1070
+ ypos -696
+}
+StickyNote {
+ inputs 0
+ name StickyNote1
+ label "read input"
+ xpos 925
+ ypos -797
+}
+push $N1f5e1e60
+LayerContactSheet {
+ name LayerContactSheet1
+ xpos 1086
+ ypos -737
+}
+StickyNote {
+ inputs 0
+ name StickyNote3
+ label "add more render layers if necessary"
+ xpos 915
+ ypos -311
+}
+push $N1df4c9f0
+Viewer {
+ frame 1013
+ frame_range 1001-1101
+ viewerProcess "Show Look (Display Rec.709)"
+ name Viewer1
+ xpos 2027
+ ypos 1650
+}
