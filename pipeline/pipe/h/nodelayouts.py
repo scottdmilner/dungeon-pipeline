@@ -11,31 +11,54 @@ if TYPE_CHECKING:
 
 
 """Scripts for building node setups. Called by lnd_nodelayouts.hdanc in Interactive > Shelf Tools, also make sure to check a network context in the context tab"""
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 76e852e (Dallin Clark)
 def lnd_clustersetup(kwargs: dict, parent: Optional[hou.Node] = None) -> hou.Node:
     out: hou.LopNode = loptoolutils.genericTool(kwargs, "componentoutput")
     out.setColor(hou.Color((0.616, 0.871, 0.769)))
 
     out_pos = out.position()
 
+<<<<<<< HEAD
     #This is the context within the out node exists, which should be the stage context
     p = out.parent() 
 
     #fetches the other nodes
+=======
+    # This is the context within the out node exists, which should be the stage context
+    p = out.parent()
+
+    # fetches the other nodes
+>>>>>>> 76e852e (Dallin Clark)
     ldv = p.createNode("sdm223::dev::LnD_Lookdev")
     prim = p.createNode("primitive")
     graft = p.createNode("graftstages")
     env = p.createNode("fetch")
     err = p.createNode("error")
 
+<<<<<<< HEAD
     #Establishes Connections
     out.setInput(0, graft)
     graft.setInput(0, err)
     err.setInput(0,prim)
+=======
+    # Establishes Connections
+    out.setInput(0, graft)
+    graft.setInput(0, err)
+    err.setInput(0, prim)
+>>>>>>> 76e852e (Dallin Clark)
     ldv.setInput(0, out)
     out.setInput(1, env)
 
     # Arrange nodes in "Y" shape
+<<<<<<< HEAD
     err_move = hou.Vector2(-1.22,2.3)
+=======
+    err_move = hou.Vector2(-1.22, 2.3)
+>>>>>>> 76e852e (Dallin Clark)
     prim_move = hou.Vector2(-1.22, 3.5)
     graft_move = hou.Vector2(0.0, 1.0)
     ldv_move = hou.Vector2(0.0, -1.0)
@@ -51,16 +74,30 @@ def lnd_clustersetup(kwargs: dict, parent: Optional[hou.Node] = None) -> hou.Nod
 
     # Configure Component Output node
     out.parm("mode").set(1)
+<<<<<<< HEAD
+=======
+    out.parm("doclassinherit").set(False)
+    out.parm("lopoutput").set('$HIP/export/`chs("filename")`')
+>>>>>>> 76e852e (Dallin Clark)
     graft.parm("destpath").set("/")
     prim.parm("primpath").set("$OS")
     out.parm("rootprim").set("`lopinputprim('.', 0)`")
     err.parm("errormsg1").set("Please name your primitive node")
     err.parm("severity1").set("error")
 
+<<<<<<< HEAD
     error_expression = "import re\nrgx = re.compile(\"primitive[0-9]+\")\nreturn any(rgx.match(node.name()) for node in hou.pwd().inputAncestors())"
     err.parm("enable1").setExpression(error_expression, language=hou.exprLanguage.Python)
 
     #Set the Component Output as Selected
+=======
+    error_expression = 'import re\nrgx = re.compile("primitive[0-9]+")\nreturn any(rgx.match(node.name()) for node in hou.pwd().inputAncestors())'
+    err.parm("enable1").setExpression(
+        error_expression, language=hou.exprLanguage.Python
+    )
+
+    # Set the Component Output as Selected
+>>>>>>> 76e852e (Dallin Clark)
     out.setCurrent(True)
     out.setSelected(True, clear_all_selected=True)
 
