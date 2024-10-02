@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import ffmpeg  # type: ignore[import-untyped]
 import logging
+import os
 import platform
+import shutil
 import subprocess
 import sys
 
 from abc import ABCMeta, abstractmethod
+from functools import wraps
 from pathlib import Path
 from PySide2 import QtWidgets
 
@@ -23,6 +27,7 @@ from shared.util import get_production_path
 if TYPE_CHECKING:
     import typing
     from types import ModuleType
+    from pipe.struct.db import Shot
 
     KT = typing.TypeVar("KT")
     VT = typing.TypeVar("VT")
@@ -148,9 +153,112 @@ class FileManager(metaclass=ABCMeta):
         self._post_open_file(entity)
 
 
+class Playblaster:
+    _conn: DBInterface
+    shot: Shot
+
+    FR = 24
+
+    def __init__(self, conn: DBInterface, shot_code: str) -> None:
+        self._conn = conn
+        self.shot = self._conn.get_shot_by_code(shot_code)
+
+    @abstractmethod
+    def _write_images(self, path: str) -> None:
+        pass
+
+    def _do_generate_srt_file(self, path: Path) -> None:
+        """Generate an srt file with frame numbers as subtitles"""
+        srt_string = ""
+        for idx, frame in enumerate(sorted(path.parent.glob(path.name + ".*.png"))):
+            num = int(frame.stem.split(".").pop())
+            print(idx, num)
+            srt_string += f"{idx}\n"
+            srt_string += (
+                "00:00:{:02},{:03}".format(
+                    idx // self.FR,
+                    int((idx % self.FR) / self.FR * 1000),
+                )
+                + " --> "
+                + "00:00:{:02},{:03}".format(
+                    (idx + 1) // self.FR,
+                    int(((idx + 1) % self.FR) / self.FR * 1000),
+                )
+                + "\n"
+            )
+            srt_string += f"Frame: {num}\n"
+            srt_string += "\n"
+
+        with open(str(path) + ".srt", "w") as srt:
+            srt.write(srt_string)
+
+    def _do_playblast(self, paths: list[Path | str] | None = None) -> None:
+        if not paths:
+            paths = []
+
+        tempdir = Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve()
+
+        FILENAME = "lnd_pb_temp." + self.shot.code
+
+        # remove any old playblasts
+        for p in tempdir.glob(FILENAME + "*"):
+            p.unlink()
+
+        self._write_images(str(tempdir / FILENAME))
+
+        start_frame = self.shot.cut_in - 5
+        images = ffmpeg.input(
+            str(tempdir / FILENAME) + ".%04d.png",
+            start_number=start_frame,
+        )
+        # self._do_generate_srt_file(tempdir / FILENAME)
+
+        # frame_nums = ffmpeg.input(str(tempdir / FILENAME) + ".srt")
+        out_filename = str(tempdir / FILENAME) + ".mov"
+        ffmpeg.output(
+            images,
+            # frame_nums,
+            out_filename,
+            timecode="00:00:{:02}:{:02}".format(
+                start_frame // self.FR,
+                start_frame % self.FR,
+            ),
+            vcodec="prores_ks",
+            pix_fmt="yuv422p10le",
+            # scodec="mov_text",
+            r=self.FR,
+        ).overwrite_output().run()
+
+        for path in (Path(p) for p in paths):
+            if not path.parent.exists():
+                path.parent.mkdir(mode=0o770, parents=True)
+            shutil.copyfile(out_filename, path)
+
+        # clean up if not in debug mode
+        # if not log.isEnabledFor(logging.DEBUG):
+        #     for p in tempdir.glob(FILENAME + "*"):
+        #         p.unlink()
+
+    @abstractmethod
+    def playblast(self) -> None:
+        pass
+
+
 def dict_index(d: dict[KT, VT], v: VT) -> KT:
     """List index function for dicts"""
     return list(d.keys())[list(d.values()).index(v)]
+
+
+def log_errors(fun):
+    @wraps(fun)
+    def wrap(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except Exception as e:
+            log.error(e, exc_info=True)
+            raise
+
+    return wrap
 
 
 def reload_pipe(extra_modules: typing.Sequence[ModuleType] | None = None) -> None:
@@ -163,7 +271,9 @@ def reload_pipe(extra_modules: typing.Sequence[ModuleType] | None = None) -> Non
     pipe_modules = [
         module
         for name, module in sys.modules.items()
-        if (name.startswith("pipe")) and ("shotgun_api3" not in name) or (name == "env")
+        if (name.startswith("pipe") or name.startswith("shared"))
+        and ("shotgun_api3" not in name)
+        or (name == "env")
     ] + extra_modules
 
     for module in pipe_modules:

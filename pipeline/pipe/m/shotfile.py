@@ -6,7 +6,6 @@ import maya.api.OpenMaya as om
 import maya.cmds as mc
 
 from abc import abstractmethod
-from functools import cached_property
 from pathlib import Path
 from pxr import Sdf, Usd, UsdGeom
 from timeline_marker.ui import TimelineMarker  # type: ignore[import-not-found]
@@ -16,7 +15,7 @@ from pipe.db import DB
 from pipe.glui.dialogs import MessageDialogCustomButtons
 from pipe.m.local import get_main_qt_window
 from pipe.struct.db import SGEntity, Shot
-from pipe.util import FileManager
+from pipe.util import FileManager, log_errors
 from shared.util import get_production_path
 
 from env_sg import DB_Config
@@ -76,15 +75,46 @@ class MShotFileManager(FileManager):
         window = get_main_qt_window()
         super().__init__(conn, Shot, window)
 
-    @cached_property
-    def stage_shape(self) -> str:
+    @classmethod
+    def get_stage_shape(cls) -> str:
         if ss := mc.ls(type="mayaUsdProxyShape", long=True)[0]:
             return ss
         raise RuntimeError("No USD stage found in scene")
 
-    @cached_property
-    def stage(self) -> Usd.Stage:
-        return mayaUsd.ufe.getStage(self.stage_shape)
+    @classmethod
+    def get_stage(cls) -> Usd.Stage:
+        return mayaUsd.ufe.getStage(cls.get_stage_shape())
+
+    @classmethod
+    @log_errors
+    def run_on_open(cls) -> None:
+        """Function to run on file open via script node"""
+
+        # save edit target layer on save
+        beforeSaveId = om.MSceneMessage.addCallback(
+            om.MSceneMessage.kBeforeSave,
+            lambda _: MShotFileManager.get_stage().GetEditTarget().GetLayer().Save(),
+        )
+
+        # remove callback before opening a new file
+        om.MSceneMessage.addCallback(
+            om.MSceneMessage.kBeforeOpen,
+            lambda kwargs: om.MSceneMessage.removeCallback(kwargs["ID"]),
+            {"ID": beforeSaveId},
+        )
+
+        # set session USD target layer to the override layer
+        try:
+            shot_code = mc.fileInfo("code", query=True)[0]
+            mc.mayaUsdEditTarget(  # type: ignore[attr-defined]
+                cls.get_stage_shape(),
+                edit=True,
+                editTarget="/".join(["shot", shot_code, "set", cls.MAYA_OVERRIDE]),
+            )
+        except IndexError:
+            mc.error("Could not find shot code in fileInfo! USD edit target not set")
+        except Exception:
+            mc.error("Warning! Could not set edit target!")
 
     @staticmethod
     def _check_unsaved_changes() -> bool:
@@ -111,32 +141,27 @@ class MShotFileManager(FileManager):
         mc.file(str(path), open=True, force=True)
 
     def _post_open_file(self, entity: SGEntity) -> None:
-        self.shot = cast(Shot, entity)
-        STAGE_SHAPE = "stage_shape"
+        """create `lndOnOpen` script node"""
+        ON_OPEN_SCRIPT = "lndOnOpen"
 
-        def saveEditTargetLayer(clientData: dict[str, str]) -> None:
-            stage: Usd.Stage = mayaUsd.ufe.getStage(clientData[STAGE_SHAPE])
-            stage.GetEditTarget().GetLayer().Save()
+        if mc.objExists(ON_OPEN_SCRIPT):
+            return
 
-        om.MSceneMessage.addCallback(
-            om.MSceneMessage.kBeforeSave,
-            saveEditTargetLayer,
-            {
-                STAGE_SHAPE: self.stage_shape,
-            },
-        )
-
-        mc.mayaUsdEditTarget(  # type: ignore[attr-defined]
-            self.stage_shape,
-            edit=True,
-            editTarget="/".join(
-                ["shot", self.shot.code, "set", MShotFileManager.MAYA_OVERRIDE]
+        classname = self.__class__.__name__
+        mc.scriptNode(
+            beforeScript=(
+                f"from pipe.m.shotfile import {classname};" f"{classname}.run_on_open()"
             ),
+            name=ON_OPEN_SCRIPT,
+            scriptType=1,
+            sourceType="python",
         )
+        # script node is created, will not run this session, so run manually
+        self.run_on_open()
 
     def _import_camera(self) -> None:
         assert self.shot.path is not None
-        root_layer = self.stage.GetRootLayer()
+        root_layer = self.get_stage().GetRootLayer()
 
         # mc.mayaUsdLayerEditor(cam_layer.identifier, edit=True, lockLayer=(2, 0, stageShape))
 
@@ -151,7 +176,8 @@ class MShotFileManager(FileManager):
 
     def _import_env(self) -> None:
         assert self.shot.path is not None
-        root_layer = self.stage.GetRootLayer()
+        stage = self.get_stage()
+        root_layer = stage.GetRootLayer()
         # locked_layers: list[str] = []
 
         # Set up shot-level overrides
@@ -169,11 +195,11 @@ class MShotFileManager(FileManager):
         env_override_layer.Save()
         root_layer.subLayerPaths.append(env_override_layer.identifier)
         # Fix env scale
-        env_prim = self.stage.OverridePrim(Sdf.Path("/environment"))
+        env_prim = stage.OverridePrim(Sdf.Path("/environment"))
         env_xformable = UsdGeom.Xformable(env_prim)
         env_xformable.AddScaleOp().Set((100, 100, 100))
 
-        self.stage.SetEditTarget(Usd.EditTarget(env_override_layer))
+        stage.SetEditTarget(Usd.EditTarget(env_override_layer))
 
         env_stub = (
             self.shot.set or self._conn.get_sequence_by_stub(self.shot.sequence).set
@@ -202,8 +228,8 @@ class MShotFileManager(FileManager):
         # Create USD Stage
         transform = mc.createNode("transform", name="stage_transform")
         mc.createNode("mayaUsdProxyShape", name="stage", parent=transform)
-        self.stage_shape = mc.ls(selection=True, long=True)[0]
-        mc.connectAttr("time1.outTime", f"{self.stage_shape}.time")
+        stage_shape = self.get_stage_shape()
+        mc.connectAttr("time1.outTime", f"{stage_shape}.time")
 
         ROOT_LAYER = "maya_root.usd"
         root_layer_path = str(get_production_path() / self.shot.path / ROOT_LAYER)
@@ -211,7 +237,7 @@ class MShotFileManager(FileManager):
             root_layer_path
         )
         root_layer.Save()
-        mc.setAttr(f"{self.stage_shape}.filePath", "../" + ROOT_LAYER, type="string")
+        mc.setAttr(f"{stage_shape}.filePath", "../" + ROOT_LAYER, type="string")
 
         # mc.mayaUsdLayerEditor(str(get_production_path() / "root.usda"), edit=True, lockLayer=(2, 0, stage_shape))
 
@@ -240,6 +266,27 @@ class MShotFileManager(FileManager):
 
 
 class MAnimShotFileManager(MShotFileManager):
+    @classmethod
+    def run_on_open(cls):
+        super().run_on_open()
+
+        # Duplicate the USD camera into a temp Maya camera
+        CAM_NAME = "shotCam"
+        try:
+            mc.mayaUsdDiscardEdits(CAM_NAME)
+        finally:
+            camera_prim = next(
+                prim
+                for prim in cls.get_stage().Traverse(Usd.PrimIsDefined)
+                if prim.IsA(UsdGeom.Camera) and prim.GetName() == CAM_NAME
+            )
+            mc.mayaUsdEditAsMaya(
+                cls.get_stage_shape() + "," + str(camera_prim.GetPrimPath())
+            )
+            camera_shape = mc.listRelatives(CAM_NAME, fullPath=True, shapes=True)[0]
+            mc.lookThru(CAM_NAME)
+            mc.camera(camera_shape, edit=True, lockTransform=True)
+
     @staticmethod
     def _get_subpath() -> str:
         return "anim"

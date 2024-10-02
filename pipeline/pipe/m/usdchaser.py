@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import attrs
-import logging
 import numpy as np
 import mayaUsd.lib as mayaUsdLib  # type: ignore[import-not-found]
-from functools import wraps
 
 from enum import IntEnum
 from pxr import Sdf, Usd, UsdGeom, UsdShade, Vt
@@ -13,21 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Iterable
 
-log = logging.getLogger(__name__)
-
-
-def _log_errors(fun):
-    """Errors in the chaser don't make it out to the console by default"""
-
-    @wraps(fun)
-    def wrap(*args, **kwargs):
-        try:
-            return fun(*args, **kwargs)
-        except Exception as e:
-            log.error(e, exc_info=True)
-            raise
-
-    return wrap
+from pipe.util import log_errors
 
 
 class ChaserMode(IntEnum):
@@ -53,7 +37,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
         self._dag_to_usd = factoryContext.GetDagToUsdMap()
         self._stage = factoryContext.GetStage()
         self.job_args = factoryContext.GetJobArgs()
-        self._chaser_args = ChaserArgs(**self.job_args.allChaserArgs["lnd"])
+        self._chaser_args = ChaserArgs(**self.job_args.allChaserArgs[self.ID])
 
     def scale_down_geo(self, scale_factor: float = 0.01) -> None:
         root_prim = self._stage.GetPseudoRoot()
@@ -64,8 +48,8 @@ class ExportChaser(mayaUsdLib.ExportChaser):
             # don't recurse deeper than this
             it.PruneChildren()
 
-            for attr_name in ("points", "extent"):
-                attr = prim.GetAttribute(attr_name)
+            for attr_token in (UsdGeom.Tokens.points, UsdGeom.Tokens.extent):
+                attr = prim.GetAttribute(attr_token)
                 if not attr.IsValid():
                     continue
 
@@ -112,7 +96,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
                 )
             )
 
-    @_log_errors
+    @log_errors
     def PostExport(self) -> bool:
         if self._chaser_args.mode == ChaserMode.RIG:
             self.scale_down_geo()
