@@ -21,13 +21,13 @@ from pipe.glui.dialogs import (
     MessageDialog,
     MessageDialogCustomButtons,
 )
-from pipe.struct.db import SGEntity
+from pipe.struct.db import SGEntity, Shot
 from shared.util import get_production_path
 
 if TYPE_CHECKING:
     import typing
     from types import ModuleType
-    from pipe.struct.db import Shot
+    from typing_extensions import Self
 
     KT = typing.TypeVar("KT")
     VT = typing.TypeVar("VT")
@@ -153,94 +153,95 @@ class FileManager(metaclass=ABCMeta):
         self._post_open_file(entity)
 
 
-class Playblaster:
+class Playblaster(metaclass=ABCMeta):
+    """Parent class for creating playblasters. Uses FFmpeg to encode videos"""
+
     _conn: DBInterface
-    shot: Shot
+    _shot: Shot
+    _in_context: bool
 
     FR = 24
 
-    def __init__(self, conn: DBInterface, shot_code: str) -> None:
+    def __init__(self, conn: DBInterface) -> None:
         self._conn = conn
-        self.shot = self._conn.get_shot_by_code(shot_code)
 
     @abstractmethod
     def _write_images(self, path: str) -> None:
         pass
 
-    def _do_generate_srt_file(self, path: Path) -> None:
-        """Generate an srt file with frame numbers as subtitles"""
-        srt_string = ""
-        for idx, frame in enumerate(sorted(path.parent.glob(path.name + ".*.png"))):
-            num = int(frame.stem.split(".").pop())
-            print(idx, num)
-            srt_string += f"{idx}\n"
-            srt_string += (
-                "00:00:{:02},{:03}".format(
-                    idx // self.FR,
-                    int((idx % self.FR) / self.FR * 1000),
-                )
-                + " --> "
-                + "00:00:{:02},{:03}".format(
-                    (idx + 1) // self.FR,
-                    int(((idx + 1) % self.FR) / self.FR * 1000),
-                )
-                + "\n"
-            )
-            srt_string += f"Frame: {num}\n"
-            srt_string += "\n"
+    def __enter__(self) -> Self:
+        self._in_context = True
+        return self
 
-        with open(str(path) + ".srt", "w") as srt:
-            srt.write(srt_string)
+    def __call__(self, shot: Shot, *args):
+        self._shot = shot
+        return self
 
-    def _do_playblast(self, paths: list[Path | str] | None = None) -> None:
+    def __exit__(self, *args) -> None:
+        self._in_context = False
+
+    def _do_playblast(
+        self, paths: list[Path | str] | None = None, tail: int = 0
+    ) -> None:
+        if not self._in_context:
+            raise RuntimeError("_do_playblast not called from within context self")
+
         if not paths:
             paths = []
 
         tempdir = Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve()
 
-        FILENAME = "lnd_pb_temp." + self.shot.code
+        FILENAME = "lnd_pb_temp." + self._shot.code
 
         # remove any old playblasts
         for p in tempdir.glob(FILENAME + "*"):
             p.unlink()
 
+        # do the playblast
         self._write_images(str(tempdir / FILENAME))
 
-        start_frame = self.shot.cut_in - 5
+        # use ffmpeg to encode the video
+        start_frame = int(self._shot.cut_in) - tail
         images = ffmpeg.input(
             str(tempdir / FILENAME) + ".%04d.png",
             start_number=start_frame,
         )
-        # self._do_generate_srt_file(tempdir / FILENAME)
-
-        # frame_nums = ffmpeg.input(str(tempdir / FILENAME) + ".srt")
         out_filename = str(tempdir / FILENAME) + ".mov"
         ffmpeg.output(
             images,
-            # frame_nums,
             out_filename,
+            vcodec="dnxhd",
+            pix_fmt="yuv422p",
+            vprofile="dnxhr_sq",
+            video_bitrate="124M",  # this number comes from Avid's table in the DNxHD whitepaper
             timecode="00:00:{:02}:{:02}".format(
                 start_frame // self.FR,
                 start_frame % self.FR,
             ),
-            vcodec="prores_ks",
-            pix_fmt="yuv422p10le",
-            # scodec="mov_text",
             r=self.FR,
         ).overwrite_output().run()
 
+        # copy video out of tempdir
         for path in (Path(p) for p in paths):
             if not path.parent.exists():
                 path.parent.mkdir(mode=0o770, parents=True)
             shutil.copyfile(out_filename, path)
 
         # clean up if not in debug mode
-        # if not log.isEnabledFor(logging.DEBUG):
-        #     for p in tempdir.glob(FILENAME + "*"):
-        #         p.unlink()
+        if not log.isEnabledFor(logging.DEBUG):
+            for p in tempdir.glob(FILENAME + "*"):
+                p.unlink()
 
     @abstractmethod
     def playblast(self) -> None:
+        """Function to be called by the user to trigger a playblast.
+        This should call `_do_playblast` from within a `with self(...)`
+        block.
+        Looks something like:
+            >>> def playblast(self) -> None:
+            >>>     with self(shot):
+            >>>         super()._do_playblast([filepath])
+        """
         pass
 
 

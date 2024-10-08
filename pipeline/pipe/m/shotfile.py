@@ -201,9 +201,12 @@ class MShotFileManager(FileManager):
 
         stage.SetEditTarget(Usd.EditTarget(env_override_layer))
 
-        env_stub = (
-            self.shot.set or self._conn.get_sequence_by_stub(self.shot.sequence).set
-        )
+        if not (env_stub := self.shot.set):
+            if not self.shot.sequence:
+                env_stub = None
+            else:
+                env_stub = self._conn.get_sequence_by_stub(self.shot.sequence).set
+
         if env_stub and (env := self._conn.get_env_by_stub(env_stub)) and env.path:
             env_file_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
                 root_layer, "/".join((env.path, "main.usd"))
