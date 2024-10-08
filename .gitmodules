@@ -31,3 +31,5 @@
 [submodule "pipeline/software/maya/scripts/maya-capture"]
 	path = pipeline/software/maya/scripts/mayacapture
 	url = https://github.com/abstractfactory/maya-capture.git
+[submodule "pipeline/software/maya/scripts/mayacapture"]
+	url = https://github.com/scottdmilner/maya-capture.git
