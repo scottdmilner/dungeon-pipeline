@@ -13,7 +13,6 @@ from PySide2.QtGui import QTextCursor
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
-
 from pipe.m.publish import Publisher
 from pipe.glui.dialogs import (
     FilteredListDialog,
@@ -24,7 +23,11 @@ from pipe.struct.db import Asset, SGEntity
 from shared.util import get_production_path
 from env import PIPEBOT_SECRET, PIPEBOT_URL
 
-from modelChecker.modelChecker_UI import UI as MCUI
+try:
+    from modelChecker.modelChecker_UI import UI as MCUI
+except TypeError:
+    # this external code throws errors when in headless mode
+    MCUI = object
 
 log = logging.getLogger(__name__)
 
