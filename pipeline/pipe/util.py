@@ -7,7 +7,7 @@ import sys
 
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from PySide2 import QtWidgets
+from Qt import QtWidgets
 
 from typing import TYPE_CHECKING
 

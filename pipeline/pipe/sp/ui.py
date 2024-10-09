@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 import os
 from math import log2
-from PySide2 import QtCore, QtWidgets
-from PySide2.QtGui import QIcon, QPixmap, QRegExpValidator
-from PySide2.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
+from Qt import QtCore, QtWidgets
+from Qt.QtGui import QIcon, QPixmap, QRegExpValidator
+from Qt.QtWidgets import QComboBox, QLabel, QLayout, QMainWindow
 from re import findall
 from typing import TYPE_CHECKING
 

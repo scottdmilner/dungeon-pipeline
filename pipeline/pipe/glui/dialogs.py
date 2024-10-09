@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 
-from PySide2 import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

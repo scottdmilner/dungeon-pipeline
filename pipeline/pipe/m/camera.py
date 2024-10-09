@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from PySide2.QtCore import QRegExp
-from PySide2.QtGui import QRegExpValidator
-from PySide2.QtWidgets import QComboBox, QHBoxLayout, QLabel, QWidget
+from Qt.QtCore import QRegExp
+from Qt.QtGui import QRegExpValidator
+from Qt.QtWidgets import QComboBox, QHBoxLayout, QLabel, QWidget
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
