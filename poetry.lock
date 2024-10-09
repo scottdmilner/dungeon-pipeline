@@ -195,6 +195,20 @@ files = [
 ]
 
 [[package]]
+name = "qt-py"
+version = "1.4.1"
+description = "Python 2 & 3 compatibility wrapper around all Qt bindings - PySide, PySide2, PyQt4 and PyQt5."
+optional = false
+python-versions = "*"
+files = [
+    {file = "Qt.py-1.4.1-py2.py3-none-any.whl", hash = "sha256:751eabac526da6836df9234797c85b3ea0517b1337a316a313cff71d4e05964c"},
+    {file = "Qt.py-1.4.1.tar.gz", hash = "sha256:c04ac2cedb5aeb710630f5443c032819aab4f6638aaa0105a9aacde66a337cf4"},
+]
+
+[package.dependencies]
+types-PySide2 = "*"
+
+[[package]]
 name = "ruff"
 version = "0.5.7"
 description = "An extremely fast Python linter and code formatter, written in Rust."
@@ -334,4 +348,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "850caec1846b99c40397bad08a35a7ef8340b4fd166851d37f4013788dc5ddca"
+content-hash = "3daee1ff6b7ed0879fefd410053e075ab390f197089fa9f0c94325c4e093b182"

@@ -1,5 +1,6 @@
 [tool.mypy]
 exclude = [
+    ".git",
     'MOPS',
     "NukeSurvivalToolkit_publicRelease",
     'VFX-LYNX',
@@ -30,6 +31,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 exclude = [
+    ".git",
     "MOPS",
     "NukeSurvivalToolkit_publicRelease",
     "VFX-LYNX",
@@ -61,6 +63,7 @@ python = "^3.9"
 attrs = "^24.2.0"
 cattrs = "^23.2.3"
 numpy = "1.26.4"
+qt-py = {extras = ["stubs"], version = "^1.4.1"}
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.7"
@@ -75,3 +78,4 @@ types-opencolorio = "^2.2.1.2"
 types-pyside2 = "^5.15.2.1.7"
 types-substance-painter = "^2023.8.3.0.0"
 nptyping = "^2.5.0"
+qt-py = {extras = ["stubs"], version = "^1.4.1"}

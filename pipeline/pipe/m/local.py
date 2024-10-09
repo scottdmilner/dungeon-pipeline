@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import sys
 
-from PySide2 import QtWidgets
+from Qt import QtWidgets
 import shiboken2
 import maya.OpenMayaUI as omUI
 
