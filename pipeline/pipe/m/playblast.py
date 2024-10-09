@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 import maya.cmds as mc
 
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -16,37 +18,48 @@ from shared.util import get_edit_path
 from env_sg import DB_Config
 
 if TYPE_CHECKING:
-    from typing import Any, Generator
+    from typing import Any, Callable, Generator, Literal
+
+
+@dataclass
+class _HudDefinition:
+    name: str
+    command: Callable[[], str]
+    event: str
+    label: str
+    section: int
+    blockSize: Literal["small", "large"] = "small"
+    labelFontSize: Literal["small", "large"] = "small"
 
 
 class MPlayblaster(Playblaster):
-    HUDS = [
-        "HUDCameraNames",
-        "HUDCurrentFrame",
-        "HUDFocalLength",
-        "LnDfilename",
-    ]
+    HUDS: tuple[list[str], list[_HudDefinition]] = (
+        [
+            "HUDCameraNames",
+            "HUDCurrentFrame",
+            "HUDFocalLength",
+        ],
+        [
+            _HudDefinition(
+                "LnDfilename",
+                command=lambda: str(mc.file(query=True, sceneName=True)),
+                event="SceneSaved",
+                label="File:",
+                section=5,
+            ),
+            _HudDefinition(
+                "LnDartist",
+                command=lambda: os.getlogin(),
+                event="SceneOpened",
+                label="Artist:",
+                section=5,
+            ),
+        ],
+    )
     _camera: str | None
 
     def __init__(self) -> None:
         super().__init__(DB.Get(DB_Config))
-        huds_to_create: dict[str, dict[str, Any]] = {
-            "LnDfilename": {
-                "block": mc.headsUpDisplay(nextFreeBlock=5),
-                "blockSize": "small",
-                "command": lambda: mc.file(query=True, sceneName=True),
-                "event": "SceneSaved",
-                "label": "File:",
-                "labelFontSize": "small",
-                "section": 5,
-            },
-        }
-
-        # check if these huds exist in the file and create them if not
-        huds: list[str] = mc.headsUpDisplay(query=True, listHeadsUpDisplays=True)  # type: ignore[assignment]
-        for name, kwargs in huds_to_create.items():
-            if name not in huds:
-                mc.headsUpDisplay(name, **kwargs)
 
     def __call__(self, shot: Shot, camera: str | None, *args):  # type: ignore[override]
         super().__call__(shot)
@@ -109,7 +122,7 @@ class MPrevisPlayblaster(MPlayblaster):
                 shot_name, cut_in, cut_out, cut_duration
             )
 
-            with _applied_hud(self.HUDS), _unselect_all(), self(shot_data, camera):
+            with _applied_hud(*self.HUDS), _unselect_all(), self(shot_data, camera):
                 super()._do_playblast(
                     [get_edit_path() / "previs" / date / f"{shot_name}_{date}.mov"],
                     tail=5,
@@ -123,7 +136,7 @@ class MPrevisPlayblaster(MPlayblaster):
             "sequence", seq_in, seq_out, seq_out - seq_in
         )
 
-        with self(shot_data, None):
+        with _applied_hud(*self.HUDS), _unselect_all(), self(shot_data, None):
             filename = Path(mc.file(query=True, sceneName=True))  # type: ignore[arg-type]
             super()._do_playblast(
                 [
@@ -141,7 +154,7 @@ class MAnimPlayblaster(MPlayblaster):
         super().__init__()
 
     def playblast(self) -> None:
-        with _applied_hud(self.HUDS), _unselect_all(), self(
+        with _applied_hud(*self.HUDS), _unselect_all(), self(
             self._conn.get_shot_by_code(self._code),
             "|__mayaUsd__|shotCamParent|shotCam",
         ):
@@ -157,7 +170,9 @@ class MAnimPlayblaster(MPlayblaster):
 
 
 @contextmanager
-def _applied_hud(huds) -> Generator[None, None, None]:
+def _applied_hud(
+    builtin_huds: list[str], custom_huds: list[_HudDefinition]
+) -> Generator[None, None, None]:
     # hide current huds and store current state
     orig_visibility: dict[str, bool] = {}
     orig_huds: list[str] = mc.headsUpDisplay(query=True, listHeadsUpDisplays=True)  # type: ignore[assignment]
@@ -167,9 +182,24 @@ def _applied_hud(huds) -> Generator[None, None, None]:
         if vis:
             mc.headsUpDisplay(hud, edit=True, visible=False)
 
-    # display requested huds
-    for hud in huds:
+    # display requested builtin huds
+    for hud in builtin_huds:
         mc.headsUpDisplay(hud, edit=True, visible=True)
+
+    # create requested custom huds
+    for chud in custom_huds:
+        if chud.name in orig_huds:
+            mc.headsUpDisplay(chud.name, remove=True)
+        mc.headsUpDisplay(
+            chud.name,
+            block=mc.headsUpDisplay(nextFreeBlock=chud.section),  # type: ignore[arg-type]
+            blockSize=chud.blockSize,
+            command=chud.command,
+            event=chud.event,
+            label=chud.label,
+            labelFontSize=chud.labelFontSize,
+            section=chud.section,
+        )
 
     try:
         yield
@@ -177,6 +207,9 @@ def _applied_hud(huds) -> Generator[None, None, None]:
         # restore original visibility
         for hud, state in orig_visibility.items():
             mc.headsUpDisplay(hud, edit=True, visible=state)
+
+        for chud in custom_huds:
+            mc.headsUpDisplay(chud.name, remove=True)
 
 
 @contextmanager
