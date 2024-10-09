@@ -1,5 +1,6 @@
 [tool.mypy]
 exclude = [
+    ".git",
     'MOPS',
     "NukeSurvivalToolkit_publicRelease",
     'VFX-LYNX',
@@ -30,6 +31,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 exclude = [
+    ".git",
     "MOPS",
     "NukeSurvivalToolkit_publicRelease",
     "VFX-LYNX",
