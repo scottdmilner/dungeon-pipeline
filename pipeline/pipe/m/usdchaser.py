@@ -43,7 +43,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
         root_prim = self._stage.GetPseudoRoot()
 
         for prim in (it := iter(Usd.PrimRange(root_prim))):
-            if not (prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.BasisCurves)):
+            if not (prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.BasisCurves)):  # type: ignore[call-overload]
                 continue
             # don't recurse deeper than this
             it.PruneChildren()
@@ -114,7 +114,9 @@ class ExportChaser(mayaUsdLib.ExportChaser):
 
                 prim_paths: list[Sdf.Path] = []
 
-                def traverse_kernel(path: Sdf.Path):
+                def traverse_kernel(path: Sdf.Path | str):
+                    if isinstance(path, str):
+                        path = Sdf.Path(path)
                     if path.IsPrimPath() and (path.name == "world_CTRL"):
                         prim_paths.append(path)
 

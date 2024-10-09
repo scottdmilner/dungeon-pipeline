@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from substance_painter import ui
 
-from PySide2 import QtWidgets
+from Qt import QtWidgets
 
 from software.baseclass import DCCLocalizer
 

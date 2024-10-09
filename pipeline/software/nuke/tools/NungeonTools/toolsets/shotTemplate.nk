@@ -1,0 +1,257 @@
+set cut_paste_input [stack 0]
+version 14.0 v5
+BackdropNode {
+ inputs 0
+ name BackdropNode1
+ tile_color 0x726d20ff
+ label Write
+ note_font_size 40
+ selected true
+ xpos -2480
+ ypos 1152
+ bdwidth 534
+ bdheight 275
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode4
+ label Read
+ note_font_size 40
+ selected true
+ xpos -2901
+ ypos -1908
+ bdwidth 1210
+ bdheight 789
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode5
+ tile_color 0x72895bff
+ label Rotopaint
+ note_font_size 40
+ selected true
+ xpos -2624
+ ypos -854
+ bdwidth 911
+ bdheight 659
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode6
+ tile_color 0x4f6877ff
+ label "Color correction"
+ note_font_size 40
+ note_font_color 0xc9eaffff
+ selected true
+ xpos -2627
+ ypos -26
+ bdwidth 907
+ bdheight 557
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode7
+ tile_color 0xa86238ff
+ label "Lens effects"
+ note_font_size 40
+ selected true
+ xpos -2512
+ ypos 716
+ bdwidth 540
+ bdheight 209
+}
+Read {
+ inputs 0
+ file_type exr
+ format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ first 1001
+ last 1101
+ origfirst 1001
+ origlast 1101
+ origset true
+ colorspace data
+ name Read3
+ selected true
+ xpos -2723
+ ypos -1461
+}
+Grade {
+ name Grade3
+ selected true
+ xpos -2723
+ ypos -1377
+ disable true
+}
+Dot {
+ name Dot4
+ selected true
+ xpos -2689
+ ypos -1254
+}
+Read {
+ inputs 0
+ file_type exr
+ format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ first 1001
+ last 1101
+ origfirst 1001
+ origlast 1101
+ origset true
+ colorspace data
+ name Read4
+ selected true
+ xpos -2256
+ ypos -1803
+}
+Dot {
+ name Dot5
+ selected true
+ xpos -2222
+ ypos -1680
+}
+set Nf145580 [stack 0]
+Merge2 {
+ inputs 2
+ name Merge2
+ selected true
+ xpos -2256
+ ypos -1258
+ disable true
+}
+RotoPaint {
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 0}
+    {t x44800000 x43d98000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}}}}}
+ toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+ toolbar_source_transform_center {1024 435}
+ name RotoPaint2
+ selected true
+ xpos -2256
+ ypos -597
+ disable true
+}
+Grade {
+ name Grade4
+ selected true
+ xpos -2256
+ ypos 138
+ disable true
+}
+HueCorrect {
+ name HueCorrect2
+ selected true
+ xpos -2256
+ ypos 164
+ disable true
+}
+Lens {
+ name Lens1
+ selected true
+ xpos -2256
+ ypos 823
+}
+OCIODisplay {
+ colorspace scene_linear
+ display "Display Rec.709"
+ view "Show Look"
+ name OCIODisplay2
+ selected true
+ xpos -2256
+ ypos 1243
+}
+Dot {
+ name Dot6
+ selected true
+ xpos -2222
+ ypos 1269
+}
+set Nf23c6d0 [stack 0]
+Write {
+ colorspace data
+ file_type exr
+ first_part rgba
+ in_colorspace scene_linear
+ out_colorspace scene_linear
+ name Write3
+ label "Write .exrs"
+ selected true
+ xpos -2162
+ ypos 1304
+}
+push $Nf23c6d0
+Write {
+ colorspace data
+ file_type mov
+ mov64_codec h264
+ mov_h264_codec_profile "High 4:2:0 8-bit"
+ mov64_pixel_format {{0} "yuv420p\tYCbCr 4:2:0 8-bit"}
+ mov64_quality High
+ mov64_fast_start true
+ mov64_write_timecode true
+ mov64_gop_size 12
+ mov64_b_frames 0
+ mov64_bitrate 28000
+ mov64_bitrate_tolerance 0
+ mov64_quality_min 1
+ mov64_quality_max 3
+ checkHashOnRead false
+ in_colorspace scene_linear
+ out_colorspace scene_linear
+ name Write4
+ label "Write .movs"
+ selected true
+ xpos -2349
+ ypos 1308
+}
+StickyNote {
+ inputs 0
+ name StickyNote4
+ label "check layers are good"
+ selected true
+ xpos -2003
+ ypos -1643
+}
+StickyNote {
+ inputs 0
+ name StickyNote5
+ label "read input"
+ selected true
+ xpos -2148
+ ypos -1744
+}
+push $Nf145580
+LayerContactSheet {
+ name LayerContactSheet2
+ selected true
+ xpos -1987
+ ypos -1684
+}
+StickyNote {
+ inputs 0
+ name StickyNote6
+ label "add more render layers if necessary"
+ selected true
+ xpos -2158
+ ypos -1258
+}

@@ -4,7 +4,7 @@ import hou
 import re
 import sys
 
-from PySide2 import QtWidgets
+from Qt import QtWidgets
 
 from software.baseclass import DCCLocalizer
 

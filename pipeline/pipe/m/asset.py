@@ -8,8 +8,8 @@ from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from urllib import request
-from PySide2.QtWidgets import QCheckBox, QWidget
-from PySide2.QtGui import QTextCursor
+from Qt.QtWidgets import QCheckBox, QWidget
+from Qt.QtGui import QTextCursor
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
