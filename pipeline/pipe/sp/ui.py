@@ -21,20 +21,11 @@ from pipe.sp.export import Exporter, TexSetExportSettings
 from pipe.sp.local import get_main_qt_window
 from pipe.struct.db import Asset
 from pipe.struct.material import DisplacementSource, NormalSource, NormalType
-from pipe.util import dict_index
+from pipe.util import checkbox_callback_helper, dict_index
 
 from env_sg import DB_Config
 
 log = logging.getLogger(__name__)
-
-
-def _checkbox_callback_helper(
-    checkbox: QtWidgets.QCheckBox, widget: QtWidgets.QWidget
-) -> typing.Callable[[], None]:
-    def inner() -> None:
-        widget.setEnabled(checkbox.isChecked())
-
-    return inner
 
 
 class SubstanceExportWindow(QMainWindow, ButtonPair):
@@ -297,7 +288,7 @@ class TexSetWidget(QtWidgets.QWidget):
         layout.addWidget(self._enabled_checkbox, 10, QtCore.Qt.AlignTop)
         settings_container = QtWidgets.QWidget()
         self._enabled_checkbox.toggled.connect(
-            _checkbox_callback_helper(self._enabled_checkbox, settings_container)
+            checkbox_callback_helper(self._enabled_checkbox, settings_container)
         )
         settings_layout = QtWidgets.QGridLayout(settings_container)
         settings_layout.setSpacing(2)

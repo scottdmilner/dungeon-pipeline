@@ -245,6 +245,18 @@ class Playblaster(metaclass=ABCMeta):
         pass
 
 
+def checkbox_callback_helper(
+    checkbox: QtWidgets.QCheckBox, widget: QtWidgets.QWidget
+) -> typing.Callable[[], None]:
+    """Helper function to generate a callback to enable/disable a widget when
+    a checkbox is checked"""
+
+    def inner() -> None:
+        widget.setEnabled(checkbox.isChecked())
+
+    return inner
+
+
 def dict_index(d: dict[KT, VT], v: VT) -> KT:
     """List index function for dicts"""
     return list(d.keys())[list(d.values()).index(v)]
