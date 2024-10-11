@@ -26,6 +26,61 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Generator, Literal
 
 
+@dataclass
+class _SaveLocation:
+    name: str
+    path: str | Path
+
+
+@dataclass
+class MShotPlayblastConfig:
+    camera: str | None
+    name: str
+    shot: Shot
+    save_locs: list[tuple[_SaveLocation, bool]]
+    enabled: bool = True
+    paths: list[str | Path] = field(default_factory=list)
+    tail: int = 0
+    use_sequencer: bool = False
+
+    def set_enabled(self, enabled: bool) -> None:
+        self.enabled = enabled
+
+    def set_paths(self, paths: list[str | Path]) -> None:
+        self.paths = paths
+
+
+@dataclass
+class _HudDefinition:
+    name: str
+    command: Callable[[], str]
+    event: str
+    label: str
+    section: int
+    blockSize: Literal["small", "large"] = "small"
+    labelFontSize: Literal["small", "large"] = "small"
+
+
+@dataclass
+class MPlayblastConfig:
+    builtin_huds: list[str]
+    custom_huds: list[_HudDefinition]
+    shots: list[MShotPlayblastConfig]
+
+
+def dummy_shot(code: str, cut_in: int, cut_out: int, cut_duration: int) -> Shot:
+    return Shot(
+        code=code,
+        id=0,
+        assets=[],
+        cut_in=cut_in,
+        cut_out=cut_out,
+        cut_duration=cut_duration,
+        sequence=None,
+        set=None,
+    )
+
+
 class _ShotPlayblastWidget(QtWidgets.QWidget):
     _enabled_checkbox: QCheckBox
     _locations: list[tuple[_SaveLocation, bool]]
@@ -88,30 +143,6 @@ class _ShotPlayblastWidget(QtWidgets.QWidget):
     @property
     def enabled(self) -> bool:
         return self._enabled_checkbox.isChecked()
-
-
-@dataclass
-class MShotPlayblastConfig:
-    camera: str | None
-    name: str
-    shot: Shot
-    save_locs: list[tuple[_SaveLocation, bool]]
-    enabled: bool = True
-    paths: list[str | Path] = field(default_factory=list)
-    tail: int = 0
-    use_sequencer: bool = False
-
-    def set_enabled(self, enabled: bool) -> None:
-        self.enabled = enabled
-
-    def set_paths(self, paths: list[str | Path]) -> None:
-        self.paths = paths
-
-
-@dataclass
-class _SaveLocation:
-    name: str
-    path: str | Path
 
 
 class _PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
@@ -301,37 +332,6 @@ class PrevisPlayblastDialog(_PlayblastDialog):
         )
 
 
-@dataclass
-class _HudDefinition:
-    name: str
-    command: Callable[[], str]
-    event: str
-    label: str
-    section: int
-    blockSize: Literal["small", "large"] = "small"
-    labelFontSize: Literal["small", "large"] = "small"
-
-
-@dataclass
-class MPlayblastConfig:
-    builtin_huds: list[str]
-    custom_huds: list[_HudDefinition]
-    shots: list[MShotPlayblastConfig]
-
-
-def dummy_shot(code: str, cut_in: int, cut_out: int, cut_duration: int) -> Shot:
-    return Shot(
-        code=code,
-        id=0,
-        assets=[],
-        cut_in=cut_in,
-        cut_out=cut_out,
-        cut_duration=cut_duration,
-        sequence=None,
-        set=None,
-    )
-
-
 class MPlayblaster(Playblaster):
     _config: MPlayblastConfig
     _extra_kwargs: dict[str, Any]
@@ -377,53 +377,6 @@ class MPlayblaster(Playblaster):
                         shot_config.paths,
                         shot_config.tail,
                     )
-
-
-# class MPrevisPlayblaster(MPlayblaster):
-#     def __init__(self) -> None:
-#         super().__init__()
-
-#     def playblast(self) -> None:
-#         with _applied_hud(*self.HUDS), _unselect_all():
-#             date = datetime.now().strftime("%m-%d-%y")
-#             shots: list[str] = mc.sequenceManager(listShots=True)  # type: ignore[assignment]
-
-#             # playblast individual shots
-#             for shot_name in shots:
-#                 camera: str = mc.shot(shot_name, query=True, currentCamera=True)  # type: ignore[assignment]
-#                 cut_in = int(mc.shot(shot_name, query=True, startTime=True))
-#                 cut_out = int(mc.shot(shot_name, query=True, endTime=True))
-#                 cut_duration = int(mc.shot(shot_name, query=True, clipDuration=True))
-
-#                 shot_data = MPlayblaster.dummy_shot(
-#                     shot_name, cut_in, cut_out, cut_duration
-#                 )
-
-#                 with self(shot_data, camera):
-#                     super()._do_playblast(
-#                         [get_edit_path() / "previs" / date / f"{shot_name}_{date}.mov"],
-#                         tail=5,
-#                     )
-
-#             # playblast sequence
-#             sequencer = mc.sequenceManager(query=True, writableSequencer=True)
-#             seq_in = mc.getAttr(f"{sequencer}.minFrame")
-#             seq_out = mc.getAttr(f"{sequencer}.maxFrame")
-#             shot_data = MPlayblaster.dummy_shot(
-#                 "sequence", seq_in, seq_out, seq_out - seq_in
-#             )
-
-#             with self(shot_data, None):
-#                 filename = Path(mc.file(query=True, sceneName=True))  # type: ignore[arg-type]
-#                 super()._do_playblast(
-#                     [
-#                         get_edit_path()
-#                         / "previs"
-#                         / date
-#                         / f"{filename.stem}_{date}.mov",
-#                         filename.parent / f"{filename.stem}_{date}.mov",
-#                     ],
-#                 )
 
 
 # class MAnimPlayblaster(MPlayblaster):
