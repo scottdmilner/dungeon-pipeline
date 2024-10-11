@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import ffmpeg  # type: ignore[import-untyped]
 import logging
+import os
 import platform
+import shutil
 import subprocess
 import sys
 
 from abc import ABCMeta, abstractmethod
+from functools import wraps
 from pathlib import Path
 from Qt import QtWidgets
 
@@ -17,12 +21,13 @@ from pipe.glui.dialogs import (
     MessageDialog,
     MessageDialogCustomButtons,
 )
-from pipe.struct.db import SGEntity
+from pipe.struct.db import SGEntity, Shot
 from shared.util import get_production_path
 
 if TYPE_CHECKING:
     import typing
     from types import ModuleType
+    from typing_extensions import Self
 
     KT = typing.TypeVar("KT")
     VT = typing.TypeVar("VT")
@@ -148,9 +153,125 @@ class FileManager(metaclass=ABCMeta):
         self._post_open_file(entity)
 
 
+class Playblaster(metaclass=ABCMeta):
+    """Parent class for creating playblasters. Uses FFmpeg to encode videos"""
+
+    _conn: DBInterface
+    _shot: Shot
+    _in_context: bool
+
+    FR = 24
+
+    def __init__(self, conn: DBInterface) -> None:
+        self._conn = conn
+
+    @abstractmethod
+    def _write_images(self, path: str) -> None:
+        pass
+
+    def __enter__(self) -> Self:
+        self._in_context = True
+        return self
+
+    def __call__(self, shot: Shot, *args):
+        self._shot = shot
+        return self
+
+    def __exit__(self, *args) -> None:
+        self._in_context = False
+
+    def _do_playblast(
+        self, paths: list[Path | str] | None = None, tail: int = 0
+    ) -> None:
+        if not self._in_context:
+            raise RuntimeError("_do_playblast not called from within context self")
+
+        if not paths:
+            paths = []
+
+        tempdir = Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve()
+
+        FILENAME = "lnd_pb_temp." + self._shot.code
+
+        # remove any old playblasts
+        for p in tempdir.glob(FILENAME + "*"):
+            p.unlink()
+
+        # do the playblast
+        self._write_images(str(tempdir / FILENAME))
+
+        # use ffmpeg to encode the video
+        start_frame = int(self._shot.cut_in) - tail
+        images = ffmpeg.input(
+            str(tempdir / FILENAME) + ".%04d.png",
+            start_number=start_frame,
+        )
+        out_filename = str(tempdir / FILENAME) + ".mov"
+        ffmpeg.output(
+            images,
+            out_filename,
+            vcodec="dnxhd",
+            pix_fmt="yuv422p",
+            vprofile="dnxhr_sq",
+            video_bitrate="124M",  # this number comes from Avid's table in the DNxHD whitepaper
+            timecode="00:00:{:02}:{:02}".format(
+                start_frame // self.FR,
+                start_frame % self.FR,
+            ),
+            r=self.FR,
+        ).overwrite_output().run()
+
+        # copy video out of tempdir
+        for path in (Path(p) for p in paths):
+            if not path.parent.exists():
+                path.parent.mkdir(mode=0o770, parents=True)
+            shutil.copyfile(out_filename, path)
+
+        # clean up if not in debug mode
+        if not log.isEnabledFor(logging.DEBUG):
+            for p in tempdir.glob(FILENAME + "*"):
+                p.unlink()
+
+    @abstractmethod
+    def playblast(self) -> None:
+        """Function to be called by the user to trigger a playblast.
+        This should call `_do_playblast` from within a `with self(...)`
+        block.
+        Looks something like:
+            >>> def playblast(self) -> None:
+            >>>     with self(shot):
+            >>>         super()._do_playblast([filepath])
+        """
+        pass
+
+
+def checkbox_callback_helper(
+    checkbox: QtWidgets.QCheckBox, widget: QtWidgets.QWidget
+) -> typing.Callable[[], None]:
+    """Helper function to generate a callback to enable/disable a widget when
+    a checkbox is checked"""
+
+    def inner() -> None:
+        widget.setEnabled(checkbox.isChecked())
+
+    return inner
+
+
 def dict_index(d: dict[KT, VT], v: VT) -> KT:
     """List index function for dicts"""
     return list(d.keys())[list(d.values()).index(v)]
+
+
+def log_errors(fun):
+    @wraps(fun)
+    def wrap(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except Exception as e:
+            log.error(e, exc_info=True)
+            raise
+
+    return wrap
 
 
 def reload_pipe(extra_modules: typing.Sequence[ModuleType] | None = None) -> None:
@@ -163,7 +284,9 @@ def reload_pipe(extra_modules: typing.Sequence[ModuleType] | None = None) -> Non
     pipe_modules = [
         module
         for name, module in sys.modules.items()
-        if (name.startswith("pipe")) and ("shotgun_api3" not in name) or (name == "env")
+        if (name.startswith("pipe") or name.startswith("shared"))
+        and ("shotgun_api3" not in name)
+        or (name == "env")
     ] + extra_modules
 
     for module in pipe_modules:

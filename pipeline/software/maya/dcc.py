@@ -84,12 +84,22 @@ class MayaDCC(DCC):
         }
 
         launch_command = ""
+        launch_args: list[str] = []
         if is_python_shell:
             launch_command = str(Executables.mayapy)
+            launch_args = [
+                "-ic",
+                ";".join(
+                    [
+                        "import atexit",
+                        "import maya.standalone",
+                        "maya.standalone.initialize()",
+                        "atexit.register(maya.standalone.uninitialize)",
+                    ]
+                ),
+            ]
         else:
             launch_command = str(Executables.maya)
-
-        launch_args: list[str] = []
 
         super().__init__(
             launch_command, launch_args, env_vars, lambda: self.set_up_shelf_path()

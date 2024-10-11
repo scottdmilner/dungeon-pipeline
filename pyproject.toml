@@ -8,6 +8,7 @@ exclude = [
     'dwpicker.*',
     'lib/python',
     'maya-timeline-marker_git',
+    "mayacapture",
     'modelChecker',
     'pin_shift.py',
     'rjg',
@@ -39,6 +40,7 @@ exclude = [
     "dwpicker",
     "dwpicker_git",
     "lib/python",
+    "mayacapture",
     "maya-timeline-marker_git",
     "modelChecker",
     "modelChecker_git",
@@ -63,6 +65,7 @@ python = "^3.9"
 attrs = "^24.2.0"
 cattrs = "^23.2.3"
 numpy = "1.26.4"
+ffmpeg-python = "^0.2.0"
 qt-py = {extras = ["stubs"], version = "^1.4.1"}
 
 [tool.poetry.group.dev.dependencies]

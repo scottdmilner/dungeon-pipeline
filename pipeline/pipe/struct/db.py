@@ -183,10 +183,10 @@ class Shot(SGEntity):
     cut_in: int = field(metadata={_SG_NAME: "sg_cut_in"})
     cut_out: int = field(metadata={_SG_NAME: "sg_cut_out"})
     cut_duration: int = field(metadata={_SG_NAME: "sg_cut_duration"})
-    sequence: SequenceStub = field(
+    sequence: Optional[SequenceStub] = field(
         metadata={
             _SG_NAME: "sg_sequence",
-            _STRUCT_HOOK: lambda s, _: SequenceStub.from_sg(s),
+            _STRUCT_HOOK: lambda s, _: SequenceStub.from_sg(s) if s else None,
         }
     )
     set: Optional[EnvironmentStub] = field(

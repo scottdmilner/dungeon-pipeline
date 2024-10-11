@@ -67,20 +67,24 @@ def fix_launcher_metadata() -> None:
         pass
 
 
-def get_pipe_path() -> Path:
-    return Path(__file__).resolve().parents[1]
+def get_anim_path() -> Path:
+    return get_production_path().parent / "anim"
+
+
+def get_asset_path() -> Path:
+    return get_production_path() / "asset"
 
 
 def get_character_path() -> Path:
     return get_production_path().parent / "character"
 
 
-def get_rigging_path() -> Path:
-    return get_character_path() / "Rigging"
+def get_edit_path() -> Path:
+    return get_production_path().parent / "edit/shots"
 
 
-def get_anim_path() -> Path:
-    return get_production_path().parent / "anim"
+def get_pipe_path() -> Path:
+    return Path(__file__).resolve().parents[1]
 
 
 def get_previs_path() -> Path:
@@ -91,8 +95,8 @@ def get_production_path() -> Path:
     return _prp
 
 
-def get_asset_path() -> Path:
-    return get_production_path() / "asset"
+def get_rigging_path() -> Path:
+    return get_character_path() / "Rigging"
 
 
 def resolve_mapped_path(path: str | Path) -> Path:

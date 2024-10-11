@@ -23,7 +23,7 @@ class ButtonPair:
         ok_name: str = "OK",
         cancel_name: str = "Cancel",
     ) -> None:
-        button_list = QtWidgets.QDialogButtonBox.Ok
+        button_list = QtWidgets.QDialogButtonBox.Ok | 0
         if has_cancel_button:
             button_list |= QtWidgets.QDialogButtonBox.Cancel
         self.buttons = QtWidgets.QDialogButtonBox(button_list)
