@@ -9,6 +9,8 @@ import subprocess
 import sys
 
 from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
 from functools import wraps
 from pathlib import Path
 from Qt import QtWidgets
@@ -27,6 +29,7 @@ from shared.util import get_production_path
 if TYPE_CHECKING:
     import typing
     from types import ModuleType
+    from typing import Any
     from typing_extensions import Self
 
     KT = typing.TypeVar("KT")
@@ -153,6 +156,15 @@ class FileManager(metaclass=ABCMeta):
         self._post_open_file(entity)
 
 
+@dataclass(frozen=True)
+class FFMpegPreset:
+    ext: str
+    out_kwargs: dict[str, Any]
+
+    def __hash__(self):
+        return hash(frozenset(self.out_kwargs.items()))
+
+
 class Playblaster(metaclass=ABCMeta):
     """Parent class for creating playblasters. Uses FFmpeg to encode videos"""
 
@@ -161,6 +173,36 @@ class Playblaster(metaclass=ABCMeta):
     _in_context: bool
 
     FR = 24
+
+    class PRESET(FFMpegPreset, Enum):
+        EDIT_SQ = (
+            "mov",
+            {
+                "vcodec": "dnxhd",
+                "pix_fmt": "yuv422p",
+                "vprofile": "dnxhr_sq",
+                # this number comes from Avid's table in the DNxHD whitepaper
+                "video_bitrate": "124M",
+            },
+        )
+        EDIT_HQX = (
+            "mov",
+            {
+                "vcodec": "dnxhd",
+                "pix_fmt": "yuv422p10le",
+                "vprofile": "dnxhr_hqx",
+                "video_bitrate": "188M",
+            },
+        )
+        WEB = (
+            "mp4",
+            {
+                "vcodec": "libx264",
+                "preset": "veryslow",
+                "tune": "animation",
+                "crf": 20,
+            },
+        )
 
     def __init__(self, conn: DBInterface) -> None:
         self._conn = conn
@@ -181,13 +223,15 @@ class Playblaster(metaclass=ABCMeta):
         self._in_context = False
 
     def _do_playblast(
-        self, paths: list[Path | str] | None = None, tail: int = 0
+        self,
+        out_paths: dict[PRESET, list[Path | str]] | None = None,
+        tail: int = 0,
     ) -> None:
         if not self._in_context:
             raise RuntimeError("_do_playblast not called from within context self")
 
-        if not paths:
-            paths = []
+        if not out_paths:
+            out_paths = {}
 
         tempdir = Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve()
 
@@ -205,27 +249,29 @@ class Playblaster(metaclass=ABCMeta):
         images = ffmpeg.input(
             str(tempdir / FILENAME) + ".%04d.png",
             start_number=start_frame,
-        )
-        out_filename = str(tempdir / FILENAME) + ".mov"
-        ffmpeg.output(
-            images,
-            out_filename,
-            vcodec="dnxhd",
-            pix_fmt="yuv422p",
-            vprofile="dnxhr_sq",
-            video_bitrate="124M",  # this number comes from Avid's table in the DNxHD whitepaper
-            timecode="00:00:{:02}:{:02}".format(
-                start_frame // self.FR,
-                start_frame % self.FR,
-            ),
             r=self.FR,
-        ).overwrite_output().run()
+            # precisely define input colorspace
+            colorspace="bt709",
+            color_trc="iec61966-2-1",
+        )
+        for preset, paths in out_paths.items():
+            out_filename = str(tempdir / FILENAME) + "." + preset.ext
+            ffmpeg.output(
+                images,
+                out_filename,
+                **preset.out_kwargs,
+                timecode="00:00:{:02}:{:02}".format(
+                    start_frame // self.FR,
+                    start_frame % self.FR,
+                ),
+                r=self.FR,
+            ).overwrite_output().run()
 
-        # copy video out of tempdir
-        for path in (Path(p) for p in paths):
-            if not path.parent.exists():
-                path.parent.mkdir(mode=0o770, parents=True)
-            shutil.copyfile(out_filename, path)
+            # copy video out of tempdir
+            for path in (Path(str(p) + "." + preset.ext) for p in paths):
+                if not path.parent.exists():
+                    path.parent.mkdir(mode=0o770, parents=True)
+                shutil.copyfile(out_filename, path)
 
         # clean up if not in debug mode
         if not log.isEnabledFor(logging.DEBUG):
