@@ -225,7 +225,7 @@ class Playblaster(metaclass=ABCMeta):
     def _do_playblast(
         self,
         out_paths: dict[PRESET, list[Path | str]] | None = None,
-        tail: int = 0,
+        tails: tuple[int, int] = (0, 0),
     ) -> None:
         if not self._in_context:
             raise RuntimeError("_do_playblast not called from within context self")
@@ -245,7 +245,7 @@ class Playblaster(metaclass=ABCMeta):
         self._write_images(str(tempdir / FILENAME))
 
         # use ffmpeg to encode the video
-        start_frame = int(self._shot.cut_in) - tail
+        start_frame = int(self._shot.cut_in) - tails[0]
         images = ffmpeg.input(
             str(tempdir / FILENAME) + ".%04d.png",
             start_number=start_frame,
