@@ -103,6 +103,10 @@ class MShotFileManager(FileManager):
             {"ID": beforeSaveId},
         )
 
+        # change default render resolution
+        mc.setAttr('defaultResolution.width',f"{1920}")
+        mc.setAttr('defaultResolution.height',f"{816}")
+
         # set session USD target layer to the override layer
         try:
             shot_code = mc.fileInfo("code", query=True)[0]
