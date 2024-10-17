@@ -12,8 +12,6 @@ from pathlib import Path
 
 from typing import TYPE_CHECKING
 
-from pipe.db import DBInterface
-
 if TYPE_CHECKING:
     from typing import Any
     from typing_extensions import Self
@@ -35,7 +33,6 @@ class FFMpegPreset:
 class Playblaster(metaclass=ABCMeta):
     """Parent class for creating playblasters. Uses FFmpeg to encode videos"""
 
-    _conn: DBInterface
     _shot: Shot
     _in_context: bool
 
@@ -71,8 +68,8 @@ class Playblaster(metaclass=ABCMeta):
             },
         )
 
-    def __init__(self, conn: DBInterface) -> None:
-        self._conn = conn
+    def __init__(self) -> None:
+        pass
 
     @abstractmethod
     def _write_images(self, path: str) -> None:
