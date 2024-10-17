@@ -63,17 +63,29 @@ class HudDefinition:
 
 
 @dataclass
+class MShotDialogConfig:
+    """Information needed to add a shot to the playblast dialog
+    id: str
+        Unique id for this shot
+    name: str
+        Display name of the shot
+    save_locs: list[tuple[SaveLocation, bool]]
+        List of save locations, paired with their default enable value
+    """
+
+    id: str
+    name: str
+    save_locs: list[tuple[SaveLocation, bool]]
+
+
+@dataclass
 class MShotPlayblastConfig:
     """Information needed to playblast a shot.
     Attributes:
         camera: str | None
-            Camera to use. Set to `None` if `use_sequencer` is set
+            Camera to use. Value ignored if `use_sequencer` is set
         shot: Shot
             Shot struct to hold shot code, cut in, cut out, and duration
-        save_locs: list[tuple[SaveLocation, bool]]
-            List of SaveLocations, paired with their default enable value
-        enabled: bool = True
-            Whether to playblast this shot
         paths: dict[Playblaster.PRESET, list[str | Path]]
             Paths to output to
         tails: tuple[int, int]
@@ -85,8 +97,6 @@ class MShotPlayblastConfig:
 
     camera: str | None
     shot: Shot
-    save_locs: list[tuple[SaveLocation, bool]]
-    enabled: bool = True
     paths: dict[Playblaster.PRESET, list[str | Path]] = field(default_factory=dict)
     tails: tuple[int, int] = (0, 0)
     use_sequencer: bool = False

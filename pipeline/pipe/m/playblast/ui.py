@@ -6,7 +6,6 @@ import os
 
 from abc import abstractmethod
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from Qt import QtCore, QtWidgets
@@ -19,7 +18,7 @@ from .playblaster import MPlayblaster
 from .struct import SaveLocation
 
 if TYPE_CHECKING:
-    from .struct import MPlayblastConfig, MShotPlayblastConfig
+    from .struct import MPlayblastConfig, MShotDialogConfig
     from typing import Callable
 
 log = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     _use_shadows: QCheckBox
 
     playblaster = MPlayblaster()
-    shot_configs: list[MShotPlayblastConfig]
+    shot_configs: list[MShotDialogConfig]
 
     class SAVE_LOCS:
         CUSTOM = SaveLocation("Custom Folder", "", Playblaster.PRESET.WEB)
@@ -60,7 +59,7 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     def __init__(
         self,
         parent: QWidget | None,
-        shot_configs: list[MShotPlayblastConfig],
+        shot_configs: list[MShotDialogConfig],
         windowTitle: str = "LnD Playblast",
     ) -> None:
         super().__init__(parent, windowTitle=windowTitle)
@@ -90,11 +89,11 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
         playblasts_layout = QtWidgets.QGridLayout()
         for idx, pb in enumerate(self.shot_configs):
             # create shot checkbox
-            self._enabled_checkboxes[pb.shot.code] = QCheckBox()
-            cb = self._enabled_checkboxes[pb.shot.code]
+            self._enabled_checkboxes[pb.id] = QCheckBox()
+            cb = self._enabled_checkboxes[pb.id]
             cb.setChecked(True)
             playblasts_layout.addWidget(cb, idx, 0, 1, 1)
-            shot_label = ClickableQLabel(f"<b>{pb.shot.code}</b>", cb)
+            shot_label = ClickableQLabel(f"<b>{pb.name}</b>", cb)
             shot_label.clicked.connect(self._click_checkbox(cb))
             playblasts_layout.addWidget(shot_label, idx, 1, 1, 1)
 
@@ -108,10 +107,10 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
             for location, enabled_by_default in pb.save_locs:
                 loc_cb = QCheckBox(location.name)
                 loc_cb.setChecked(enabled_by_default)
-                self._enabled_locs[pb.shot.code][location.name] = enabled_by_default
+                self._enabled_locs[pb.id][location.name] = enabled_by_default
                 loc_cb.toggled.connect(
                     self._update_on_check(
-                        self._enabled_locs[pb.shot.code], location.name, loc_cb
+                        self._enabled_locs[pb.id], location.name, loc_cb
                     )
                 )
                 outputs_layout.addWidget(loc_cb)
@@ -195,26 +194,14 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     def _generate_config(self) -> MPlayblastConfig:
         pass
 
+    def is_shot_enabled(self, dialog_id: str) -> bool:
+        """Takes an MShotDialogConfig id and returns if it's enabled"""
+        return self._enabled_checkboxes[dialog_id].isChecked()
+
+    def is_location_enabled(self, dialog_id: str, loc_name: str) -> bool:
+        return self._enabled_locs[dialog_id][loc_name]
+
     def do_export(self):
-        date = datetime.now().strftime("%m-%d-%y")
-
-        # iterate over shots and finalize configs
-        for config in self.shot_configs:
-            # disable unenabled checkboxes
-            if not self._enabled_checkboxes[config.shot.code].isChecked():
-                config.set_enabled(False)
-                continue
-
-            # sort paths by export preset
-            paths = defaultdict(list)
-            for loc, _ in config.save_locs:
-                if self._enabled_locs[config.shot.code][loc.name]:
-                    paths[loc.preset].append(
-                        str(loc.path) + f"/{config.shot.code}_{date}"
-                    )
-
-            config.set_paths(paths)
-
         self.playblaster.configure(self._generate_config()).playblast()
 
         MessageDialog(self.parent(), "Playblast(s) successful!").exec_()

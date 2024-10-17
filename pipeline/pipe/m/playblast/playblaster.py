@@ -8,12 +8,9 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from mayacapture.capture import capture  # type: ignore[import-not-found]
-from pipe.db import DB
 from pipe.util import Playblaster
 
 from .struct import HudDefinition, MPlayblastConfig
-
-from env_sg import DB_Config
 
 if TYPE_CHECKING:
     from typing import Any, Generator
@@ -26,7 +23,7 @@ class MPlayblaster(Playblaster):
     _extra_kwargs: dict[str, Any]
 
     def __init__(self) -> None:
-        super().__init__(DB.Get(DB_Config))
+        super().__init__()
 
     def configure(self, config: MPlayblastConfig) -> MPlayblaster:
         self._config = config
@@ -75,9 +72,6 @@ class MPlayblaster(Playblaster):
 
             # iterate over shots and playblast
             for shot_config in self._config.shots:
-                if not shot_config.enabled:
-                    continue
-
                 # assemble shot-specific kwargs
                 self._extra_kwargs = copy.deepcopy(global_kwargs)
                 if shot_config.use_sequencer:
