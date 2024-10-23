@@ -84,11 +84,14 @@ class PrevisPlayblastDialog(PlayblastDialog):
     def _do_camera_shot_lookup(self) -> str:
         """Look up the current shot based off of the camera"""
         panel: str = mc.getPanel(withLabel="CapturePanel")  # type: ignore[assignment]
-        if panel:
-            camera = (
-                str(mc.modelEditor(panel, query=True, camera=True)).split("|").pop()  # type: ignore[arg-type]
-            )
-            return self._camera_shot_lookup[camera]
+        try:
+            if panel:
+                camera = (
+                    str(mc.modelEditor(panel, query=True, camera=True)).split("|").pop()  # type: ignore[arg-type]
+                )
+                return self._camera_shot_lookup[camera]
+        except KeyError:
+            pass
         return "No shot data"
 
     def _save_locations_to_paths(

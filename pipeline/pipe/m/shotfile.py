@@ -104,8 +104,8 @@ class MShotFileManager(FileManager):
         )
 
         # change default render resolution
-        mc.setAttr("defaultResolution.width", str(1920))
-        mc.setAttr("defaultResolution.height", str(816))
+        mc.setAttr("defaultResolution.width", 1920)  # type: ignore[arg-type]
+        mc.setAttr("defaultResolution.height", 816)  # type: ignore[arg-type]
 
         # set session USD target layer to the override layer
         try:
@@ -274,7 +274,7 @@ class MShotFileManager(FileManager):
 
         # Save shot code to file
         mc.fileInfo("code", self.shot.code)
-        mc.file(save=True)
+        mc.file(save=True, force=True)
 
 
 class MAnimShotFileManager(MShotFileManager):
