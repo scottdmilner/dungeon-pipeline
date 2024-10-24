@@ -47,10 +47,6 @@ class MayaDCC(DCC):
                     str(this_path.parent / "scripts"),
                     str(this_path.parent / "userSetup"),
                     str(this_path.parent / "scripts/studiolibrary/src"),
-                    str(
-                        get_production_path()
-                        / f"../pipeline/pipeline/lib/python/3.10/{sys.platform}"
-                    ),
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
