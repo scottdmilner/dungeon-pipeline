@@ -31,7 +31,7 @@ class ClickableQLabel(QLabel):
         self.clicked.emit()
 
 
-class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
+class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
     """Dialog for a generic Maya playblaster. To subclass:
     - subclass SAVE_LOCS as necessary to add more locations
     - define a `_generate_config` function
