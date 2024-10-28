@@ -1,29 +1,39 @@
 from __future__ import annotations
 
 import logging
-# import maya.cmds as mc
+import maya.cmds as mc
 
 from datetime import datetime
 from typing import TYPE_CHECKING
+from Qt.QtWidgets import QComboBox, QGridLayout, QLabel, QSpinBox, QWidget
+from Qt.QtCore import QRegExp
+from Qt.QtGui import QRegExpValidator
 
+from pipe.db import DB
 from pipe.util import Playblaster
 from shared.util import get_edit_path
+from env_sg import DB_Config
 
 from .struct import (
     HudDefinition,
     MPlayblastConfig,
+    MShotDialogConfig,
     MShotPlayblastConfig,
     SaveLocation,
+    dummy_shot,
 )
 from .ui import PlayblastDialog
 
 if TYPE_CHECKING:
-    pass
+    from pipe.struct.db import Shot
 
 log = logging.getLogger(__name__)
 
 
 class AnimPlayblastDialog(PlayblastDialog):
+    _conn: DB
+    _shot: Shot | None
+
     class SAVE_LOCS(PlayblastDialog.SAVE_LOCS):
         EDIT = SaveLocation(
             "Send to Edit",
@@ -31,37 +41,154 @@ class AnimPlayblastDialog(PlayblastDialog):
             Playblaster.PRESET.EDIT_SQ,
         )
 
+    SG_ID = "sg"
+    CUSTOM_ID = "custom"
+
     def __init__(self, parent):
-        HudDefinition
-        MPlayblastConfig
-        MShotPlayblastConfig
-        # code = str(mc.fileInfo("code", query=True)[0])
-        # shot = self.playblaster._conn.get_shot_by_code(code)
-        # shot_config = MShotPlayblastConfig(
-        #     name=code,
-        #     # camera
-        # )
-        super().__init__(parent, [], "LnD Anim Playblast")
+        self._conn = DB.Get(DB_Config)
+        try:
+            code = str(mc.fileInfo("code", query=True)[0])
+            self._shot = self._conn.get_shot_by_code(code)
+        except Exception:
+            self._shot = None
 
+        self._shot_dialog_configs = [
+            MShotDialogConfig(
+                id=self.SG_ID,
+                name="Shot (from SG)",
+                save_locs=[
+                    (self.SAVE_LOCS.EDIT, False),
+                    (self.SAVE_LOCS.CURRENT, True),
+                    (self.SAVE_LOCS.CUSTOM, False),
+                ],
+            ),
+            MShotDialogConfig(
+                id=self.CUSTOM_ID,
+                name="Custom",
+                save_locs=[
+                    (self.SAVE_LOCS.EDIT, False),
+                    (self.SAVE_LOCS.CURRENT, True),
+                    (self.SAVE_LOCS.CUSTOM, False),
+                ],
+            ),
+        ]
+        super().__init__(parent, self._shot_dialog_configs, "LnD Anim Playblast")
 
-# class MAnimPlayblaster(MPlayblaster):
-#     _code: str
+    def _setup_ui(self):
+        super()._setup_ui()
 
-#     def __init__(self) -> None:
-#         self._code = mc.fileInfo("code", query=True)[0]
-#         super().__init__()
+        # disable the SG option if we can't find this shot in SG
+        if not self._shot:
+            self._enabled_checkboxes[self.SG_ID].setChecked(False)
+            self._enabled_checkboxes[self.SG_ID].setEnabled(False)
 
-#     def playblast(self) -> None:
-#         with _applied_hud(*self.HUDS), _unselect_all(), self(
-#             self._conn.get_shot_by_code(self._code),
-#             "|__mayaUsd__|shotCamParent|shotCam",
-#         ):
-#             super()._do_playblast(
-#                 [
-#                     get_edit_path()
-#                     / "testing"
-#                     / self._shot.code
-#                     / (self._shot.code + "_V002.mov")
-#                 ],
-#                 tail=5,
-#             )
+        # Create UI for custom shot
+        custom_shot_layout = QGridLayout()
+        custom_shot_widget = QWidget(self)
+        custom_shot_widget.setLayout(custom_shot_layout)
+
+        self._shot_pass = QComboBox(self)
+        self._shot_pass.addItems(["Blocking #", "Polish #"])
+        self._shot_pass.setEditable(True)
+        self._shot_pass.setValidator(
+            QRegExpValidator(QRegExp("(?:Blocking|Polish) #\d+"))
+        )
+        custom_shot_layout.addWidget(QLabel("Pass"), 0, 0)
+        custom_shot_layout.addWidget(self._shot_pass, 0, 1, 1, 2)
+
+        self._custom_in = QSpinBox(self, maximum=10000, minimum=0, value=1001)
+        self._custom_out = QSpinBox(self, maximum=10000, minimum=0, value=1100)
+        custom_shot_layout.addWidget(QLabel("Custom In"), 1, 1)
+        custom_shot_layout.addWidget(self._custom_in, 1, 2)
+        custom_shot_layout.addWidget(QLabel("Custom Out"), 1, 3)
+        custom_shot_layout.addWidget(self._custom_out, 1, 4)
+
+        self._custom_camera = QComboBox(self)
+        self._custom_camera.addItems(cameras := mc.ls(cameras=True, visible=True))
+        self._custom_camera.setCurrentIndex(0)
+        self._custom_camera.setValidator(QRegExpValidator(QRegExp("|".join(cameras))))
+        custom_shot_layout.addWidget(QLabel("Custom Camera"), 2, 1)
+        custom_shot_layout.addWidget(self._custom_camera, 2, 2, 1, 2)
+
+        self._main_layout.insertWidget(2, custom_shot_widget)
+
+    def _generate_config(self) -> MPlayblastConfig:
+        date = datetime.now().strftime("%m-%d-%y")
+        shots: list[MShotPlayblastConfig] = []
+
+        if self.is_shot_enabled(self.SG_ID):
+            assert self._shot is not None
+            shots.append(
+                MShotPlayblastConfig(
+                    camera="|__mayaUsd__|shotCamParent|shotCam",
+                    shot=self._shot,
+                    paths=self.save_locations_to_paths(
+                        self.SG_ID,
+                        (
+                            sl[0]
+                            for sl in next(
+                                c
+                                for c in self._shot_dialog_configs
+                                if c.id == self.SG_ID
+                            ).save_locs
+                        ),
+                        f"{self._shot.code}_{date}",
+                    ),
+                    tails=(5, 5),
+                )
+            )
+
+        if self.is_shot_enabled(self.CUSTOM_ID):
+            shots.append(
+                MShotPlayblastConfig(
+                    camera=self._custom_camera.currentText(),
+                    shot=dummy_shot(
+                        "custom",
+                        inv := self._custom_in.value(),
+                        outv := self._custom_out.value(),
+                        cut_duration=outv - inv,
+                    ),
+                    paths=self.save_locations_to_paths(
+                        self.CUSTOM_ID,
+                        (
+                            sl[0]
+                            for sl in next(
+                                c
+                                for c in self._shot_dialog_configs
+                                if c.id == self.CUSTOM_ID
+                            ).save_locs
+                        ),
+                        f"customPB_{date}",
+                    ),
+                )
+            )
+
+        return MPlayblastConfig(
+            builtin_huds=[
+                PlayblastDialog.MAYA_HUDS.CAM_NAME,
+                PlayblastDialog.MAYA_HUDS.CUR_FRAME,
+                PlayblastDialog.MAYA_HUDS.FOCAL_LENGTH,
+            ],
+            custom_huds=[
+                PlayblastDialog.CUSTOM_HUDS.FILENAME,
+                PlayblastDialog.CUSTOM_HUDS.ARTIST,
+                HudDefinition(
+                    "LnDshot",
+                    command=lambda: self._shot.code
+                    if self._shot
+                    else "No shot code found",
+                    section=7,
+                    event="SceneSaved",
+                ),
+                HudDefinition(
+                    "LnDpass",
+                    command=lambda: self._shot_pass.currentText(),
+                    label="Pass:",
+                    section=5,
+                    event="SceneSaved",
+                ),
+            ],
+            lighting=self.use_lighting,
+            shadows=self.use_shadows,
+            shots=shots,
+        )

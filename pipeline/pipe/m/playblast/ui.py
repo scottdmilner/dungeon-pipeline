@@ -15,11 +15,11 @@ from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.util import checkbox_callback_helper, Playblaster
 
 from .playblaster import MPlayblaster
-from .struct import SaveLocation
+from .struct import HudDefinition, SaveLocation
 
 if TYPE_CHECKING:
     from .struct import MPlayblastConfig, MShotDialogConfig
-    from typing import Callable
+    from typing import Callable, Iterable
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +54,27 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
             "Current Folder",
             Path(mc.file(query=True, sceneName=True)).parent,  # type: ignore[arg-type]
             Playblaster.PRESET.WEB,
+        )
+
+    class MAYA_HUDS:
+        CAM_NAME = "HUDCameraNames"
+        CUR_FRAME = "HUDCurrentFrame"
+        FOCAL_LENGTH = "HUDFocalLength"
+
+    class CUSTOM_HUDS:
+        FILENAME = HudDefinition(
+            "LnDfilename",
+            command=lambda: str(mc.file(query=True, sceneName=True)),
+            event="SceneSaved",
+            label="File:",
+            section=5,
+        )
+        ARTIST = HudDefinition(
+            "LnDartist",
+            command=lambda: os.getlogin(),
+            event="SceneOpened",
+            label="Artist:",
+            section=5,
         )
 
     def __init__(
@@ -176,6 +197,16 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     @property
     def use_shadows(self) -> bool:
         return self._use_shadows.isChecked()
+
+    def save_locations_to_paths(
+        self, dialog_id: str, locs: Iterable[SaveLocation], filename: str
+    ) -> dict[Playblaster.PRESET, list[str | Path]]:
+        paths: dict[Playblaster.PRESET, list[str | Path]] = defaultdict(list)
+        for loc in locs:
+            if self.is_location_enabled(dialog_id, loc.name):
+                paths[loc.preset].append(str(loc.path) + "/" + filename)
+
+        return paths
 
     def _set_custom_folder(self) -> None:
         """Prompt user to select a custom folder for saving"""

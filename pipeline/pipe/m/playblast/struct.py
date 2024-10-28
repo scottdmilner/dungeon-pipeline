@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from pipe.util import Playblaster
     from typing import Callable, Literal
 
+
 log = logging.getLogger(__name__)
 
 

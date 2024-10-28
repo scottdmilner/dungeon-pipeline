@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import logging
 import maya.cmds as mc
-import os
 
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from pipe.util import Playblaster
 from shared.util import get_edit_path
@@ -21,9 +18,6 @@ from .struct import (
     dummy_shot,
 )
 from .ui import PlayblastDialog
-
-if TYPE_CHECKING:
-    from typing import Iterable
 
 log = logging.getLogger(__name__)
 
@@ -91,40 +85,18 @@ class PrevisPlayblastDialog(PlayblastDialog):
             return self._camera_shot_lookup[camera]
         return "No shot data"
 
-    def _save_locations_to_paths(
-        self, dialog_id: str, locs: Iterable[SaveLocation], filename: str
-    ) -> dict[Playblaster.PRESET, list[str | Path]]:
-        paths: dict[Playblaster.PRESET, list[str | Path]] = defaultdict(list)
-        for loc in locs:
-            if self.is_location_enabled(dialog_id, loc.name):
-                paths[loc.preset].append(str(loc.path) + "/" + filename)
-
-        return paths
-
     def _generate_config(self) -> MPlayblastConfig:
         seq_node = str(mc.sequenceManager(query=True, writableSequencer=True))
         date = datetime.now().strftime("%m-%d-%y")
         return MPlayblastConfig(
             builtin_huds=[
-                "HUDCameraNames",
-                "HUDCurrentFrame",
-                "HUDFocalLength",
+                PlayblastDialog.MAYA_HUDS.CAM_NAME,
+                PlayblastDialog.MAYA_HUDS.CUR_FRAME,
+                PlayblastDialog.MAYA_HUDS.FOCAL_LENGTH,
             ],
             custom_huds=[
-                HudDefinition(
-                    "LnDfilename",
-                    command=lambda: str(mc.file(query=True, sceneName=True)),
-                    event="SceneSaved",
-                    label="File:",
-                    section=5,
-                ),
-                HudDefinition(
-                    "LnDartist",
-                    command=lambda: os.getlogin(),
-                    event="SceneOpened",
-                    label="Artist:",
-                    section=5,
-                ),
+                PlayblastDialog.CUSTOM_HUDS.FILENAME,
+                PlayblastDialog.CUSTOM_HUDS.ARTIST,
                 HudDefinition(
                     "LnDshot",
                     command=self._do_camera_shot_lookup,
@@ -143,7 +115,7 @@ class PrevisPlayblastDialog(PlayblastDialog):
                         int(mc.shot(config.id, query=True, endTime=True)),
                         int(mc.shot(config.id, query=True, clipDuration=True)),
                     ),
-                    paths=self._save_locations_to_paths(
+                    paths=self.save_locations_to_paths(
                         config.id,
                         (sl[0] for sl in config.save_locs),
                         f"{shot_name}_{date}",
@@ -161,7 +133,7 @@ class PrevisPlayblastDialog(PlayblastDialog):
                         cut_out=(co := mc.getAttr(f"{seq_node}.maxFrame")),
                         cut_duration=co - ci,
                     ),
-                    paths=self._save_locations_to_paths(
+                    paths=self.save_locations_to_paths(
                         config.id, (sl[0] for sl in config.save_locs), f"{name}_{date}"
                     ),
                     use_sequencer=True,
