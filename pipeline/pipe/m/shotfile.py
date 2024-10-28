@@ -103,16 +103,25 @@ class MShotFileManager(FileManager):
             {"ID": beforeSaveId},
         )
 
+        # change default render resolution
+        mc.setAttr("defaultResolution.width", 1920)  # type: ignore[arg-type]
+        mc.setAttr("defaultResolution.height", 816)  # type: ignore[arg-type]
+
         # set session USD target layer to the override layer
         try:
-            shot_code = mc.fileInfo("code", query=True)[0]
-            mc.mayaUsdEditTarget(  # type: ignore[attr-defined]
-                cls.get_stage_shape(),
-                edit=True,
-                editTarget="/".join(["shot", shot_code, "set", cls.MAYA_OVERRIDE]),
-            )
-        except IndexError:
-            mc.error("Could not find shot code in fileInfo! USD edit target not set")
+            shot_code = ""
+            try:
+                shot_code = mc.fileInfo("code", query=True)[0]
+            except IndexError:
+                mc.error(
+                    "Could not find shot code in fileInfo! USD edit target not set"
+                )
+            if shot_code:
+                mc.mayaUsdEditTarget(  # type: ignore[attr-defined]
+                    cls.get_stage_shape(),
+                    edit=True,
+                    editTarget="/".join(["shot", shot_code, "set", cls.MAYA_OVERRIDE]),
+                )
         except Exception:
             mc.error("Warning! Could not set edit target!")
 
@@ -265,7 +274,7 @@ class MShotFileManager(FileManager):
 
         # Save shot code to file
         mc.fileInfo("code", self.shot.code)
-        mc.file(save=True)
+        mc.file(save=True, force=True)
 
 
 class MAnimShotFileManager(MShotFileManager):

@@ -107,32 +107,47 @@ class ExportChaser(mayaUsdLib.ExportChaser):
             # editor.MovePrimAtPath(Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"))
             # editor.ApplyEdits()
 
-            WORLD = Sdf.Path("/WORLD")
             new_shotCam_path = Sdf.Path("/LnD_shotCam")
             with Sdf.ChangeBlock():
                 layer = self._stage.GetEditTarget().GetLayer()
 
-                prim_paths: list[Sdf.Path] = []
+                world_ctrl_find: list[Sdf.Path] = []
+                cam_rig_root_find: list[Sdf.Path] = []
 
                 def traverse_kernel(path: Sdf.Path | str):
                     if isinstance(path, str):
                         path = Sdf.Path(path)
-                    if path.IsPrimPath() and (path.name == "world_CTRL"):
-                        prim_paths.append(path)
+                    if path.IsPrimPath():
+                        if path.name == "world_CTRL":
+                            world_ctrl_find.append(path)
+                        elif path.name == "LnD_shotCam":
+                            cam_rig_root_find.append(path)
 
-                layer.Traverse(WORLD, traverse_kernel)
-                world_ctrl_path = prim_paths.pop()
+                layer.Traverse(Sdf.Path("/"), traverse_kernel)
 
-                prim_spec = Sdf.CreatePrimInLayer(layer, new_shotCam_path)
-                prim_spec.SetInfo(prim_spec.SpecifierKey, Sdf.SpecifierDef)
+                try:
+                    world_ctrl_path = world_ctrl_find.pop()
+                except IndexError:
+                    raise RuntimeError("Could not find world_CTRL in export!")
+                try:
+                    cam_rig_root = cam_rig_root_find.pop()
+                except IndexError:
+                    raise RuntimeError("Could not find camera rig root in export!")
 
-                edit = Sdf.BatchNamespaceEdit()
-                edit.Add(
-                    Sdf.NamespaceEdit.Reparent(world_ctrl_path, new_shotCam_path, -1)
-                )
-                edit.Add(Sdf.NamespaceEdit.Remove(WORLD))
-                if not layer.Apply(edit):
-                    raise Exception("Failed to apply layer edit!")
+                if cam_rig_root != new_shotCam_path:
+                    prim_spec = Sdf.CreatePrimInLayer(layer, new_shotCam_path)
+                    prim_spec.SetInfo(prim_spec.SpecifierKey, Sdf.SpecifierDef)
+
+                    edit = Sdf.BatchNamespaceEdit()
+                    edit.Add(
+                        Sdf.NamespaceEdit.Reparent(
+                            world_ctrl_path, new_shotCam_path, -1
+                        )
+                    )
+                    edit.Add(Sdf.NamespaceEdit.Remove(cam_rig_root))
+
+                    if not layer.Apply(edit):
+                        raise Exception("Failed to apply layer edit!")
 
             self._stage.SetDefaultPrim(self._stage.GetPrimAtPath(new_shotCam_path))
         else:

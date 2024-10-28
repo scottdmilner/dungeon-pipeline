@@ -67,7 +67,7 @@ class CameraPublisher(Publisher):
         return get_production_path() / self._entity.path / "cam" / "cam.usd"
 
     def _presave(self) -> bool:
-        mc.select(self._camera)
+        mc.select(self._camera, replace=True)
         return True
 
     def _get_mayausd_kwargs(self) -> dict[str, Any]:
