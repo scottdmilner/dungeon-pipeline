@@ -10,7 +10,7 @@ from Qt.QtCore import QRegExp
 from Qt.QtGui import QRegExpValidator
 
 from pipe.db import DB
-from pipe.util import Playblaster
+from pipe.util import checkbox_callback_helper, Playblaster
 from shared.util import get_edit_path
 from env_sg import DB_Config
 
@@ -79,22 +79,25 @@ class AnimPlayblastDialog(PlayblastDialog):
 
         # disable the SG option if we can't find this shot in SG
         if not self._shot:
-            self._enabled_checkboxes[self.SG_ID].setChecked(False)
-            self._enabled_checkboxes[self.SG_ID].setEnabled(False)
+            self._enabled_shot_cbs[self.SG_ID].toggle()
+            self._enabled_shot_cbs[self.SG_ID].setEnabled(False)
 
-        # Create UI for custom shot
-        custom_shot_layout = QGridLayout()
-        custom_shot_widget = QWidget(self)
-        custom_shot_widget.setLayout(custom_shot_layout)
-
+        anim_settings_widget = QWidget(self)
+        anim_settings_layout = QGridLayout(anim_settings_widget)
         self._shot_pass = QComboBox(self)
         self._shot_pass.addItems(["Blocking #", "Polish #"])
         self._shot_pass.setEditable(True)
         self._shot_pass.setValidator(
             QRegExpValidator(QRegExp("(?:Blocking|Polish) #\d+"))
         )
-        custom_shot_layout.addWidget(QLabel("Pass"), 0, 0)
-        custom_shot_layout.addWidget(self._shot_pass, 0, 1, 1, 2)
+        anim_settings_layout.addWidget(QLabel("Pass"), 0, 0)
+        anim_settings_layout.addWidget(self._shot_pass, 0, 1, 1, 2)
+
+        self._main_layout.insertWidget(2, anim_settings_widget)
+
+        # Create UI for custom shot
+        custom_shot_widget = QWidget(self)
+        custom_shot_layout = QGridLayout(custom_shot_widget)
 
         self._custom_in = QSpinBox(self, maximum=10000, minimum=0, value=1001)
         self._custom_out = QSpinBox(self, maximum=10000, minimum=0, value=1100)
@@ -110,7 +113,12 @@ class AnimPlayblastDialog(PlayblastDialog):
         custom_shot_layout.addWidget(QLabel("Custom Camera"), 2, 1)
         custom_shot_layout.addWidget(self._custom_camera, 2, 2, 1, 2)
 
-        self._main_layout.insertWidget(2, custom_shot_widget)
+        # disable UI if custom shot not enabled
+        (escb := self._enabled_shot_cbs[self.CUSTOM_ID]).toggled.connect(
+            checkbox_callback_helper(escb, custom_shot_widget)
+        )
+
+        self._main_layout.insertWidget(3, custom_shot_widget)
 
     def _generate_config(self) -> MPlayblastConfig:
         date = datetime.now().strftime("%m-%d-%y")
@@ -118,20 +126,14 @@ class AnimPlayblastDialog(PlayblastDialog):
 
         if self.is_shot_enabled(self.SG_ID):
             assert self._shot is not None
+            sg_config = next(c for c in self._shot_dialog_configs if c.id == self.SG_ID)
             shots.append(
                 MShotPlayblastConfig(
                     camera="|__mayaUsd__|shotCamParent|shotCam",
                     shot=self._shot,
                     paths=self.save_locations_to_paths(
                         self.SG_ID,
-                        (
-                            sl[0]
-                            for sl in next(
-                                c
-                                for c in self._shot_dialog_configs
-                                if c.id == self.SG_ID
-                            ).save_locs
-                        ),
+                        (sl[0] for sl in sg_config.save_locs),
                         f"{self._shot.code}_{date}",
                     ),
                     tails=(5, 5),
@@ -139,6 +141,9 @@ class AnimPlayblastDialog(PlayblastDialog):
             )
 
         if self.is_shot_enabled(self.CUSTOM_ID):
+            custom_config = next(
+                c for c in self._shot_dialog_configs if c.id == self.CUSTOM_ID
+            )
             shots.append(
                 MShotPlayblastConfig(
                     camera=self._custom_camera.currentText(),
@@ -150,14 +155,7 @@ class AnimPlayblastDialog(PlayblastDialog):
                     ),
                     paths=self.save_locations_to_paths(
                         self.CUSTOM_ID,
-                        (
-                            sl[0]
-                            for sl in next(
-                                c
-                                for c in self._shot_dialog_configs
-                                if c.id == self.CUSTOM_ID
-                            ).save_locs
-                        ),
+                        (sl[0] for sl in custom_config.save_locs),
                         f"customPB_{date}",
                     ),
                 )
