@@ -31,10 +31,9 @@ class MPlayblaster(Playblaster):
 
     def _write_images(self, path: str) -> None:
         """Maya implementation of playblasting image frames"""
-        active_editor = mc.playblast(activeEditor=True)
+        active_editor = str(mc.sequenceManager(query=True, modelPanel=True))
         self._extra_kwargs["viewport_options"].update(
             {
-                "fogging": mc.modelEditor(active_editor, query=True, fogging=True),
                 "twoSidedLighting": mc.modelEditor(
                     active_editor, query=True, twoSidedLighting=True
                 ),
@@ -87,6 +86,10 @@ class MPlayblaster(Playblaster):
                 "viewport_options": {},
                 "viewport2_options": {},
             }
+
+            if self._config.hardware_fog:
+                global_kwargs["viewport_options"].update({"fogging": True})
+            
             if self._config.lighting:
                 global_kwargs["viewport_options"].update({"displayLights": "all"})
 

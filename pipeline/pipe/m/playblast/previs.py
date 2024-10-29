@@ -107,6 +107,7 @@ class PrevisPlayblastDialog(PlayblastDialog):
                     idle_refresh=True,
                 ),
             ],
+            hardware_fog=self.use_hardware_fog,
             lighting=self.use_lighting,
             shadows=self.use_shadows,
             shots=[

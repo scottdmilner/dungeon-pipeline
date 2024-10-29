@@ -117,6 +117,8 @@ class MPlayblastConfig:
             List of valid Maya builtin HUD names
         custom_huds: list[HudDefinition]
             List of `HudDefinition`s
+        hardware_fog: bool
+            Toggle hardware fog
         lighting: bool
             Toggle viewport lighting
         shadows: bool
@@ -129,6 +131,7 @@ class MPlayblastConfig:
 
     builtin_huds: list[str]
     custom_huds: list[HudDefinition]
+    hardware_fog: bool
     lighting: bool
     shadows: bool
     shots: list[MShotPlayblastConfig]

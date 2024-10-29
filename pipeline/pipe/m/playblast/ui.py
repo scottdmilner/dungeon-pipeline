@@ -193,7 +193,7 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
         self._main_layout.addWidget(playblasts_scroll_area)
 
         # create lighting, shadow, ssao toggles
-        active_editor = mc.playblast(activeEditor=True)
+        active_editor = str(mc.sequenceManager(query=True, modelPanel=True))
         toggles_layout = QHBoxLayout()
         toggles_widget = QWidget()
         toggles_widget.setLayout(toggles_layout)
@@ -212,6 +212,11 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
             bool(mc.getAttr("hardwareRenderingGlobals.ssaoEnable"))
         )
         toggles_layout.addWidget(self._use_ssao)
+        self._use_hardware_fog = QCheckBox("Use Hardware Fog")
+        self._use_hardware_fog.setChecked(
+            bool(mc.modelEditor(active_editor, query=True, fogging=True))
+        )
+        toggles_layout.addWidget(self._use_hardware_fog)
         self._main_layout.addWidget(toggles_widget)
 
         # custom folder prompt
@@ -256,6 +261,10 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     @property
     def use_ssao(self) -> bool:
         return self._use_ssao.isChecked()
+    
+    @property
+    def use_hardware_fog(self) -> bool:
+        return self._use_hardware_fog.isChecked()
 
     def save_locations_to_paths(
         self, dialog_id: str, locs: Iterable[SaveLocation], filename: str
