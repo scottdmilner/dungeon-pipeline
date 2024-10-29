@@ -261,7 +261,7 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     @property
     def use_ssao(self) -> bool:
         return self._use_ssao.isChecked()
-    
+
     @property
     def use_hardware_fog(self) -> bool:
         return self._use_hardware_fog.isChecked()
