@@ -9,7 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from Qt import QtCore, QtWidgets
-from Qt.QtWidgets import QCheckBox, QLabel, QWidget
+from Qt.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QWidget
 
 from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.util import checkbox_callback_helper, Playblaster
@@ -121,7 +121,7 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
             # disable the output checkboxes when the shot is disabled
             outputs_container = QWidget()
             cb.toggled.connect(checkbox_callback_helper(cb, outputs_container))
-            outputs_layout = QtWidgets.QHBoxLayout(outputs_container)
+            outputs_layout = QHBoxLayout(outputs_container)
             playblasts_layout.addWidget(outputs_container, idx, 2, 1, 1)
 
             # create the location checkboxes
@@ -149,21 +149,30 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
         playblasts_scroll_area.setWidgetResizable(True)
         self._main_layout.addWidget(playblasts_scroll_area)
 
-        # create lighting and shadow toggles
-        toggles_layout = QtWidgets.QHBoxLayout()
+        # create lighting, shadow, ssao toggles
+        active_editor = mc.playblast(activeEditor=True)
+        toggles_layout = QHBoxLayout()
         toggles_widget = QWidget()
         toggles_widget.setLayout(toggles_layout)
         self._use_lighting = QCheckBox("Use Lighting")
-        self._use_lighting.setChecked(True)
+        self._use_lighting.setChecked(
+            mc.modelEditor(active_editor, query=True, displayLights=True) == "all"
+        )
         toggles_layout.addWidget(self._use_lighting)
         self._use_shadows = QCheckBox("Use Shadows")
+        self._use_shadows.setChecked(
+            bool(mc.modelEditor(active_editor, query=True, shadows=True))
+        )
         toggles_layout.addWidget(self._use_shadows)
         self._use_ssao = QCheckBox("Use Anti-aliasing")
+        self._use_ssao.setChecked(
+            bool(mc.getAttr("hardwareRenderingGlobals.ssaoEnable"))
+        )
         toggles_layout.addWidget(self._use_ssao)
         self._main_layout.addWidget(toggles_widget)
 
         # custom folder prompt
-        custom_folder_layout = QtWidgets.QHBoxLayout()
+        custom_folder_layout = QHBoxLayout()
         self._custom_folder_text = QLabel(os.getenv("TMPDIR", os.getenv("TEMP", "tmp")))
         custom_folder_button = QtWidgets.QPushButton(text="Set Custom Folder")
         custom_folder_button.clicked.connect(self._set_custom_folder)
