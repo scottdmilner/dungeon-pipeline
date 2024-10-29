@@ -31,11 +31,34 @@ class MPlayblaster(Playblaster):
 
     def _write_images(self, path: str) -> None:
         """Maya implementation of playblasting image frames"""
+        active_editor = mc.playblast(activeEditor=True)
+        self._extra_kwargs["viewport_options"].update(
+            {
+                "fogging": mc.modelEditor(active_editor, query=True, fogging=True),
+                "twoSidedLighting": mc.modelEditor(
+                    active_editor, query=True, twoSidedLighting=True
+                ),
+            }
+        )
         self._extra_kwargs["viewport2_options"].update(
             {
+                **{
+                    k: mc.getAttr(f"hardwareRenderingGlobals.{k}")
+                    for k in (
+                        "hwFogAlpha",
+                        "hwFogFalloff",
+                        "hwFogDensity",
+                        "hwFogEnd",
+                        "hwFogColorR",
+                        "hwFogColorG",
+                        "hwFogColorB",
+                        "hwFogStart",
+                    )
+                },
+                "enableTextureMaxRes": True,
+                "hwFogEnable": True,
                 "maxHardwareLights": 16,
                 "multiSampleEnable": True,
-                "ssaoEnable": True,
             }
         )
 
@@ -69,6 +92,9 @@ class MPlayblaster(Playblaster):
 
             if self._config.shadows:
                 global_kwargs["viewport_options"].update({"shadows": True})
+
+            if self._config.ssao:
+                global_kwargs["viewport2_options"].update({"ssaoEnable": True})
 
             # iterate over shots and playblast
             for shot_config in self._config.shots:

@@ -144,4 +144,5 @@ class PrevisPlayblastDialog(PlayblastDialog):
                 for config in self._sequence_dialog_configs
                 if self.is_shot_enabled(config.id)
             ],
+            ssao=self.use_ssao,
         )

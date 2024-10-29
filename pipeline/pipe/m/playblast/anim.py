@@ -191,4 +191,5 @@ class AnimPlayblastDialog(PlayblastDialog):
             lighting=self.use_lighting,
             shadows=self.use_shadows,
             shots=shots,
+            ssao=self.use_ssao,
         )

@@ -123,6 +123,8 @@ class MPlayblastConfig:
             Toggle viewport shadows
         shots: list[MShotPlayblastConfig]
             List of shots to playblast
+        ssao: bool
+            Toggle viewport screen-space anti-aliasing
     """
 
     builtin_huds: list[str]
@@ -130,6 +132,7 @@ class MPlayblastConfig:
     lighting: bool
     shadows: bool
     shots: list[MShotPlayblastConfig]
+    ssao: bool
 
 
 class SaveLocation:

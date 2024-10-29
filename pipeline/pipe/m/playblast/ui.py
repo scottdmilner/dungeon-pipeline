@@ -158,6 +158,8 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
         toggles_layout.addWidget(self._use_lighting)
         self._use_shadows = QCheckBox("Use Shadows")
         toggles_layout.addWidget(self._use_shadows)
+        self._use_ssao = QCheckBox("Use Anti-aliasing")
+        toggles_layout.addWidget(self._use_ssao)
         self._main_layout.addWidget(toggles_widget)
 
         # custom folder prompt
@@ -197,6 +199,10 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     @property
     def use_shadows(self) -> bool:
         return self._use_shadows.isChecked()
+
+    @property
+    def use_ssao(self) -> bool:
+        return self._use_ssao.isChecked()
 
     def save_locations_to_paths(
         self, dialog_id: str, locs: Iterable[SaveLocation], filename: str
