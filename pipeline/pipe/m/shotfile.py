@@ -73,7 +73,7 @@ class MShotFileManager(FileManager):
     def __init__(self) -> None:
         conn = DB.Get(DB_Config)
         window = get_main_qt_window()
-        super().__init__(conn, Shot, window)
+        super().__init__(conn, Shot, window, versioning=True)
 
     @classmethod
     def get_stage_shape(cls) -> str:
@@ -141,9 +141,9 @@ class MShotFileManager(FileManager):
         return True
 
     @staticmethod
-    def _generate_filename(entity) -> str:
+    def _generate_filename_ext(entity) -> tuple[str, str]:
         shot = cast(Shot, entity)
-        return shot.code + ".mb"
+        return shot.code, "mb"
 
     @staticmethod
     def _open_file(path: Path) -> None:
@@ -159,7 +159,7 @@ class MShotFileManager(FileManager):
         classname = self.__class__.__name__
         mc.scriptNode(
             beforeScript=(
-                f"from pipe.m.shotfile import {classname};" f"{classname}.run_on_open()"
+                f"from pipe.m.shotfile import {classname}; {classname}.run_on_open()"
             ),
             name=ON_OPEN_SCRIPT,
             scriptType=1,

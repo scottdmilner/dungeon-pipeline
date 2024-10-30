@@ -23,20 +23,54 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+class OpenFileDialog(FilteredListDialog):
+    _version_cb: QtWidgets.QCheckBox | None
+
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None,
+        items: list[str],
+        entity_type: type[SGEntity],
+        versioning: bool,
+    ) -> None:
+        super().__init__(
+            parent,
+            items,
+            f"Open {entity_type.__name__} File",
+            f"Select the {entity_type.__name__} file that you'd like to open.",
+            accept_button_name="Open",
+        )
+
+        if versioning:
+            self._version_cb = QtWidgets.QCheckBox("Open older version")
+            self._layout.insertWidget(1, self._version_cb)
+        else:
+            self._version_cb = None
+
+    @property
+    def open_old_file(self) -> bool:
+        if self._version_cb:
+            return self._version_cb.isChecked()
+        return False
+
+
 class FileManager(metaclass=ABCMeta):
     _conn: DBInterface
     _entity_type: type[SGEntity]
     _main_window: QtWidgets.QWidget | None
+    _versioning: bool
 
     def __init__(
         self,
         conn: DBInterface,
         entity_type: type[SGEntity],
         main_window: QtWidgets.QWidget | None,
+        versioning: bool = False,
     ) -> None:
         self._conn = conn
         self._entity_type = entity_type
         self._main_window = main_window
+        self._versioning = versioning
 
     @staticmethod
     @abstractmethod
@@ -45,7 +79,7 @@ class FileManager(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def _generate_filename(entity: SGEntity) -> str:
+    def _generate_filename_ext(entity: SGEntity) -> tuple[str, str]:
         pass
 
     @staticmethod
@@ -89,12 +123,11 @@ class FileManager(metaclass=ABCMeta):
         entity_names = self._conn.get_entity_code_list(
             self._entity_type, sorted=True, child_mode=DBInterface.ChildQueryMode.ROOTS
         )
-        open_file_dialog = FilteredListDialog(
+        open_file_dialog = OpenFileDialog(
             self._main_window,
             entity_names,
-            f"Open {self._entity_type.__name__} File",
-            f"Select the {self._entity_type.__name__} file that you'd like to open.",
-            accept_button_name="Open",
+            self._entity_type,
+            versioning=self._versioning,
         )
 
         if not open_file_dialog.exec_():
@@ -123,7 +156,34 @@ class FileManager(metaclass=ABCMeta):
         if not self._prompt_create_if_not_exist(entity_path):
             return
 
-        file_path = entity_path / self._generate_filename(entity)
+        filename, ext = self._generate_filename_ext(entity)
+        file_path = entity_path / f"{filename}.{ext}"
+
+        if self._versioning:
+            files = [file_path] + sorted(entity_path.glob(f"{filename}.*.{ext}"))
+
+            # prompt the user for which version to open
+            if open_file_dialog.open_old_file:
+                version_file_dialog = FilteredListDialog(
+                    self._main_window,
+                    [file.name for file in files],
+                    "Choose a version",
+                    "Select the version filename to open",
+                    accept_button_name="Select",
+                )
+                if not version_file_dialog.exec_():
+                    log.debug("error initializing version dialog")
+                    return
+
+                version = version_file_dialog.get_selected_item()
+                if not version:
+                    return
+                file_path = entity_path / version
+
+            # otherwise get the alphabetically last file
+            else:
+                file_path = files.pop()
+
         if file_path.is_file():
             self._open_file(file_path)
         else:

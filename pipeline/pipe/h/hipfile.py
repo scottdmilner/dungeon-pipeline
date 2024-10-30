@@ -48,9 +48,9 @@ class HAssetFileManager(HFileManager):
         super().__init__(Asset)
 
     @staticmethod
-    def _generate_filename(entity) -> str:
+    def _generate_filename_ext(entity) -> tuple[str, str]:
         asset = cast(Asset, entity)
-        return asset.name + ".hipnc"
+        return asset.name, "hipnc"
 
     def _setup_file(self, path: Path, entity: SGEntity) -> None:
         super(HAssetFileManager, HAssetFileManager)._setup_file(self, path, entity)
@@ -64,9 +64,9 @@ class HEnvFileManager(HFileManager):
         super().__init__(Environment)
 
     @staticmethod
-    def _generate_filename(entity) -> str:
+    def _generate_filename_ext(entity) -> tuple[str, str]:
         env = cast(Environment, entity)
-        return env.name + ".hipnc"
+        return env.name, "hipnc"
 
     def _setup_file(self, path: Path, entity: SGEntity) -> None:
         super(HEnvFileManager, HEnvFileManager)._setup_file(self, path, entity)
