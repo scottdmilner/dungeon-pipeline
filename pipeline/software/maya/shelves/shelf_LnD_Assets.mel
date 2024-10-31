@@ -66,7 +66,7 @@ global proc shelf_LnD_Assets () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.asset import AssetPublisher; AssetPublisher().publish();" 
+        -command "from pipe.m.publish import AssetPublisher; AssetPublisher().publish();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -100,7 +100,7 @@ global proc shelf_LnD_Assets () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.anim import RiggedExporter; RiggedExporter(char='rayden').publish();" 
+        -command "from pipe.m.publish import RiggedExporter; RiggedExporter(char='rayden').publish();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -134,7 +134,7 @@ global proc shelf_LnD_Assets () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.anim import RiggedExporter; RiggedExporter(char='robin').publish();" 
+        -command "from pipe.m.publish import RiggedExporter; RiggedExporter(char='robin').publish();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

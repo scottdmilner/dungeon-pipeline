@@ -13,10 +13,11 @@ if TYPE_CHECKING:
 import maya.cmds as mc
 
 from pipe.glui.dialogs import FilteredListDialog
-from pipe.m.publish import Publisher
-from pipe.m.usdchaser import ExportChaser, ChaserMode
 from pipe.struct.db import SGEntity, Shot
 from shared.util import get_production_path
+
+from .publisher import Publisher
+from .usdchaser import ExportChaser, ChaserMode
 
 
 log = logging.getLogger(__name__)

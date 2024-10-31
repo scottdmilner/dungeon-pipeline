@@ -13,7 +13,6 @@ from Qt.QtGui import QTextCursor
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
-from pipe.m.publish import Publisher
 from pipe.glui.dialogs import (
     FilteredListDialog,
     MessageDialog,
@@ -22,6 +21,8 @@ from pipe.glui.dialogs import (
 from pipe.struct.db import Asset, SGEntity
 from shared.util import get_production_path
 from env import PIPEBOT_SECRET, PIPEBOT_URL
+
+from .publisher import Publisher
 
 try:
     from modelChecker.modelChecker_UI import UI as MCUI

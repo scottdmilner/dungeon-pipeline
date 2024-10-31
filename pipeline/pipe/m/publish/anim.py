@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 import maya.cmds as mc
 
-from pipe.m.publish import Publisher
-from pipe.m.usdchaser import ChaserMode, ExportChaser
+from .publisher import Publisher
+from .usdchaser import ChaserMode, ExportChaser
 
 log = logging.getLogger(__name__)
 
