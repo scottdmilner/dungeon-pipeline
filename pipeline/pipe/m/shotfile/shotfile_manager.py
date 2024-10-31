@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import mayaUsd  # type: ignore[import-not-found]
 import maya.api.OpenMaya as om
@@ -12,7 +10,6 @@ from timeline_marker.ui import TimelineMarker  # type: ignore[import-not-found]
 from typing import cast
 
 from pipe.db import DB
-from pipe.glui.dialogs import MessageDialogCustomButtons
 from pipe.m.local import get_main_qt_window
 from pipe.struct.db import SGEntity, Shot
 from pipe.util import FileManager, log_errors
@@ -20,50 +17,9 @@ from shared.util import get_production_path
 
 from env_sg import DB_Config
 
+from .timeline import shot_timeline_generator
+
 log = logging.getLogger(__name__)
-
-
-def timeline_generator(
-    pre_roll: list[tuple[str, tuple[int, int, int], int]],
-    roll: list[tuple[str, tuple[int, int, int], int]],
-    /,
-    start_frame: int = 1001,
-) -> tuple[list[int], list[tuple[int, int, int]], list[str]]:
-    colors = []
-    comments = []
-    pre_duration = 0
-    post_duration = 0
-
-    for comment, color, duration in pre_roll:
-        comments += [comment] * duration
-        colors += [color] * duration
-        pre_duration += duration
-    for comment, color, duration in roll:
-        comments += [comment] * duration
-        colors += [color] * duration
-        post_duration += duration
-
-    frames = list(range(start_frame - pre_duration, start_frame + post_duration))
-    return frames, colors, comments
-
-
-def shot_timeline_generator(
-    shot_duration: int,
-) -> tuple[list[int], list[tuple[int, int, int]], list[str]]:
-    return timeline_generator(
-        [
-            ("Rest Pose @Origin", (70, 0, 0), 15),
-            ("Rest Pose -> Windup", (150, 0, 0), 15),
-            ("Hold Windup", (255, 0, 0), 10),
-            ("Windup", (128, 128, 0), 15),
-            ("Head", (128, 255, 128), 5),
-        ],
-        [
-            ("Animate!", (0, 255, 0), shot_duration),
-            ("Tail", (100, 160, 255), 5),
-        ],
-        start_frame=1001,
-    )
 
 
 class MShotFileManager(FileManager):
@@ -275,76 +231,3 @@ class MShotFileManager(FileManager):
         # Save shot code to file
         mc.fileInfo("code", self.shot.code)
         mc.file(save=True, force=True)
-
-
-class MAnimShotFileManager(MShotFileManager):
-    @classmethod
-    def run_on_open(cls):
-        super().run_on_open()
-
-        # Duplicate the USD camera into a temp Maya camera
-        CAM_NAME = "shotCam"
-        try:
-            mc.mayaUsdDiscardEdits(CAM_NAME)
-        finally:
-            camera_prim = next(
-                prim
-                for prim in cls.get_stage().Traverse(Usd.PrimIsDefined)
-                if prim.IsA(UsdGeom.Camera) and prim.GetName() == CAM_NAME
-            )
-            mc.mayaUsdEditAsMaya(
-                cls.get_stage_shape() + "," + str(camera_prim.GetPrimPath())
-            )
-            camera_shape = mc.listRelatives(CAM_NAME, fullPath=True, shapes=True)[0]
-            mc.lookThru(CAM_NAME)
-            mc.camera(camera_shape, edit=True, lockTransform=True)
-
-    @staticmethod
-    def _get_subpath() -> str:
-        return "anim"
-
-    def _setup_scene(self) -> None:
-        self._import_camera()
-        self._import_env()
-
-        # Import Rigs
-        for asset_stub in self.shot.assets:
-            asset = self._conn.get_asset_by_stub(asset_stub)
-            if not asset.path:
-                continue
-            rig_path = "/".join(("production", asset.path, "rig", "rig.mb"))
-            if (get_production_path() / ".." / rig_path).exists():
-                mc.file(rig_path, reference=True, namespace=asset.name)
-            else:
-                print(f'Unable to find rig for asset "{asset.disp_name}"')
-
-    def _setup_file(self, path: Path, entity) -> None:
-        mc.file(newFile=True, force=True)
-        super()._setup_file(path, entity)
-
-
-class MRLOShotFileManager(MShotFileManager):
-    @staticmethod
-    def _check_unsaved_changes() -> bool:
-        return True
-
-    @staticmethod
-    def _get_subpath() -> str:
-        return "rlo"
-
-    def _setup_scene(self) -> None:
-        self._import_env()
-
-    def _setup_file(self, path: Path, entity: SGEntity) -> None:
-        if not path.exists():
-            prompt_create = MessageDialogCustomButtons(
-                self._main_window,
-                f"The RLO file for shot {entity.code} does not exist. Continue "
-                "to save a copy of the current file as the RLO file?",
-                has_cancel_button=True,
-                ok_name="Continue",
-                cancel_name="Cancel",
-            )
-            if not bool(prompt_create.exec_()):
-                return
-        super()._setup_file(path, entity)
