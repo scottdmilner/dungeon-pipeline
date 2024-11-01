@@ -15,8 +15,122 @@ from pipe.util import log_errors
 
 
 class ChaserMode(IntEnum):
-    RIG = 1
+    ANIM = 1
     CAM = 2
+    CHAR = 3
+
+
+def scale_down_geo(stage: Usd.Stage, scale_factor: float = 0.01) -> None:
+    """Recurse through the stage and scale down all Mesh and BasisCurves prims by
+    `scale_factor`"""
+
+    root_prim = stage.GetPseudoRoot()
+
+    for prim in (it := iter(Usd.PrimRange(root_prim))):
+        if not (prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.BasisCurves)):  # type: ignore[call-overload]
+            continue
+        # don't recurse deeper than this
+        it.PruneChildren()
+
+        for attr_token in (UsdGeom.Tokens.points, UsdGeom.Tokens.extent):
+            attr = prim.GetAttribute(attr_token)
+            if not attr.IsValid():
+                continue
+
+            frames: Iterable[Usd.TimeCode] = (
+                (Usd.TimeCode(f) for f in attr.GetTimeSamples())
+                if attr.GetNumTimeSamples()
+                else (Usd.TimeCode.Default(),)
+            )
+
+            for frame in frames:
+                data = np.array(attr.Get(frame))
+                data *= scale_factor
+                attr.Set(Vt.Vec3fArray.FromNumpy(data), frame)  # type: ignore[arg-type]
+
+        for attr_name in ("xformOp:translate", "xformOp:translate:pivot"):
+            attr = prim.GetAttribute(attr_name)
+            if not attr.IsValid():
+                continue
+            data = attr.Get()
+            data *= scale_factor
+            attr.Set(data)
+
+    UsdGeom.SetStageMetersPerUnit(
+        stage, UsdGeom.GetStageMetersPerUnit(stage) / scale_factor
+    )
+
+
+def update_material_bindings(stage: Usd.Stage) -> None:
+    """Update material bindings to what Houdini will expect"""
+
+    bindings = UsdShade.MaterialBindingAPI(stage.GetPrimAtPath(Sdf.Path("/ROOT/MODEL")))
+    for rel in bindings.GetCollectionBindingRels():
+        t1, t2 = rel.GetTargets()
+        # strip the namespace because the USD exporter strips the geo namespace but not the material namespace
+        new_name = t2.name.split("_", 1)[1]
+        # Change the material binding to match how it will look in Houdini
+        rel.SetTargets(
+            (
+                t1,
+                Sdf.Path(
+                    str(t2.GetParentPath()).replace("/ROOT", "/ROOT/MODEL")
+                    + "/MAT_"
+                    + new_name
+                ),
+            )
+        )
+
+
+def find_and_move_prim(
+    stage: Usd.Stage, prim_to_find: str, new_prim_parent: Sdf.Path
+) -> None:
+    """Searches for the prim with name `prim_to_find` and moves it underneath
+    `new_prim_parent`. *Assumes only 1 prim with the given name*"""
+
+    with Sdf.ChangeBlock():
+        layer = stage.GetEditTarget().GetLayer()
+
+        # TODO: will work in Usd v24
+        # editor = Usd.NamespaceEditor(self._stage)
+        # editor.MovePrimAtPath(Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"))
+        # editor.ApplyEdits()
+
+        prim_search: list[Sdf.Path] = []
+
+        def traverse_kernel(path: Sdf.Path | str):
+            if isinstance(path, str):
+                path = Sdf.Path(path)
+            if path.IsPrimPath():
+                if path.name == prim_to_find:
+                    prim_search.append(path)
+
+        layer.Traverse(Sdf.Path("/"), traverse_kernel)
+
+        try:
+            prim_to_move = prim_search.pop()
+        except IndexError:
+            raise RuntimeError(f"Could not find {prim_to_find} in export!")
+
+        old_prim_parent = prim_to_move.GetParentPath()
+        if old_prim_parent != new_prim_parent:
+            prim_spec = Sdf.CreatePrimInLayer(layer, new_prim_parent)
+            prim_spec.SetInfo(prim_spec.SpecifierKey, Sdf.SpecifierDef)
+
+            edit = Sdf.BatchNamespaceEdit()
+            edit.Add(Sdf.NamespaceEdit.Reparent(prim_to_move, new_prim_parent, -1))
+            edit.Add(Sdf.NamespaceEdit.Remove(old_prim_parent))
+
+            if not layer.Apply(edit):
+                raise Exception("Failed to apply layer edit!")
+
+
+def separate_by_namespace(stage: Usd.Stage) -> None:
+    pass
+
+
+def split_preroll(stage: Usd.Stage) -> None:
+    pass
 
 
 @attrs.define
@@ -39,116 +153,24 @@ class ExportChaser(mayaUsdLib.ExportChaser):
         self.job_args = factoryContext.GetJobArgs()
         self._chaser_args = ChaserArgs(**self.job_args.allChaserArgs[self.ID])
 
-    def scale_down_geo(self, scale_factor: float = 0.01) -> None:
-        root_prim = self._stage.GetPseudoRoot()
-
-        for prim in (it := iter(Usd.PrimRange(root_prim))):
-            if not (prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.BasisCurves)):  # type: ignore[call-overload]
-                continue
-            # don't recurse deeper than this
-            it.PruneChildren()
-
-            for attr_token in (UsdGeom.Tokens.points, UsdGeom.Tokens.extent):
-                attr = prim.GetAttribute(attr_token)
-                if not attr.IsValid():
-                    continue
-
-                frames: Iterable[Usd.TimeCode] = (
-                    (Usd.TimeCode(f) for f in attr.GetTimeSamples())
-                    if attr.GetNumTimeSamples()
-                    else (Usd.TimeCode.Default(),)
-                )
-
-                for frame in frames:
-                    data = np.array(attr.Get(frame))
-                    data *= scale_factor
-                    attr.Set(Vt.Vec3fArray.FromNumpy(data), frame)  # type: ignore[arg-type]
-
-            for attr_name in ("xformOp:translate", "xformOp:translate:pivot"):
-                attr = prim.GetAttribute(attr_name)
-                if not attr.IsValid():
-                    continue
-                data = attr.Get()
-                data *= scale_factor
-                attr.Set(data)
-
-        UsdGeom.SetStageMetersPerUnit(self._stage, 1.0)
-
-    def update_material_bindings(self) -> None:
-        """Update material bindings to what Houdini will expect"""
-
-        bindings = UsdShade.MaterialBindingAPI(
-            self._stage.GetPrimAtPath(Sdf.Path("/ROOT/MODEL"))
-        )
-        for rel in bindings.GetCollectionBindingRels():
-            t1, t2 = rel.GetTargets()
-            # strip the namespace because the USD exporter strips the geo namespace but not the material namespace
-            new_name = t2.name.split("_", 1)[1]
-            # Change the material binding to match how it will look in Houdini
-            rel.SetTargets(
-                (
-                    t1,
-                    Sdf.Path(
-                        str(t2.GetParentPath()).replace("/ROOT", "/ROOT/MODEL")
-                        + "/MAT_"
-                        + new_name
-                    ),
-                )
-            )
-
     @log_errors
     def PostExport(self) -> bool:
-        if self._chaser_args.mode == ChaserMode.RIG:
-            self.scale_down_geo()
-            self.update_material_bindings()
+        if self._chaser_args.mode == ChaserMode.ANIM:
+            scale_down_geo(self._stage)
+            separate_by_namespace(self._stage)
+            split_preroll(self._stage)
+
+        elif self._chaser_args.mode == ChaserMode.CHAR:
+            scale_down_geo(self._stage)
+            update_material_bindings(self._stage)
+
         elif self._chaser_args.mode == ChaserMode.CAM:
-            # TODO: will work in Usd v24
-            # editor = Usd.NamespaceEditor(self._stage)
-            # editor.MovePrimAtPath(Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"))
-            # editor.ApplyEdits()
+            # We don't scale down the camera here because we need to import it
+            # back into Maya. Instead we'll scale it down when we import it into
+            # Solaris.
 
             new_shotCam_path = Sdf.Path("/LnD_shotCam")
-            with Sdf.ChangeBlock():
-                layer = self._stage.GetEditTarget().GetLayer()
-
-                world_ctrl_find: list[Sdf.Path] = []
-                cam_rig_root_find: list[Sdf.Path] = []
-
-                def traverse_kernel(path: Sdf.Path | str):
-                    if isinstance(path, str):
-                        path = Sdf.Path(path)
-                    if path.IsPrimPath():
-                        if path.name == "world_CTRL":
-                            world_ctrl_find.append(path)
-                        elif path.name == "LnD_shotCam":
-                            cam_rig_root_find.append(path)
-
-                layer.Traverse(Sdf.Path("/"), traverse_kernel)
-
-                try:
-                    world_ctrl_path = world_ctrl_find.pop()
-                except IndexError:
-                    raise RuntimeError("Could not find world_CTRL in export!")
-                try:
-                    cam_rig_root = cam_rig_root_find.pop()
-                except IndexError:
-                    raise RuntimeError("Could not find camera rig root in export!")
-
-                if cam_rig_root != new_shotCam_path:
-                    prim_spec = Sdf.CreatePrimInLayer(layer, new_shotCam_path)
-                    prim_spec.SetInfo(prim_spec.SpecifierKey, Sdf.SpecifierDef)
-
-                    edit = Sdf.BatchNamespaceEdit()
-                    edit.Add(
-                        Sdf.NamespaceEdit.Reparent(
-                            world_ctrl_path, new_shotCam_path, -1
-                        )
-                    )
-                    edit.Add(Sdf.NamespaceEdit.Remove(cam_rig_root))
-
-                    if not layer.Apply(edit):
-                        raise Exception("Failed to apply layer edit!")
-
+            find_and_move_prim(self._stage, "world_CTRL", new_shotCam_path)
             self._stage.SetDefaultPrim(self._stage.GetPrimAtPath(new_shotCam_path))
         else:
             raise ValueError(

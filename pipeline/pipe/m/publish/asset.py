@@ -33,7 +33,7 @@ except TypeError:
 log = logging.getLogger(__name__)
 
 
-class _PublishAssetDialog(FilteredListDialog):
+class PublishAssetDialog(FilteredListDialog):
     _substance_only: QCheckBox
 
     def __init__(self, parent: QWidget | None, items: Sequence[str]) -> None:
@@ -59,7 +59,7 @@ class AssetPublisher(Publisher):
     _override: bool
 
     def __init__(self) -> None:
-        super().__init__(_PublishAssetDialog)
+        super().__init__(PublishAssetDialog)
 
     def _prepublish(self) -> bool:
         checker = ModelChecker.get()
@@ -92,9 +92,19 @@ class AssetPublisher(Publisher):
         return self._conn.get_asset_by_name(name)
 
     def _get_save_path(self) -> Path | None:
-        dialog = cast(_PublishAssetDialog, self._dialog)
+        dialog = cast(PublishAssetDialog, self._dialog)
         asset = cast(Asset, self._entity)
-        assert asset.path is not None
+        try:
+            assert asset.path is not None
+        except AssertionError:
+            error = MessageDialog(
+                self._window,
+                "Error: No path for this Asset set in ShotGrid. Nothing exported",
+                "Error",
+            )
+            error.exec_()
+            return None
+
         return (
             get_production_path()
             / asset.path

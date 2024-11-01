@@ -32,14 +32,19 @@ class Publisher:
     _dialog_T: type[FilteredListDialog]
     _entity: SGEntity
     _publish_path: Path
+    _selected_item: str
     _system: str
+    _use_sg_entity: bool
     _window: QWidget | None
 
-    def __init__(self, dialog: type[FilteredListDialog] | None = None) -> None:
+    def __init__(
+        self, dialog: type[FilteredListDialog] | None = None, use_sg_entity: bool = True
+    ) -> None:
         self._conn = DB.Get(DB_Config)
         self._window = pipe.m.local.get_main_qt_window()
         self._system = platform.system()
         self._dialog_T = dialog or FilteredListDialog
+        self._use_sg_entity = use_sg_entity
 
     @staticmethod
     def _assert_not_none(fun):
@@ -117,9 +122,9 @@ class Publisher:
             if not self._dialog.exec_():
                 return
 
-            disp_name = self._dialog.get_selected_item()
+            self._selected_item = self._dialog.get_selected_item()
 
-            if disp_name is None:
+            if self._selected_item is None:
                 error = MessageDialog(
                     self._window, "Error: Nothing selected. Nothing exported", "Error"
                 )
@@ -127,29 +132,24 @@ class Publisher:
                 return
 
             # get the corresponding SGEntity object
-            try:
-                self._entity = self._get_entity_from_name(disp_name)
-            except AssertionError:
-                error = MessageDialog(
-                    self._window,
-                    f"Error: The selected item did not correspond to a valid {self._entity.__class__.__name__} "
-                    "in ShotGrid. Please report this error. Nothing exported",
-                    "Error",
-                )
-                error.exec_()
-                return
-            log.debug(self._entity)
+            if self._use_sg_entity:
+                try:
+                    self._entity = self._get_entity_from_name(self._selected_item)
+                except AssertionError:
+                    error = MessageDialog(
+                        self._window,
+                        "Error: The selected item did not correspond to a valid "
+                        f"{self._entity.__class__.__name__} in ShotGrid. Please "
+                        "report this error. Nothing exported",
+                        "Error",
+                    )
+                    error.exec_()
+                    return
+                log.debug(self._entity)
 
-        try:
-            self._publish_path = self._get_save_path()
-        except AssertionError:
-            error = MessageDialog(
-                self._window,
-                f"Error: No path for this {self._entity.__class__.__name__} "
-                "set in ShotGrid. Nothing exported",
-                "Error",
-            )
-            error.exec_()
+        self._publish_path = self._get_save_path()
+        if not self._publish_path:
+            mc.error("No save path found!")
             return
 
         if not self._presave():
