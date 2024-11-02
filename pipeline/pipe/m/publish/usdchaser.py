@@ -5,6 +5,7 @@ import numpy as np
 import mayaUsd.lib as mayaUsdLib  # type: ignore[import-not-found]
 
 from enum import IntEnum
+from pathlib import Path
 from pxr import Sdf, Usd, UsdGeom, UsdShade, Vt
 from typing import TYPE_CHECKING
 
@@ -61,10 +62,12 @@ def scale_down_geo(stage: Usd.Stage, scale_factor: float = 0.01) -> None:
     )
 
 
-def update_material_bindings(stage: Usd.Stage) -> None:
+def update_material_bindings(
+    stage: Usd.Stage, old: str, new: str, name_prepend: str = ""
+) -> None:
     """Update material bindings to what Houdini will expect"""
 
-    bindings = UsdShade.MaterialBindingAPI(stage.GetPrimAtPath(Sdf.Path("/ROOT/MODEL")))
+    bindings = UsdShade.MaterialBindingAPI(stage.GetPrimAtPath(Sdf.Path(new)))
     for rel in bindings.GetCollectionBindingRels():
         t1, t2 = rel.GetTargets()
         # strip the namespace because the USD exporter strips the geo namespace but not the material namespace
@@ -74,44 +77,16 @@ def update_material_bindings(stage: Usd.Stage) -> None:
             (
                 t1,
                 Sdf.Path(
-                    str(t2.GetParentPath()).replace("/ROOT", "/ROOT/MODEL")
-                    + "/MAT_"
-                    + new_name
+                    str(t2.GetParentPath()).replace(old, new) + name_prepend + new_name
                 ),
             )
         )
 
 
-def find_and_move_prim(
-    stage: Usd.Stage, prim_to_find: str, new_prim_parent: Sdf.Path
+def move_prim(
+    layer: Sdf.Layer, prim_to_move: Sdf.Path, new_prim_parent: Sdf.Path
 ) -> None:
-    """Searches for the prim with name `prim_to_find` and moves it underneath
-    `new_prim_parent`. *Assumes only 1 prim with the given name*"""
-
     with Sdf.ChangeBlock():
-        layer = stage.GetEditTarget().GetLayer()
-
-        # TODO: will work in Usd v24
-        # editor = Usd.NamespaceEditor(self._stage)
-        # editor.MovePrimAtPath(Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"))
-        # editor.ApplyEdits()
-
-        prim_search: list[Sdf.Path] = []
-
-        def traverse_kernel(path: Sdf.Path | str):
-            if isinstance(path, str):
-                path = Sdf.Path(path)
-            if path.IsPrimPath():
-                if path.name == prim_to_find:
-                    prim_search.append(path)
-
-        layer.Traverse(Sdf.Path("/"), traverse_kernel)
-
-        try:
-            prim_to_move = prim_search.pop()
-        except IndexError:
-            raise RuntimeError(f"Could not find {prim_to_find} in export!")
-
         old_prim_parent = prim_to_move.GetParentPath()
         if old_prim_parent != new_prim_parent:
             prim_spec = Sdf.CreatePrimInLayer(layer, new_prim_parent)
@@ -119,14 +94,102 @@ def find_and_move_prim(
 
             edit = Sdf.BatchNamespaceEdit()
             edit.Add(Sdf.NamespaceEdit.Reparent(prim_to_move, new_prim_parent, -1))
-            edit.Add(Sdf.NamespaceEdit.Remove(old_prim_parent))
+            edit.Add(Sdf.NamespaceEdit.Remove(old_prim_parent.GetPrefixes()[0]))
 
             if not layer.Apply(edit):
                 raise Exception("Failed to apply layer edit!")
 
 
-def separate_by_namespace(stage: Usd.Stage) -> None:
-    pass
+def find_and_move_prim(
+    layer: Sdf.Layer, prim_to_find: str, new_prim_parent: Sdf.Path
+) -> None:
+    """Searches for the prim with name `prim_to_find` and moves it underneath
+    `new_prim_parent`. *Assumes only 1 prim with the given name*"""
+    # TODO: will work in Usd v24?
+    # editor = Usd.NamespaceEditor(self._stage)
+    # editor.MovePrimAtPath(Sdf.Path("/WORLD/CAM/LnD_shotCam"), Sdf.Path("/"))
+    # editor.ApplyEdits()
+
+    prim_search: list[Sdf.Path] = []
+
+    def traverse_kernel(path: Sdf.Path | str):
+        if isinstance(path, str):
+            path = Sdf.Path(path)
+        if path.IsPrimPath():
+            if path.name == prim_to_find:
+                prim_search.append(path)
+
+    layer.Traverse(Sdf.Path("/"), traverse_kernel)
+
+    try:
+        prim_to_move = prim_search.pop()
+    except IndexError:
+        raise RuntimeError(f"Could not find {prim_to_find} in export!")
+
+    move_prim(layer, prim_to_move, new_prim_parent)
+
+
+def remove_namespace(layer: Sdf.Layer) -> None:
+    edit = Sdf.BatchNamespaceEdit()
+
+    def traverse_kernel(path: Sdf.Path | str):
+        if isinstance(path, str):
+            path = Sdf.Path(path)
+        if path.IsPrimPath():
+            edit.Add(Sdf.NamespaceEdit.Rename(path, path.name.split("_", 1)[1]))
+
+    layer.Traverse(Sdf.Path("/"), traverse_kernel)
+    layer.Apply(edit)
+
+
+def split_by_namespace(stage: Usd.Stage) -> None:
+    main_layer = stage.GetRootLayer()
+    main_path = Path(main_layer.realPath)
+    stage.SetEditTarget(main_layer)
+
+    child_names = [c.name for c in list(main_layer.pseudoRoot.nameChildren)]
+    namespaces = set((n.split("_", 1)[0] for n in child_names))
+
+    for namespace in namespaces:
+        layer_name = namespace.lower()
+        layer_path = str(main_path.parent / f"{layer_name}.usd")
+
+        layer = Sdf.Layer.FindOrOpen(layer_path)
+        if layer:
+            layer.Clear()
+        else:
+            layer = Sdf.Layer.CreateNew(layer_path)
+        layer.TransferContent(main_layer)
+
+        children_to_keep = [c for c in child_names if c.startswith(namespace)]
+        edit = Sdf.BatchNamespaceEdit()
+        for child in child_names:
+            if child not in children_to_keep:
+                edit.Add(Sdf.NamespaceEdit.Remove("/" + child))
+
+        layer.Apply(edit)
+        remove_namespace(layer)
+
+        move_prim(layer, Sdf.Path("/ROOT/MODEL"), Sdf.Path("/character"))
+        edit = Sdf.BatchNamespaceEdit()
+        edit.Add(Sdf.NamespaceEdit.Rename(Sdf.Path("/character/MODEL"), layer_name))
+        layer.Apply(edit)
+
+        layer.Save()
+
+        main_layer.subLayerPaths.append(layer.identifier)
+
+    edit = Sdf.BatchNamespaceEdit()
+    for child in child_names:
+        edit.Add(Sdf.NamespaceEdit.Remove("/" + child))
+    main_layer.Apply(edit)
+
+    p: str
+    for idx, p in enumerate(main_layer.subLayerPaths):  # type: ignore[arg-type]
+        path = Path(p)
+        main_layer.subLayerPaths[idx] = "./" + str(path.relative_to(main_path.parent))
+
+    main_layer.Save()
 
 
 def split_preroll(stage: Usd.Stage) -> None:
@@ -157,12 +220,12 @@ class ExportChaser(mayaUsdLib.ExportChaser):
     def PostExport(self) -> bool:
         if self._chaser_args.mode == ChaserMode.ANIM:
             scale_down_geo(self._stage)
-            separate_by_namespace(self._stage)
+            split_by_namespace(self._stage)
             split_preroll(self._stage)
 
         elif self._chaser_args.mode == ChaserMode.CHAR:
             scale_down_geo(self._stage)
-            update_material_bindings(self._stage)
+            update_material_bindings(self._stage, "/ROOT", "/ROOT/MODEL", "MAT_")
 
         elif self._chaser_args.mode == ChaserMode.CAM:
             # We don't scale down the camera here because we need to import it
@@ -170,7 +233,9 @@ class ExportChaser(mayaUsdLib.ExportChaser):
             # Solaris.
 
             new_shotCam_path = Sdf.Path("/LnD_shotCam")
-            find_and_move_prim(self._stage, "world_CTRL", new_shotCam_path)
+            find_and_move_prim(
+                self._stage.GetEditTarget().GetLayer(), "world_CTRL", new_shotCam_path
+            )
             self._stage.SetDefaultPrim(self._stage.GetPrimAtPath(new_shotCam_path))
         else:
             raise ValueError(

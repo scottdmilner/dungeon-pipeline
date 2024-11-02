@@ -27,6 +27,9 @@ class AnimPublisher(Publisher):
     _shot: Shot
     _init_success: bool
 
+    # TODO: fix
+    tails = (100, 5)
+
     def __init__(self):
         super().__init__(use_sg_entity=False)
         try:
@@ -57,7 +60,7 @@ class AnimPublisher(Publisher):
     def _get_save_path(self) -> Path | None:
         if not self._shot.path:
             return None
-        return get_production_path() / self._shot.path / "anim/usd"
+        return get_production_path() / self._shot.path / "anim/usd/main.usd"
 
     def _presave(self) -> bool:
         return True
@@ -69,36 +72,14 @@ class AnimPublisher(Publisher):
             "exportColorSets": False,
             "exportComponentTags": False,
             "exportUVs": False,
-            "frameRange": (self._shot.cut_in, self._shot.cut_out),
+            "frameRange": (
+                self._shot.cut_in - self.tails[0],
+                self._shot.cut_out + self.tails[1],
+            ),
             "frameStride": 1.0,
             "shadingMode": "none",
-            "stripNamespaces": True,
+            "stripNamespaces": False,
         }
 
     def _get_confirm_message(self):
         return f"Animation has been exported to {self._publish_path}"
-
-
-class RiggedExporter(Publisher):
-    def __init__(self) -> None:
-        super().__init__(use_sg_entity=False)
-
-    def _get_entity_list(self) -> list[str]:
-        cache_sets = mc.ls("::" + CACHE_SET, sets=True)
-        return [s.split(":")[0] for s in cache_sets]
-
-    def _get_mayausd_kwargs(self) -> dict[str, Any]:
-        kwargs = {
-            "chaser": [ExportChaser.ID],
-            "chaserArgs": [(ExportChaser.ID, "mode", ChaserMode.CHAR)],
-            "exportCollectionBasedBindings": True,
-            "exportMaterialCollections": True,
-            "materialCollectionsPath": "/ROOT/MODEL",
-            "shadingMode": "useRegistry",
-        }
-
-        return kwargs
-
-    def _presave(self) -> bool:
-        mc.select(self._selected_item + ":" + CACHE_SET)
-        return True
