@@ -77,7 +77,7 @@ def update_material_bindings(
             (
                 t1,
                 Sdf.Path(
-                    str(t2.GetParentPath()).replace(old, new) + name_prepend + new_name
+                    f"{str(t2.GetParentPath()).replace(old, new)}/{name_prepend}{new_name}"
                 ),
             )
         )
@@ -142,24 +142,25 @@ def remove_namespace(layer: Sdf.Layer) -> None:
     layer.Apply(edit)
 
 
-def split_by_namespace(stage: Usd.Stage) -> None:
-    main_layer = stage.GetRootLayer()
-    main_path = Path(main_layer.realPath)
-    stage.SetEditTarget(main_layer)
+def split_by_namespace(stage: Usd.Stage) -> dict[str, Sdf.Layer]:
+    root_layer = stage.GetRootLayer()
+    root_layer_path = Path(root_layer.realPath)
+    stage.SetEditTarget(root_layer)
 
-    child_names = [c.name for c in list(main_layer.pseudoRoot.nameChildren)]
+    child_names = stage.GetPseudoRoot().GetChildrenNames()
     namespaces = set((n.split("_", 1)[0] for n in child_names))
 
+    layers: dict[str, Sdf.Layer] = dict()
     for namespace in namespaces:
         layer_name = namespace.lower()
-        layer_path = str(main_path.parent / f"{layer_name}.usd")
+        layer_path = str(root_layer_path.parent / f"{layer_name}.usd")
 
         layer = Sdf.Layer.FindOrOpen(layer_path)
         if layer:
             layer.Clear()
         else:
             layer = Sdf.Layer.CreateNew(layer_path)
-        layer.TransferContent(main_layer)
+        layer.TransferContent(root_layer)
 
         children_to_keep = [c for c in child_names if c.startswith(namespace)]
         edit = Sdf.BatchNamespaceEdit()
@@ -169,27 +170,18 @@ def split_by_namespace(stage: Usd.Stage) -> None:
 
         layer.Apply(edit)
         remove_namespace(layer)
-
-        move_prim(layer, Sdf.Path("/ROOT/MODEL"), Sdf.Path("/character"))
-        edit = Sdf.BatchNamespaceEdit()
-        edit.Add(Sdf.NamespaceEdit.Rename(Sdf.Path("/character/MODEL"), layer_name))
-        layer.Apply(edit)
-
         layer.Save()
 
-        main_layer.subLayerPaths.append(layer.identifier)
+        layers.update({layer_name: layer})
 
+    # clear out root layer
     edit = Sdf.BatchNamespaceEdit()
     for child in child_names:
         edit.Add(Sdf.NamespaceEdit.Remove("/" + child))
-    main_layer.Apply(edit)
+    root_layer.Apply(edit)
+    root_layer.Save()
 
-    p: str
-    for idx, p in enumerate(main_layer.subLayerPaths):  # type: ignore[arg-type]
-        path = Path(p)
-        main_layer.subLayerPaths[idx] = "./" + str(path.relative_to(main_path.parent))
-
-    main_layer.Save()
+    return layers
 
 
 def split_preroll(stage: Usd.Stage) -> None:
@@ -220,7 +212,20 @@ class ExportChaser(mayaUsdLib.ExportChaser):
     def PostExport(self) -> bool:
         if self._chaser_args.mode == ChaserMode.ANIM:
             scale_down_geo(self._stage)
-            split_by_namespace(self._stage)
+            layers = split_by_namespace(self._stage)
+
+            root_layer = self._stage.GetRootLayer()
+            root_layer_path = Path(root_layer.realPath)
+
+            for name, layer in layers.items():
+                char_prim_path = Sdf.Path(f"/__class__/character/{name}")
+                char_prim_spec = Sdf.CreatePrimInLayer(root_layer, char_prim_path)
+                char_prim_spec.specifier = Sdf.SpecifierOver
+                reference = Sdf.Reference(
+                    f"./{Path(layer.realPath).relative_to(root_layer_path.parent)}",
+                    Sdf.Path("/ROOT/MODEL"),
+                )
+                char_prim_spec.referenceList.appendedItems = [reference]
             split_preroll(self._stage)
 
         elif self._chaser_args.mode == ChaserMode.CHAR:
