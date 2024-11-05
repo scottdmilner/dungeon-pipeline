@@ -59,6 +59,7 @@ class FileManager(metaclass=ABCMeta):
     _entity_type: type[SGEntity]
     _main_window: QtWidgets.QWidget | None
     _versioning: bool
+    _version_glob: str
 
     def __init__(
         self,
@@ -66,24 +67,24 @@ class FileManager(metaclass=ABCMeta):
         entity_type: type[SGEntity],
         main_window: QtWidgets.QWidget | None,
         versioning: bool = False,
+        version_glob: str = "{}.*.{}",
     ) -> None:
         self._conn = conn
         self._entity_type = entity_type
         self._main_window = main_window
         self._versioning = versioning
+        self._version_glob = version_glob
 
     @staticmethod
     @abstractmethod
     def _check_unsaved_changes() -> bool:
         pass
 
-    @staticmethod
     @abstractmethod
-    def _generate_filename_ext(entity: SGEntity) -> tuple[str, str]:
+    def _generate_filename_ext(self, entity: SGEntity) -> tuple[str, str]:
         pass
 
-    @staticmethod
-    def _get_subpath() -> str:
+    def _get_subpath(self) -> str:
         return ""
 
     @staticmethod
@@ -160,7 +161,9 @@ class FileManager(metaclass=ABCMeta):
         file_path = entity_path / f"{filename}.{ext}"
 
         if self._versioning:
-            files = [file_path] + sorted(entity_path.glob(f"{filename}.*.{ext}"))
+            files = [file_path] + sorted(
+                entity_path.glob(self._version_glob.format(filename, ext))
+            )
 
             # prompt the user for which version to open
             if open_file_dialog.open_old_file:

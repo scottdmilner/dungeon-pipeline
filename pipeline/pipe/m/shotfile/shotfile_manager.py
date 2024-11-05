@@ -96,8 +96,7 @@ class MShotFileManager(FileManager):
                 return False
         return True
 
-    @staticmethod
-    def _generate_filename_ext(entity) -> tuple[str, str]:
+    def _generate_filename_ext(self, entity) -> tuple[str, str]:
         shot = cast(Shot, entity)
         return shot.code, "mb"
 

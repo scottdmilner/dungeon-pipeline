@@ -33,8 +33,7 @@ class MAnimShotFileManager(MShotFileManager):
             mc.lookThru(CAM_NAME)
             mc.camera(camera_shape, edit=True, lockTransform=True)
 
-    @staticmethod
-    def _get_subpath() -> str:
+    def _get_subpath(self) -> str:
         return "anim"
 
     def _setup_scene(self) -> None:

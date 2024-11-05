@@ -15,8 +15,7 @@ class MRLOShotFileManager(MShotFileManager):
     def _check_unsaved_changes() -> bool:
         return True
 
-    @staticmethod
-    def _get_subpath() -> str:
+    def _get_subpath(self) -> str:
         return "rlo"
 
     def _setup_scene(self) -> None:
