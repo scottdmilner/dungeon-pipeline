@@ -23,7 +23,9 @@ class HFileManager(FileManager):
     ) -> None:
         conn = DB.Get(DB_Config)
         window = pipe.h.local.get_main_qt_window()
-        super().__init__(conn, entity_type, window, versioning, version_glob)
+        super().__init__(
+            conn, entity_type, window, versioning=versioning, version_glob=version_glob
+        )
 
     @staticmethod
     def _check_unsaved_changes() -> bool:

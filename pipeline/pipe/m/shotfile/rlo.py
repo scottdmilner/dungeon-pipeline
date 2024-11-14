@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 class MRLOShotFileManager(MShotFileManager):
     def __init__(self):
-        super().__init__("{}*.{}")
+        super().__init__(version_glob="{}*.{}", version_msg="Open alt version")
 
     @staticmethod
     def _check_unsaved_changes() -> bool:

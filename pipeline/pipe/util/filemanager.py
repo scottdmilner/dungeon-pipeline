@@ -32,6 +32,7 @@ class OpenFileDialog(FilteredListDialog):
         items: list[str],
         entity_type: type[SGEntity],
         versioning: bool,
+        version_msg: str,
     ) -> None:
         super().__init__(
             parent,
@@ -42,7 +43,7 @@ class OpenFileDialog(FilteredListDialog):
         )
 
         if versioning:
-            self._version_cb = QtWidgets.QCheckBox("Open older version")
+            self._version_cb = QtWidgets.QCheckBox(version_msg)
             self._layout.insertWidget(1, self._version_cb)
         else:
             self._version_cb = None
@@ -60,20 +61,24 @@ class FileManager(metaclass=ABCMeta):
     _main_window: QtWidgets.QWidget | None
     _versioning: bool
     _version_glob: str
+    _version_msg: str
 
     def __init__(
         self,
         conn: DBInterface,
         entity_type: type[SGEntity],
         main_window: QtWidgets.QWidget | None,
+        *,
         versioning: bool = False,
         version_glob: str = "{}.*.{}",
+        version_msg: str = "Open older version",
     ) -> None:
         self._conn = conn
         self._entity_type = entity_type
         self._main_window = main_window
         self._versioning = versioning
         self._version_glob = version_glob
+        self._version_msg = version_msg
 
     @staticmethod
     @abstractmethod
@@ -129,6 +134,7 @@ class FileManager(metaclass=ABCMeta):
             entity_names,
             self._entity_type,
             versioning=self._versioning,
+            version_msg=self._version_msg,
         )
 
         if not open_file_dialog.exec_():

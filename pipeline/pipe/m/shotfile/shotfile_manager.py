@@ -26,10 +26,10 @@ class MShotFileManager(FileManager):
     MAYA_OVERRIDE = "maya_override.usd"
     shot: Shot
 
-    def __init__(self, version_glob: str = "{}.*.{}") -> None:
+    def __init__(self, **kwargs) -> None:
         conn = DB.Get(DB_Config)
         window = get_main_qt_window()
-        super().__init__(conn, Shot, window, versioning=True, version_glob=version_glob)
+        super().__init__(conn, Shot, window, versioning=True, **kwargs)
 
     @classmethod
     def get_stage_shape(cls) -> str:
