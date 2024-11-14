@@ -11,6 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class MRLOShotFileManager(MShotFileManager):
+    def __init__(self):
+        super().__init__("{}*.{}")
+
     @staticmethod
     def _check_unsaved_changes() -> bool:
         return True

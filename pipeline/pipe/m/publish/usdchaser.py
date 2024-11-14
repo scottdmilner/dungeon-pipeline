@@ -358,7 +358,7 @@ class ExportChaser(mayaUsdLib.ExportChaser):
     def PostExport(self) -> bool:
         if self._chaser_args.mode == ChaserMode.ANIM:
             assert self._chaser_args.timeline is not None
-            
+
             scale_down_geo(self._stage)
             make_topo_attrs_default(self._stage)
             layers = split_by_namespace(self._stage, "anim")
