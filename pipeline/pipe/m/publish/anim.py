@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 import maya.cmds as mc
 
 from pipe.glui.dialogs import MessageDialog
+from pipe.struct.timeline import Timeline
 from shared.util import get_production_path
 
 from .publisher import Publisher
@@ -26,9 +27,6 @@ PROP_SET = "prop_SET"
 class AnimPublisher(Publisher):
     _shot: Shot
     _init_success: bool
-
-    # TODO: fix
-    tails = (100, 5)
 
     def __init__(self):
         super().__init__(use_sg_entity=False)
@@ -66,15 +64,19 @@ class AnimPublisher(Publisher):
         return True
 
     def _get_mayausd_kwargs(self) -> dict[str, Any]:
+        timeline = Timeline.from_shot(self._shot, preroll_duration=55)
         return {
             "chaser": [ExportChaser.ID],
-            "chaserArgs": [(ExportChaser.ID, "mode", ChaserMode.ANIM)],
+            "chaserArgs": [
+                (ExportChaser.ID, "mode", ChaserMode.ANIM),
+                (ExportChaser.ID, "timeline", timeline.to_json()),
+            ],
             "exportColorSets": False,
             "exportComponentTags": False,
             "exportUVs": False,
             "frameRange": (
-                self._shot.cut_in - self.tails[0],
-                self._shot.cut_out + self.tails[1],
+                timeline.preroll,
+                timeline.end,
             ),
             "frameStride": 1.0,
             "shadingMode": "none",

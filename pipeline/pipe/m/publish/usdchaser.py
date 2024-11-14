@@ -5,13 +5,15 @@ import numpy as np
 import mayaUsd.lib as mayaUsdLib  # type: ignore[import-not-found]
 
 from enum import IntEnum
+from math import isclose
 from pathlib import Path
-from pxr import Sdf, Usd, UsdGeom, UsdShade, Vt
+from pxr import Sdf, Usd, UsdGeom, UsdShade, UsdUtils, Vt
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Iterable
+    from typing import Callable, Iterable
 
+from pipe.struct.timeline import Timeline
 from pipe.util import log_errors
 
 
@@ -27,6 +29,15 @@ def get_frames_from_attr(attr: Usd.Attribute) -> Iterable[Usd.TimeCode]:
         if attr.GetNumTimeSamples()
         else (Usd.TimeCode.Default(),)
     )
+
+
+def create_or_clear_layer(path: str) -> Sdf.Layer:
+    layer = Sdf.Layer.FindOrOpen(path)
+    if layer:
+        layer.Clear()
+    else:
+        layer = Sdf.Layer.CreateNew(path)
+    return layer
 
 
 def scale_down_geo(stage: Usd.Stage, scale_factor: float = 0.01) -> None:
@@ -70,6 +81,40 @@ def scale_down_geo(stage: Usd.Stage, scale_factor: float = 0.01) -> None:
     UsdGeom.SetStageMetersPerUnit(
         stage, UsdGeom.GetStageMetersPerUnit(stage) / scale_factor
     )
+
+
+TOPOLOGY_ATTRIBS = (
+    UsdGeom.Tokens.cornerIndices,
+    UsdGeom.Tokens.cornerSharpnesses,
+    UsdGeom.Tokens.creaseIndices,
+    UsdGeom.Tokens.creaseLengths,
+    UsdGeom.Tokens.creaseSharpnesses,
+    UsdGeom.Tokens.faceVaryingLinearInterpolation,
+    UsdGeom.Tokens.faceVertexCounts,
+    UsdGeom.Tokens.faceVertexIndices,
+    UsdGeom.Tokens.holeIndices,
+    UsdGeom.Tokens.interpolateBoundary,
+    UsdGeom.Tokens.triangleSubdivisionRule,
+)
+
+
+def make_topo_attrs_default(stage: Usd.Stage) -> None:
+    root_prim = stage.GetPseudoRoot()
+    for prim in (it := iter(Usd.PrimRange(root_prim))):
+        if not (prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.BasisCurves)):  # type: ignore[call-overload]
+            continue
+
+        # don't recurse deeper than this
+        it.PruneChildren()
+
+        for attr_token in TOPOLOGY_ATTRIBS:
+            attr = prim.GetAttribute(attr_token)
+            if not attr.IsValid():
+                continue
+            data = attr.Get(1)
+            if data:
+                attr.Clear()
+                attr.Set(data, Usd.TimeCode.Default())
 
 
 def update_material_bindings(
@@ -152,7 +197,7 @@ def remove_namespace(layer: Sdf.Layer) -> None:
     layer.Apply(edit)
 
 
-def split_by_namespace(stage: Usd.Stage) -> dict[str, Sdf.Layer]:
+def split_by_namespace(stage: Usd.Stage, suffix: str) -> dict[str, Sdf.Layer]:
     root_layer = stage.GetRootLayer()
     root_layer_path = Path(root_layer.realPath)
     stage.SetEditTarget(root_layer)
@@ -163,13 +208,8 @@ def split_by_namespace(stage: Usd.Stage) -> dict[str, Sdf.Layer]:
     layers: dict[str, Sdf.Layer] = dict()
     for namespace in namespaces:
         layer_name = namespace.lower()
-        layer_path = str(root_layer_path.parent / f"{layer_name}.usd")
-
-        layer = Sdf.Layer.FindOrOpen(layer_path)
-        if layer:
-            layer.Clear()
-        else:
-            layer = Sdf.Layer.CreateNew(layer_path)
+        layer_path = str(root_layer_path.parent / f"{layer_name}.{suffix}.usd")
+        layer = create_or_clear_layer(layer_path)
         layer.TransferContent(root_layer)
 
         children_to_keep = [c for c in child_names if c.startswith(namespace)]
@@ -194,13 +234,107 @@ def split_by_namespace(stage: Usd.Stage) -> dict[str, Sdf.Layer]:
     return layers
 
 
-def split_preroll(stage: Usd.Stage) -> None:
-    pass
+def float_range_compare_factory(
+    keep_start: float | None, keep_end: float | None
+) -> Callable[[float], bool]:
+    def check_start(val: float) -> bool:
+        return isclose(val, keep_start, rel_tol=1e-4) or (keep_start < val)  # type: ignore[arg-type, operator]
+
+    def check_end(val: float) -> bool:
+        return isclose(val, keep_end, rel_tol=1e-4) or (val < keep_end)  # type: ignore[arg-type, operator]
+
+    def check_both(val: float) -> bool:
+        return check_start(val) and check_end(val)
+
+    if (keep_start is not None) and (keep_end is not None):
+        return check_both
+    elif keep_start is not None:
+        return check_start
+    elif keep_end is not None:
+        return check_end
+    else:
+        raise ValueError("Must provide keep_start or keep_end")
+
+
+def timesample_erase_kernel_factory(
+    layer: Sdf.Layer, *, keep_start: float | None = None, keep_end: float | None = None
+) -> Callable[[Sdf.Path | str], None]:
+    """Returns a layer traversal kernal that erases time samples not between
+    keep_start and keep_end"""
+
+    def kernel(path: Sdf.Path | str) -> None:
+        if isinstance(path, str):
+            path = Sdf.Path(path)
+        if not path.IsPrimPropertyPath():
+            return
+        attr_spec = layer.GetAttributeAtPath(path)
+        if not attr_spec.variability == Sdf.VariabilityVarying:
+            return
+
+        cmp = float_range_compare_factory(keep_start, keep_end)
+        for ts in layer.ListTimeSamplesForPath(path):
+            if cmp(ts):
+                continue
+            layer.EraseTimeSample(path, ts)
+
+        if keep_start:
+            layer.startTimeCode = keep_start
+        if keep_end:
+            layer.endTimeCode = keep_end
+
+    return kernel
+
+
+def split_preroll(
+    anim_layer: Sdf.Layer, name: str, prim_path: Sdf.Path, tl: Timeline
+) -> Sdf.Layer:
+    """Split anim and preroll data into separate files, then stitch them together
+    with Value Clips"""
+    preroll_layer_path = str(Path(anim_layer.realPath).parent / f"{name}.preroll.usd")
+    preroll_layer = create_or_clear_layer(preroll_layer_path)
+    preroll_layer.TransferContent(anim_layer)
+
+    preroll_layer.Traverse(
+        preroll_layer.pseudoRoot.path,
+        timesample_erase_kernel_factory(preroll_layer, keep_end=(tl.head - 1)),
+    )
+    preroll_layer.Save()
+
+    anim_layer.Traverse(
+        anim_layer.pseudoRoot.path,
+        timesample_erase_kernel_factory(anim_layer, keep_start=tl.head),
+    )
+    anim_layer.Save()
+
+    stitched_layer_path = str(Path(anim_layer.realPath).parent / f"{name}.usd")
+    stiched_layer = create_or_clear_layer(stitched_layer_path)
+    stiched_layer.TransferContent(anim_layer)
+
+    timesample_files = [preroll_layer.realPath, anim_layer.realPath]
+    topology_layer = create_or_clear_layer(
+        UsdUtils.GenerateClipTopologyName(stiched_layer.resolvedPath)
+    )
+    manifest_layer = create_or_clear_layer(
+        UsdUtils.GenerateClipManifestName(stiched_layer.realPath)
+    )
+    UsdUtils.StitchClipsTopology(topology_layer, timesample_files)
+    UsdUtils.StitchClipsManifest(
+        manifest_layer, topology_layer, timesample_files, prim_path
+    )
+    UsdUtils.StitchClips(
+        stiched_layer, timesample_files, prim_path, tl.preroll, tl.end, False
+    )
+    stiched_layer.Save()
+
+    return stiched_layer
 
 
 @attrs.define
 class ChaserArgs:
     mode: ChaserMode = attrs.field(converter=int)
+    timeline: Timeline = attrs.field(
+        default=None, kw_only=True, converter=lambda t: Timeline.from_json(t)
+    )
 
 
 class ExportChaser(mayaUsdLib.ExportChaser):
@@ -222,21 +356,30 @@ class ExportChaser(mayaUsdLib.ExportChaser):
     def PostExport(self) -> bool:
         if self._chaser_args.mode == ChaserMode.ANIM:
             scale_down_geo(self._stage)
-            layers = split_by_namespace(self._stage)
+            make_topo_attrs_default(self._stage)
+            layers = split_by_namespace(self._stage, "anim")
 
             root_layer = self._stage.GetRootLayer()
             root_layer_path = Path(root_layer.realPath)
 
+            character_root_path = Sdf.Path("/ROOT/MODEL")
+
             for name, layer in layers.items():
-                char_prim_path = Sdf.Path(f"/__class__/character/{name}")
-                char_prim_spec = Sdf.CreatePrimInLayer(root_layer, char_prim_path)
-                char_prim_spec.specifier = Sdf.SpecifierOver
-                reference = Sdf.Reference(
-                    f"./{Path(layer.realPath).relative_to(root_layer_path.parent)}",
-                    Sdf.Path("/ROOT/MODEL"),
+                stitched_layer = split_preroll(
+                    layer, name, character_root_path, self._chaser_args.timeline
                 )
+
+                char_prim_spec = Sdf.CreatePrimInLayer(
+                    root_layer, Sdf.Path(f"/__class__/character/{name}")
+                )
+                char_prim_spec.specifier = Sdf.SpecifierOver
+
+                reference = Sdf.Reference(
+                    f"./{Path(stitched_layer.realPath).relative_to(root_layer_path.parent)}",
+                    character_root_path,
+                )
+
                 char_prim_spec.referenceList.appendedItems = [reference]
-            split_preroll(self._stage)
 
         elif self._chaser_args.mode == ChaserMode.CHAR:
             scale_down_geo(self._stage)
