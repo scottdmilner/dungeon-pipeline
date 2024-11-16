@@ -42,8 +42,11 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     _enabled_loc_cbs: dict[str, dict[str, QCheckBox]]
     _enabled_shot_cbs: dict[str, QCheckBox]
     _main_layout: QtWidgets.QLayout
+    _use_dof: QCheckBox
+    _use_hardware_fog: QCheckBox
     _use_lighting: QCheckBox
     _use_shadows: QCheckBox
+    _use_ssao: QCheckBox
 
     playblaster = MPlayblaster()
     shot_configs: list[MShotDialogConfig]
@@ -217,6 +220,12 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
             bool(mc.modelEditor(active_editor, query=True, fogging=True))
         )
         toggles_layout.addWidget(self._use_hardware_fog)
+        self._use_dof = QCheckBox("Use DoF")
+        camera = str(
+            mc.modelEditor(active_editor, query=True, activeView=True, camera=True)
+        )
+        self._use_dof.setChecked(bool(mc.camera(camera, query=True, depthOfField=True)))
+        toggles_layout.addWidget(self._use_dof)
         self._main_layout.addWidget(toggles_widget)
 
         # custom folder prompt
@@ -251,6 +260,14 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
         return inner
 
     @property
+    def use_dof(self) -> bool:
+        return self._use_dof.isChecked()
+
+    @property
+    def use_hardware_fog(self) -> bool:
+        return self._use_hardware_fog.isChecked()
+
+    @property
     def use_lighting(self) -> bool:
         return self._use_lighting.isChecked()
 
@@ -261,10 +278,6 @@ class PlayblastDialog(QtWidgets.QMainWindow, ButtonPair):
     @property
     def use_ssao(self) -> bool:
         return self._use_ssao.isChecked()
-
-    @property
-    def use_hardware_fog(self) -> bool:
-        return self._use_hardware_fog.isChecked()
 
     def save_locations_to_paths(
         self, dialog_id: str, locs: Iterable[SaveLocation], filename: str

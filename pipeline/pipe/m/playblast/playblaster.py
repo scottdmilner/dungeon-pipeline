@@ -84,7 +84,11 @@ class MPlayblaster(Playblaster):
             global_kwargs: dict[str, Any] = {
                 "viewport_options": {},
                 "viewport2_options": {},
+                "camera_options": {},
             }
+
+            if self._config.dof:
+                global_kwargs["camera_options"].update({"depthOfField": True})
 
             if self._config.hardware_fog:
                 global_kwargs["viewport_options"].update({"fogging": True})

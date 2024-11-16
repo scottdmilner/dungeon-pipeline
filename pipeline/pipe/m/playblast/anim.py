@@ -186,6 +186,7 @@ class AnimPlayblastDialog(PlayblastDialog):
                     event="SceneSaved",
                 ),
             ],
+            dof=self.use_dof,
             hardware_fog=self.use_hardware_fog,
             lighting=self.use_lighting,
             shadows=self.use_shadows,
