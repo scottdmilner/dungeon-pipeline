@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from pipe.util import Playblaster
     from typing import Callable, Literal
 
+
 log = logging.getLogger(__name__)
 
 
@@ -116,19 +117,28 @@ class MPlayblastConfig:
             List of valid Maya builtin HUD names
         custom_huds: list[HudDefinition]
             List of `HudDefinition`s
+        dof: bool
+            Toggle depth of field
+        hardware_fog: bool
+            Toggle hardware fog
         lighting: bool
             Toggle viewport lighting
         shadows: bool
             Toggle viewport shadows
         shots: list[MShotPlayblastConfig]
             List of shots to playblast
+        ssao: bool
+            Toggle viewport screen-space anti-aliasing
     """
 
     builtin_huds: list[str]
     custom_huds: list[HudDefinition]
+    dof: bool
+    hardware_fog: bool
     lighting: bool
     shadows: bool
     shots: list[MShotPlayblastConfig]
+    ssao: bool
 
 
 class SaveLocation:

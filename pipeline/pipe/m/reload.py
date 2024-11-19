@@ -6,7 +6,7 @@ def reload_pipe() -> None:
     # wrap this in a try block because it will fail in headless mode
     try:
         import mayaUsd.lib as mayaUsdLib  # type: ignore[import-not-found]
-        from pipe.m.usdchaser import ExportChaser
+        from pipe.m.publish import ExportChaser
 
         mayaUsdLib.ExportChaser.Unregister(ExportChaser, ExportChaser.ID)
         mayaUsdLib.ExportChaser.Register(ExportChaser, ExportChaser.ID)

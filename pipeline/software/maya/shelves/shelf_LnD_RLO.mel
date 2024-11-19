@@ -100,7 +100,7 @@ global proc shelf_LnD_RLO () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from pipe.m.camera import CameraPublisher; CameraPublisher().publish();" 
+        -command "from pipe.m.publish import CameraPublisher; CameraPublisher().publish();" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

@@ -9,17 +9,17 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from Qt import QtCore, QtWidgets
-from Qt.QtWidgets import QCheckBox, QLabel, QWidget
+from Qt.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QWidget
 
 from pipe.glui.dialogs import ButtonPair, MessageDialog
 from pipe.util import checkbox_callback_helper, Playblaster
 
 from .playblaster import MPlayblaster
-from .struct import SaveLocation
+from .struct import HudDefinition, SaveLocation
 
 if TYPE_CHECKING:
     from .struct import MPlayblastConfig, MShotDialogConfig
-    from typing import Callable
+    from typing import Callable, Iterable
 
 log = logging.getLogger(__name__)
 
@@ -39,11 +39,14 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
 
     _central_widget: QWidget
     _custom_folder_text: QLabel
-    _enabled_locs: dict[str, dict[str, bool]]
-    _enabled_checkboxes: dict[str, QCheckBox]
+    _enabled_loc_cbs: dict[str, dict[str, QCheckBox]]
+    _enabled_shot_cbs: dict[str, QCheckBox]
     _main_layout: QtWidgets.QLayout
+    _use_dof: QCheckBox
+    _use_hardware_fog: QCheckBox
     _use_lighting: QCheckBox
     _use_shadows: QCheckBox
+    _use_ssao: QCheckBox
 
     playblaster = MPlayblaster()
     shot_configs: list[MShotDialogConfig]
@@ -54,6 +57,27 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
             "Current Folder",
             Path(mc.file(query=True, sceneName=True)).parent,  # type: ignore[arg-type]
             Playblaster.PRESET.WEB,
+        )
+
+    class MAYA_HUDS:
+        CAM_NAME = "HUDCameraNames"
+        CUR_FRAME = "HUDCurrentFrame"
+        FOCAL_LENGTH = "HUDFocalLength"
+
+    class CUSTOM_HUDS:
+        FILENAME = HudDefinition(
+            "LnDfilename",
+            command=lambda: str(mc.file(query=True, sceneName=True)),
+            event="SceneSaved",
+            label="File:",
+            section=5,
+        )
+        ARTIST = HudDefinition(
+            "LnDartist",
+            command=lambda: os.getlogin(),
+            event="SceneOpened",
+            label="Artist:",
+            section=5,
         )
 
     def __init__(
@@ -68,8 +92,8 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
 
         # initialize other values
         self.shot_configs = shot_configs
-        self._enabled_checkboxes = dict()
-        self._enabled_locs = defaultdict(dict)
+        self._enabled_shot_cbs = dict()
+        self._enabled_loc_cbs = defaultdict(dict)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -88,34 +112,77 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
         # iterate over shot configs and add them to the table
         playblasts_layout = QtWidgets.QGridLayout()
         for idx, pb in enumerate(self.shot_configs):
-            # create shot checkbox
-            self._enabled_checkboxes[pb.id] = QCheckBox()
-            cb = self._enabled_checkboxes[pb.id]
+            # create shot enable checkbox
+            shot_enable_cb_widget = QWidget()
+            shot_enable_cb_layout = QHBoxLayout(shot_enable_cb_widget)
+            self._enabled_shot_cbs[pb.id] = QCheckBox()
+            cb = self._enabled_shot_cbs[pb.id]
             cb.setChecked(True)
-            playblasts_layout.addWidget(cb, idx, 0, 1, 1)
+            shot_enable_cb_layout.addWidget(cb)
+
             shot_label = ClickableQLabel(f"<b>{pb.name}</b>", cb)
             shot_label.clicked.connect(self._click_checkbox(cb))
-            playblasts_layout.addWidget(shot_label, idx, 1, 1, 1)
+            shot_enable_cb_layout.addWidget(shot_label)
+            playblasts_layout.addWidget(shot_enable_cb_widget, idx + 1, 0, 1, 1)
 
             # disable the output checkboxes when the shot is disabled
             outputs_container = QWidget()
             cb.toggled.connect(checkbox_callback_helper(cb, outputs_container))
-            outputs_layout = QtWidgets.QHBoxLayout(outputs_container)
-            playblasts_layout.addWidget(outputs_container, idx, 2, 1, 1)
+            outputs_layout = QHBoxLayout(outputs_container)
+            playblasts_layout.addWidget(outputs_container, idx + 1, 1, 1, 1)
 
             # create the location checkboxes
             for location, enabled_by_default in pb.save_locs:
                 loc_cb = QCheckBox(location.name)
                 loc_cb.setChecked(enabled_by_default)
-                self._enabled_locs[pb.id][location.name] = enabled_by_default
-                loc_cb.toggled.connect(
-                    self._update_on_check(
-                        self._enabled_locs[pb.id], location.name, loc_cb
-                    )
-                )
+                self._enabled_loc_cbs[pb.id][location.name] = loc_cb
                 outputs_layout.addWidget(loc_cb)
 
-            playblasts_layout.addWidget(outputs_container, idx, 3, 1, 1)
+            playblasts_layout.addWidget(outputs_container, idx + 1, 2, 1, 1)
+
+        # Create check all/none buttons
+        shots_toggle_container = QWidget()
+        shots_toggle_container.setStyleSheet("margin: 0; padding: 0;")
+        shots_toggle_layout = QHBoxLayout(shots_toggle_container)
+        shots_all = QtWidgets.QPushButton("All", self)
+        shots_all.clicked.connect(
+            lambda: [
+                cb.setChecked(True)  # type: ignore[func-returns-value]
+                for cb in self._enabled_shot_cbs.values()
+                if cb.isEnabled()
+            ]
+        )
+        shots_toggle_layout.addWidget(shots_all)
+        shots_none = QtWidgets.QPushButton("None", self)
+        shots_none.clicked.connect(
+            lambda: [
+                cb.setChecked(False)  # type: ignore[func-returns-value]
+                for cb in self._enabled_shot_cbs.values()
+                if cb.isEnabled()
+            ]
+        )
+        shots_toggle_layout.addWidget(shots_none)
+
+        outputs_toggle_container = QWidget()
+        outputs_toggle_layout = QHBoxLayout(outputs_toggle_container)
+        for loc, _ in pb.save_locs:
+            loc_toggle_container = QWidget()
+            loc_toggle_container.setStyleSheet("margin: 0; padding: 0;")
+            loc_toggle_layout = QHBoxLayout(loc_toggle_container)
+            loc_all = QtWidgets.QPushButton("All", self)
+            loc_all.clicked.connect(
+                self._set_checkboxes(self._enabled_loc_cbs.values(), loc.name, True)
+            )
+            loc_toggle_layout.addWidget(loc_all)
+            loc_none = QtWidgets.QPushButton("None", self)
+            loc_none.clicked.connect(
+                self._set_checkboxes(self._enabled_loc_cbs.values(), loc.name, False)
+            )
+            loc_toggle_layout.addWidget(loc_none)
+            outputs_toggle_layout.addWidget(loc_toggle_container)
+
+        playblasts_layout.addWidget(shots_toggle_container, 0, 0, 1, 1)
+        playblasts_layout.addWidget(outputs_toggle_container, 0, 1)
 
         # configure playblast widget group
         playblasts_widget = QWidget()
@@ -128,19 +195,41 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
         playblasts_scroll_area.setWidgetResizable(True)
         self._main_layout.addWidget(playblasts_scroll_area)
 
-        # create lighting and shadow toggles
-        toggles_layout = QtWidgets.QHBoxLayout()
+        # create lighting, shadow, ssao toggles
+        active_editor = str(mc.sequenceManager(query=True, modelPanel=True))
+        toggles_layout = QHBoxLayout()
         toggles_widget = QWidget()
         toggles_widget.setLayout(toggles_layout)
         self._use_lighting = QCheckBox("Use Lighting")
-        self._use_lighting.setChecked(True)
+        self._use_lighting.setChecked(
+            mc.modelEditor(active_editor, query=True, displayLights=True) == "all"
+        )
         toggles_layout.addWidget(self._use_lighting)
         self._use_shadows = QCheckBox("Use Shadows")
+        self._use_shadows.setChecked(
+            bool(mc.modelEditor(active_editor, query=True, shadows=True))
+        )
         toggles_layout.addWidget(self._use_shadows)
+        self._use_ssao = QCheckBox("Use Anti-aliasing")
+        self._use_ssao.setChecked(
+            bool(mc.getAttr("hardwareRenderingGlobals.ssaoEnable"))
+        )
+        toggles_layout.addWidget(self._use_ssao)
+        self._use_hardware_fog = QCheckBox("Use Hardware Fog")
+        self._use_hardware_fog.setChecked(
+            bool(mc.modelEditor(active_editor, query=True, fogging=True))
+        )
+        toggles_layout.addWidget(self._use_hardware_fog)
+        self._use_dof = QCheckBox("Use DoF")
+        camera = str(
+            mc.modelEditor(active_editor, query=True, activeView=True, camera=True)
+        )
+        self._use_dof.setChecked(bool(mc.camera(camera, query=True, depthOfField=True)))
+        toggles_layout.addWidget(self._use_dof)
         self._main_layout.addWidget(toggles_widget)
 
         # custom folder prompt
-        custom_folder_layout = QtWidgets.QHBoxLayout()
+        custom_folder_layout = QHBoxLayout()
         self._custom_folder_text = QLabel(os.getenv("TMPDIR", os.getenv("TEMP", "tmp")))
         custom_folder_button = QtWidgets.QPushButton(text="Set Custom Folder")
         custom_folder_button.clicked.connect(self._set_custom_folder)
@@ -154,20 +243,29 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
         self._main_layout.addWidget(self.buttons)
 
     @staticmethod
-    def _update_on_check(
-        data: dict, key: str, checkbox: QCheckBox
-    ) -> Callable[[], None]:
-        def inner() -> None:
-            data[key] = checkbox.isChecked()
-
-        return inner
-
-    @staticmethod
     def _click_checkbox(checkbox: QCheckBox) -> Callable[[], None]:
         def inner() -> None:
             checkbox.click()
 
         return inner
+
+    @staticmethod
+    def _set_checkboxes(
+        checkboxes_index: Iterable[dict[str, QCheckBox]], loc: str, val: bool
+    ) -> Callable[[], None]:
+        def inner() -> None:
+            for cbi in checkboxes_index:
+                cbi[loc].setChecked(val)
+
+        return inner
+
+    @property
+    def use_dof(self) -> bool:
+        return self._use_dof.isChecked()
+
+    @property
+    def use_hardware_fog(self) -> bool:
+        return self._use_hardware_fog.isChecked()
 
     @property
     def use_lighting(self) -> bool:
@@ -176,6 +274,20 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
     @property
     def use_shadows(self) -> bool:
         return self._use_shadows.isChecked()
+
+    @property
+    def use_ssao(self) -> bool:
+        return self._use_ssao.isChecked()
+
+    def save_locations_to_paths(
+        self, dialog_id: str, locs: Iterable[SaveLocation], filename: str
+    ) -> dict[Playblaster.PRESET, list[str | Path]]:
+        paths: dict[Playblaster.PRESET, list[str | Path]] = defaultdict(list)
+        for loc in locs:
+            if self.is_location_enabled(dialog_id, loc.name):
+                paths[loc.preset].append(str(loc.path) + "/" + filename)
+
+        return paths
 
     def _set_custom_folder(self) -> None:
         """Prompt user to select a custom folder for saving"""
@@ -196,10 +308,10 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
 
     def is_shot_enabled(self, dialog_id: str) -> bool:
         """Takes an MShotDialogConfig id and returns if it's enabled"""
-        return self._enabled_checkboxes[dialog_id].isChecked()
+        return self._enabled_shot_cbs[dialog_id].isChecked()
 
     def is_location_enabled(self, dialog_id: str, loc_name: str) -> bool:
-        return self._enabled_locs[dialog_id][loc_name]
+        return self._enabled_loc_cbs[dialog_id][loc_name].isChecked()
 
     def do_export(self):
         self.playblaster.configure(self._generate_config()).playblast()

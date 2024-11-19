@@ -1,14 +1,58 @@
-set cut_paste_input [stack 0]
+#! /opt/Nuke14.0v5/libnuke-14.0.5.so -nx
 version 14.0 v5
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="0" w="1919" h="1013" screen="0">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1256" stretch="1"/>
+            <splitter orientation="2">
+                <split size="569"/>
+                <dock id="" activePageId="Viewer.1">
+                    <page id="Viewer.1"/>
+                </dock>
+                <split size="401"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                </dock>
+            </splitter>
+            <split size="615"/>
+            <dock id="" activePageId="Properties.1">
+                <page id="Properties.1"/>
+                <page id="uk.co.thefoundry.backgroundrenderview.1"/>
+                <page id="Scenegraph.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name /users/animation/ijc23/Documents/dungeon-pipeline/pipeline/software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk
+ colorManagement OCIO
+ OCIO_config aces_1.2
+ defaultViewerLUT "OCIO LUTs"
+ workingSpaceLUT scene_linear
+ monitorLut "Show Look (Display Rec.709)"
+ monitorOutLUT "Show Look (Display Rec.709)"
+ int8Lut matte_paint
+ int16Lut texture_paint
+ logLut compositing_log
+ floatLut scene_linear
+}
 BackdropNode {
  inputs 0
  name BackdropNode1
  tile_color 0x726d20ff
  label Write
  note_font_size 40
- selected true
- xpos -2480
- ypos 1152
+ xpos -2341
+ ypos 1126
  bdwidth 534
  bdheight 275
 }
@@ -17,11 +61,10 @@ BackdropNode {
  name BackdropNode4
  label Read
  note_font_size 40
- selected true
- xpos -2901
- ypos -1908
- bdwidth 1210
- bdheight 789
+ xpos -2373
+ ypos -1934
+ bdwidth 720
+ bdheight 365
 }
 BackdropNode {
  inputs 0
@@ -29,9 +72,8 @@ BackdropNode {
  tile_color 0x72895bff
  label Rotopaint
  note_font_size 40
- selected true
- xpos -2624
- ypos -854
+ xpos -2485
+ ypos -880
  bdwidth 911
  bdheight 659
 }
@@ -42,9 +84,8 @@ BackdropNode {
  label "Color correction"
  note_font_size 40
  note_font_color 0xc9eaffff
- selected true
- xpos -2627
- ypos -26
+ xpos -2488
+ ypos -52
  bdwidth 907
  bdheight 557
 }
@@ -54,9 +95,8 @@ BackdropNode {
  tile_color 0xa86238ff
  label "Lens effects"
  note_font_size 40
- selected true
- xpos -2512
- ypos 716
+ xpos -2373
+ ypos 690
  bdwidth 540
  bdheight 209
 }
@@ -71,22 +111,19 @@ Read {
  origset true
  colorspace data
  name Read3
- selected true
- xpos -2723
- ypos -1461
+ xpos -2584
+ ypos -1487
 }
 Grade {
  name Grade3
- selected true
- xpos -2723
- ypos -1377
+ xpos -2584
+ ypos -1403
  disable true
 }
 Dot {
  name Dot4
- selected true
- xpos -2689
- ypos -1254
+ xpos -2550
+ ypos -1280
 }
 Read {
  inputs 0
@@ -99,23 +136,20 @@ Read {
  origset true
  colorspace data
  name Read4
- selected true
- xpos -2256
- ypos -1803
+ xpos -2117
+ ypos -1829
 }
 Dot {
  name Dot5
- selected true
- xpos -2222
- ypos -1680
+ xpos -2083
+ ypos -1706
 }
-set Nf145580 [stack 0]
+set Nbd14c40 [stack 0]
 Merge2 {
  inputs 2
  name Merge2
- selected true
- xpos -2256
- ypos -1258
+ xpos -2117
+ ypos -1284
  disable true
 }
 RotoPaint {
@@ -146,60 +180,41 @@ RotoPaint {
 } }
  toolbar_source_transform_center {1024 435}
  name RotoPaint2
- selected true
- xpos -2256
- ypos -597
+ xpos -2117
+ ypos -623
  disable true
 }
 Grade {
  name Grade4
- selected true
- xpos -2256
- ypos 138
+ xpos -2117
+ ypos 112
  disable true
 }
 HueCorrect {
  name HueCorrect2
- selected true
- xpos -2256
- ypos 164
+ xpos -2117
+ ypos 138
  disable true
 }
 Lens {
  name Lens1
- selected true
- xpos -2256
- ypos 823
+ xpos -2117
+ ypos 797
 }
+Dot {
+ name Dot6
+ xpos -2080
+ ypos 1175
+}
+set Nba498d0 [stack 0]
 OCIODisplay {
  colorspace scene_linear
  display "Display Rec.709"
  view "Show Look"
  name OCIODisplay2
- selected true
- xpos -2256
- ypos 1243
+ xpos -2210
+ ypos 1256
 }
-Dot {
- name Dot6
- selected true
- xpos -2222
- ypos 1269
-}
-set Nf23c6d0 [stack 0]
-Write {
- colorspace data
- file_type exr
- first_part rgba
- in_colorspace scene_linear
- out_colorspace scene_linear
- name Write3
- label "Write .exrs"
- selected true
- xpos -2162
- ypos 1304
-}
-push $Nf23c6d0
 Write {
  colorspace data
  file_type mov
@@ -220,38 +235,45 @@ Write {
  out_colorspace scene_linear
  name Write4
  label "Write .movs"
- selected true
- xpos -2349
- ypos 1308
+ xpos -2210
+ ypos 1282
 }
 StickyNote {
  inputs 0
  name StickyNote4
  label "check layers are good"
- selected true
- xpos -2003
- ypos -1643
+ xpos -1864
+ ypos -1669
 }
 StickyNote {
  inputs 0
  name StickyNote5
  label "read input"
- selected true
- xpos -2148
- ypos -1744
+ xpos -2009
+ ypos -1770
 }
-push $Nf145580
+push $Nbd14c40
 LayerContactSheet {
  name LayerContactSheet2
- selected true
- xpos -1987
- ypos -1684
+ xpos -1848
+ ypos -1710
 }
 StickyNote {
  inputs 0
  name StickyNote6
  label "add more render layers if necessary"
- selected true
- xpos -2158
- ypos -1258
+ xpos -2019
+ ypos -1284
+}
+push $Nba498d0
+Write {
+ colorspace data
+ file_type exr
+ first_part rgba
+ in_colorspace scene_linear
+ out_colorspace scene_linear
+ name Write3
+ label "Write .exrs"
+ xpos -2023
+ ypos 1278
 }

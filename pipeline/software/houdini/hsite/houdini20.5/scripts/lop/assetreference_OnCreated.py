@@ -46,7 +46,8 @@ def update_destination_prim(
 
 try:
     me: hou.Node = kwargs["node"]  # type: ignore[name-defined] # noqa: F821
-    for callback in (update_filepath, update_destination_prim):
-        me.addEventCallback([hou.nodeEventType.ParmTupleChanged], callback=callback)
+    if not me.parent().name() == "ASSETS":
+        for callback in (update_filepath, update_destination_prim):
+            me.addEventCallback([hou.nodeEventType.ParmTupleChanged], callback=callback)
 except Exception:  # in case this is created as a locked node
     pass

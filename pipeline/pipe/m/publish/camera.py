@@ -12,17 +12,18 @@ if TYPE_CHECKING:
 
 import maya.cmds as mc
 
-from pipe.glui.dialogs import FilteredListDialog
-from pipe.m.publish import Publisher
-from pipe.m.usdchaser import ExportChaser, ChaserMode
+from pipe.glui.dialogs import FilteredListDialog, MessageDialog
 from pipe.struct.db import SGEntity, Shot
 from shared.util import get_production_path
+
+from .publisher import Publisher
+from .usdchaser import ExportChaser, ChaserMode
 
 
 log = logging.getLogger(__name__)
 
 
-class _PublishCameraDialog(FilteredListDialog):
+class PublishCameraDialog(FilteredListDialog):
     _camera: QComboBox
 
     def __init__(self, parent: QWidget | None, items: Sequence[str]) -> None:
@@ -54,7 +55,7 @@ class _PublishCameraDialog(FilteredListDialog):
 
 class CameraPublisher(Publisher):
     def __init__(self) -> None:
-        super().__init__(_PublishCameraDialog)
+        super().__init__(PublishCameraDialog)
 
     def _get_entity_list(self) -> list[str]:
         return self._conn.get_shot_code_list(sorted=True)
@@ -63,7 +64,17 @@ class CameraPublisher(Publisher):
         return self._conn.get_shot_by_code(name)
 
     def _get_save_path(self) -> Path | None:
-        assert self._entity.path is not None
+        try:
+            assert self._entity.path is not None
+        except AssertionError:
+            error = MessageDialog(
+                self._window,
+                "Error: No path for this Shot set in ShotGrid. Nothing exported",
+                "Error",
+            )
+            error.exec_()
+            return None
+
         return get_production_path() / self._entity.path / "cam" / "cam.usd"
 
     def _presave(self) -> bool:
@@ -86,4 +97,4 @@ class CameraPublisher(Publisher):
 
     @property
     def _camera(self) -> str:
-        return cast(_PublishCameraDialog, self._dialog)._camera.currentText()
+        return cast(PublishCameraDialog, self._dialog)._camera.currentText()

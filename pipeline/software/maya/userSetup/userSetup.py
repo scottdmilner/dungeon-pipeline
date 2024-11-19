@@ -25,7 +25,7 @@ def main():
 
     # register USD Export chaser
     import mayaUsd.lib as mayaUsdLib  # type: ignore[import-not-found]
-    from pipe.m.usdchaser import ExportChaser
+    from pipe.m.publish import ExportChaser
 
     mayaUsdLib.ExportChaser.Register(ExportChaser, ExportChaser.ID)
 

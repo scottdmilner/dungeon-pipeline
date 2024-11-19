@@ -1,0 +1,15 @@
+{
+	"env": [
+		{
+			"TLOPS": "$PIPE_PATH/lib/tractor-lops"
+		},
+        {
+            "HOUDINI_PATH": [
+                {
+                    "value": "$TLOPS",
+                    "method": "append"
+                }
+            ]
+        }
+	]
+}

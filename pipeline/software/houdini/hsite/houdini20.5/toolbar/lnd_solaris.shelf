@@ -8,6 +8,7 @@
   <toolshelf name="lnd_assets" label="LnD Assets">
     <memberTool name="open_asset"/>
     <memberTool name="open_set"/>
+    <memberTool name="open_shot"/>
   </toolshelf>
 
   <toolshelf name="test_geometry" label="Test Geometry">
@@ -31,6 +32,12 @@ fm.open_file()]]></script>
     <script scriptType="python"><![CDATA[from pipe.h.hipfile import HEnvFileManager
 fm = HEnvFileManager()
 fm.open_file()]]></script>
+  </tool>
+
+  <tool name="open_shot" label="Open Shot" icon="NETWORKS_scene">
+    <script scriptType="python">
+      <![CDATA[from pipe.h.hipfile import HShotFileManager
+HShotFileManager().open_file()]]></script>
   </tool>
 
   <tool name="lop_testgeometry_crag" label="Test Geometry: Crag" icon="SOP_testgeometry_crag">

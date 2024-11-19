@@ -33,3 +33,6 @@
 	url = https://github.com/abstractfactory/maya-capture.git
 [submodule "pipeline/software/maya/scripts/mayacapture"]
 	url = https://github.com/scottdmilner/maya-capture.git
+[submodule "pipeline/lib/tractor-lops"]
+	path = pipeline/lib/tractor-lops
+	url = https://github.com/scottdmilner/tractor-lops.git
