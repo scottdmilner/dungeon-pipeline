@@ -34,7 +34,6 @@ class RigPublisher(Publisher):
             "exportMaterialCollections": True,
             "materialCollectionsPath": "/ROOT/MODEL",
             "shadingMode": "useRegistry",
-            # "writeDefaults": True, # TODO enable for Maya 2025
         }
 
         return kwargs

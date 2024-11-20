@@ -162,13 +162,14 @@ class Publisher:
             "file": str(temp_publish_path if self._IS_WINDOWS else self._publish_path),
             "selection": True,
             "stripNamespaces": True,
+            # "writeDefaults": True,
             **self._get_mayausd_kwargs(),
         }
 
         mc.mayaUSDExport(**kwargs)  # type: ignore[attr-defined]
 
         # if on Windows, work around this bug: https://github.com/PixarAnimationStudios/OpenUSD/issues/849
-        # TODO: check if this is still needed in Maya 2025
+        # TODO: check if this is still needed in Maya 2026
         if self._IS_WINDOWS:
             shutil.move(temp_publish_path, self._publish_path)
 
