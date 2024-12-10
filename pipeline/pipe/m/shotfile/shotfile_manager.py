@@ -82,6 +82,20 @@ class MShotFileManager(FileManager):
                     edit=True,
                     editTarget="/".join(["shot", shot_code, "set", cls.MAYA_OVERRIDE]),
                 )
+
+                conn = DB.Get(DB_Config)
+                shot = conn.get_shot_by_code(shot_code)
+
+                # Import Timeline
+                frames, colors, comments = shot_timeline_generator(shot.cut_duration)
+                TimelineMarker.clear()
+                TimelineMarker.set(frames, colors, comments)
+                mc.playbackOptions(
+                    animationStartTime=frames[0],
+                    animationEndTime=frames[-1],
+                    minTime=frames[0],
+                    maxTime=frames[-1],
+                )
         except Exception:
             mc.error("Warning! Could not set edit target!")
 
@@ -217,16 +231,6 @@ class MShotFileManager(FileManager):
         self._setup_scene()
         root_layer.Save()
         root_layer.SetPermissionToSave(False)
-
-        # Import Timeline
-        frames, colors, comments = shot_timeline_generator(self.shot.cut_duration)
-        TimelineMarker.set(frames, colors, comments)
-        mc.playbackOptions(
-            animationStartTime=frames[0],
-            animationEndTime=frames[-1],
-            minTime=frames[0],
-            maxTime=frames[-1],
-        )
 
         # Save USD Edits to the scene file and don't prompt about it
         mc.optionVar(intValue=("mayaUsd_SerializedUsdEditsLocationPrompt", 0))
