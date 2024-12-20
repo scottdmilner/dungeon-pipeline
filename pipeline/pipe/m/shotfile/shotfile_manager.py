@@ -155,7 +155,8 @@ class MShotFileManager(FileManager):
             mc.warning("No exported camera found")
             return
 
-        root_layer.subLayerPaths.append(cam_file_layer.identifier)
+        if cam_file_layer.identifier not in root_layer.subLayerPaths:  # type: ignore[operator]
+            root_layer.subLayerPaths.append(cam_file_layer.identifier)
 
     def _import_env(self) -> None:
         assert self.shot.path is not None
@@ -176,11 +177,14 @@ class MShotFileManager(FileManager):
             )
         )
         env_override_layer.Save()
-        root_layer.subLayerPaths.append(env_override_layer.identifier)
+
+        if env_override_layer.identifier not in root_layer.subLayerPaths:  # type: ignore[operator]
+            root_layer.subLayerPaths.append(env_override_layer.identifier)
+
         # Fix env scale
         env_prim = stage.OverridePrim(Sdf.Path("/environment"))
         env_xformable = UsdGeom.Xformable(env_prim)
-        env_xformable.AddScaleOp().Set((100, 100, 100))
+        env_xformable.GetScaleOp().Set((100, 100, 100))
 
         stage.SetEditTarget(Usd.EditTarget(env_override_layer))
 
@@ -194,7 +198,8 @@ class MShotFileManager(FileManager):
             env_file_layer = Sdf.Layer.FindOrOpenRelativeToLayer(
                 root_layer, "/".join((env.path, "main.usd"))
             )
-            root_layer.subLayerPaths.append(env_file_layer.identifier)
+            if env_file_layer.identifier not in root_layer.subLayerPaths:  # type: ignore[operator]
+                root_layer.subLayerPaths.append(env_file_layer.identifier)
             # locked_layers.append(env_file_layer.identifier)
             env_file_layer.SetPermissionToSave(False)
 
