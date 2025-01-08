@@ -55,6 +55,7 @@ class MPlayblaster(Playblaster):
                         "hwFogStart",
                     )
                 },
+                "alphaCutPrepass": True,
                 "enableTextureMaxRes": True,
                 "maxHardwareLights": 16,
                 "multiSampleEnable": True,
