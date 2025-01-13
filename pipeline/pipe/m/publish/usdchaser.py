@@ -295,8 +295,9 @@ def float_range_compare_factory(
 def timesample_erase_kernel_factory(
     layer: Sdf.Layer, *, keep_start: float | None = None, keep_end: float | None = None
 ) -> Callable[[Sdf.Path | str], None]:
-    """Returns a layer traversal kernal that erases time samples not between
-    keep_start and keep_end"""
+    """Returns a layer traversal kernel that erases time samples not between
+    keep_start and keep_end
+    NOTE: assume that all time samples are in this layer"""
 
     def kernel(path: Sdf.Path | str) -> None:
         if isinstance(path, str):
@@ -307,7 +308,17 @@ def timesample_erase_kernel_factory(
         if not attr_spec.variability == Sdf.VariabilityVarying:
             return
 
-        cmp = float_range_compare_factory(keep_start, keep_end)
+        start = (
+            layer.GetBracketingTimeSamplesForPath(path, keep_start)[0]
+            if keep_start
+            else None
+        )
+        end = (
+            layer.GetBracketingTimeSamplesForPath(path, keep_end)[1]
+            if keep_end
+            else None
+        )
+        cmp = float_range_compare_factory(start, end)
         for ts in layer.ListTimeSamplesForPath(path):
             if cmp(ts):
                 continue
