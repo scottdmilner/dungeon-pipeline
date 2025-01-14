@@ -21,13 +21,19 @@ class HShotFileManager(HFileManager):
 
     class DEPARTMENT(str, Enum):
         CFX = "cfx"
+        FLO = "flo"
         FX = "fx"
         LIGHTING = "lighting"
 
     def __init__(self):
         department_dialog = FilteredListDialog(
             pipe.h.local.get_main_qt_window(),
-            [self.DEPARTMENT.CFX, self.DEPARTMENT.FX, self.DEPARTMENT.LIGHTING],
+            [
+                self.DEPARTMENT.CFX,
+                self.DEPARTMENT.FLO,
+                self.DEPARTMENT.FX,
+                self.DEPARTMENT.LIGHTING,
+            ],
             "Department Select",
             include_filter_field=False,
             accept_button_name="Select",
@@ -66,6 +72,8 @@ class HShotFileManager(HFileManager):
         muted_deps: list[str] = []
         if self._department == self.DEPARTMENT.CFX:
             muted_deps = ["cfx", "fx", "layout", "lighting"]
+        elif self._department == self.DEPARTMENT.FLO:
+            muted_deps = ["cfx", "flo", "lighting"]
         elif self._department == self.DEPARTMENT.FX:
             muted_deps = ["fx"]
         elif self._department == self.DEPARTMENT.LIGHTING:
