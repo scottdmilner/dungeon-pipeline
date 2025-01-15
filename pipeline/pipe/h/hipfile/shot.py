@@ -7,8 +7,11 @@ from pathlib import Path
 from typing import cast
 
 import pipe.h
+from pipe.db import DB
 from pipe.glui.dialogs import FilteredListDialog
 from pipe.struct.db import SGEntity, Shot
+
+from env_sg import DB_Config
 
 from .filemanager import HFileManager
 
@@ -55,6 +58,26 @@ class HShotFileManager(HFileManager):
         shot = cast(Shot, entity)
         hou.playbar.setFrameRange(shot.cut_in - 5, shot.cut_out + 5)
         hou.playbar.setPlaybackRange(shot.cut_in - 5, shot.cut_out + 5)
+        hou.setFrame(shot.cut_in)
+
+    def _open_file(self, path):
+        def do_post_open_file(event: hou.hipFileEventType) -> None:
+            if event != hou.hipFileEventType.AfterLoad:
+                return
+            try:
+                shot_code = str(hou.contextOption("SHOT")).split("/").pop()
+                conn = DB.Get(DB_Config)
+                shot = conn.get_shot_by_code(shot_code)
+                self._post_open_file(shot)
+            except Exception:
+                print("Failed to update frame range!")
+
+            hou.hipFile.removeEventCallback(do_post_open_file)
+
+        # hou.hipFile.load interrupts the running of the script so we have to
+        # call _post_open_file with a callback instead
+        hou.hipFile.addEventCallback(do_post_open_file)
+        super()._open_file(path)
 
     def _setup_file(self, path: Path, entity: SGEntity) -> None:
         super(HShotFileManager, HShotFileManager)._setup_file(self, path, entity)

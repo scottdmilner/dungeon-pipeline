@@ -92,9 +92,8 @@ class FileManager(metaclass=ABCMeta):
     def _get_subpath(self) -> str:
         return ""
 
-    @staticmethod
     @abstractmethod
-    def _open_file(path: Path) -> None:
+    def _open_file(self, path: Path) -> None:
         """Opens the file into the current session"""
         pass
 

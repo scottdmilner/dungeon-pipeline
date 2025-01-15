@@ -40,8 +40,7 @@ class HFileManager(FileManager):
                 return False
         return True
 
-    @staticmethod
-    def _open_file(path: Path) -> None:
+    def _open_file(self, path: Path) -> None:
         hou.hipFile.load(str(path), suppress_save_prompt=True)
 
     def _setup_file(self, path: Path, entity: SGEntity) -> None:

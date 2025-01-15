@@ -118,8 +118,7 @@ class MShotFileManager(FileManager):
         shot = cast(Shot, entity)
         return shot.code, "mb"
 
-    @staticmethod
-    def _open_file(path: Path) -> None:
+    def _open_file(self, path: Path) -> None:
         mc.file(str(path), open=True, force=True)
 
     def _post_open_file(self, entity: SGEntity) -> None:
