@@ -53,11 +53,7 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
 
     class SAVE_LOCS:
         CUSTOM = SaveLocation("Custom Folder", "", Playblaster.PRESET.WEB)
-        CURRENT = SaveLocation(
-            "Current Folder",
-            Path(mc.file(query=True, sceneName=True)).parent,  # type: ignore[arg-type]
-            Playblaster.PRESET.WEB,
-        )
+        CURRENT = SaveLocation("Current Folder", "", Playblaster.PRESET.WEB)
 
     class MAYA_HUDS:
         CAM_NAME = "HUDCameraNames"
@@ -87,8 +83,11 @@ class PlayblastDialog(ButtonPair, QtWidgets.QMainWindow):
         windowTitle: str = "LnD Playblast",
     ) -> None:
         super().__init__(parent, windowTitle=windowTitle)
-        # initialize SAVE_LOCS custom path
+        # initialize SAVE_LOCS paths
         self.SAVE_LOCS.CUSTOM._path = lambda: self._custom_folder_text.text()
+        self.SAVE_LOCS.CURRENT._path = lambda: Path(
+            mc.file(query=True, sceneName=True)  # type: ignore[arg-type]
+        ).parent
 
         # initialize other values
         self.shot_configs = shot_configs
