@@ -16,8 +16,7 @@ class SubstanceDesignerDCC(DCC):
     """Substance Designer DCC class"""
 
     def __init__(
-        self,
-        is_python_shell: bool = False,
+        self, is_python_shell: bool = False, extra_args: list[str] | None = None
     ) -> None:
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
@@ -47,6 +46,7 @@ class SubstanceDesignerDCC(DCC):
         launch_args = [
             "--config-file",
             str(this_path.parent / "lnd_configuration.sbscfg"),
+            *(extra_args or []),
         ]
 
         super().__init__(launch_command, launch_args, env_vars)

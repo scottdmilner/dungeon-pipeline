@@ -19,8 +19,7 @@ class NukeDCC(DCC):
     """Nuke DCC class"""
 
     def __init__(
-        self,
-        is_python_shell: bool = False,
+        self, is_python_shell: bool = False, extra_args: list[str] | None = None
     ) -> None:
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
@@ -51,8 +50,8 @@ class NukeDCC(DCC):
             launch_command = str(Executables.nuke)
 
         if is_python_shell:
-            launch_args = []
+            launch_args = extra_args or []
         else:
-            launch_args = ["--nukex"]
+            launch_args = ["--nukex", *(extra_args or [])]
 
         super().__init__(launch_command, launch_args, env_vars)

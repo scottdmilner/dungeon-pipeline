@@ -21,8 +21,7 @@ class SubstancePainterDCC(DCC):
     """Substance Painter DCC class"""
 
     def __init__(
-        self,
-        is_python_shell: bool = False,
+        self, is_python_shell: bool = False, extra_args: list[str] | None = None
     ) -> None:
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
@@ -55,6 +54,6 @@ class SubstancePainterDCC(DCC):
                 f"The operating system {system} is not a supported OS for this DCC software"
             )
 
-        launch_args: list[str] = []
+        launch_args: list[str] = extra_args or []
 
         super().__init__(launch_command, launch_args, env_vars)
