@@ -68,6 +68,8 @@ class HoudiniDCC(DCC):
             "HSITE": str(resolve_mapped_path(this_path.parent / "hsite")),
             # Job directory
             "JOB": str(resolve_mapped_path(get_production_path())),
+            # Ensure LD_LIBRARY_PATH is unset to allow nesting pipe instances
+            "LD_LIBRARY_PATH": None,
             # Manually set LD_LIBRARY_PATH to integrated Houdini libraries (for Axiom)
             # "LD_LIBRARY_PATH": str(Executables.hfs / "dsolib")
             # if platform.system() == "Linux"

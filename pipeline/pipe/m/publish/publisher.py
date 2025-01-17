@@ -191,9 +191,14 @@ class Publisher:
             if self._IS_WINDOWS:
                 shutil.move(temp_publish_path, self._publish_path)
 
+            self._postpublish()
+
             confirm = MessageDialog(
                 self._window,
                 self._get_confirm_message(),
                 "Export Complete",
             )
             confirm.exec_()
+
+    def _postpublish(self) -> None:
+        pass
