@@ -195,3 +195,6 @@ class Shot(SGEntity):
             _STRUCT_HOOK: lambda e, _: EnvironmentStub.from_sg(e) if e else None,
         }
     )
+    substeps: int = field(
+        default=1, metadata={_SG_NAME: "sg_substeps", _STRUCT_HOOK: lambda s, _: s or 1}
+    )

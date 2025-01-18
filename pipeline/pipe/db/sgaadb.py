@@ -428,6 +428,7 @@ class _ShotListQuery(_Query):
             "sg_path",
             "sg_sequence",
             "sg_set",
+            "sg_substeps",
         ]
 
     # Override
