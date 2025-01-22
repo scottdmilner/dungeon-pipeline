@@ -48,6 +48,7 @@ class MayaDCC(DCC):
                     str(this_path.parent / "scripts"),
                     str(this_path.parent / "userSetup"),
                     str(this_path.parent / "scripts/studiolibrary/src"),
+                    os.environ.get("RMANTREE", "") + "/bin",
                 ]
             ),
             "OCIO": str(pipe_path / "lib/ocio/love-v01/config.ocio"),
@@ -66,6 +67,7 @@ class MayaDCC(DCC):
                     os.environ.get("PXR_PLUGINPATH_NAME", ""),
                 ]
             ),
+            "TRACTOR_ENGINE": "tractor-engine.cs.byu.edu:443",
             # Icons
             "XBMLANGPATH": os.pathsep.join(
                 [

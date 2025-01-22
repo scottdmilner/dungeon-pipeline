@@ -62,6 +62,7 @@ class FileManager(metaclass=ABCMeta):
     _versioning: bool
     _version_glob: str
     _version_msg: str
+    _override_entity_code: str | None
 
     def __init__(
         self,
@@ -72,6 +73,7 @@ class FileManager(metaclass=ABCMeta):
         versioning: bool = False,
         version_glob: str = "{}.*.{}",
         version_msg: str = "Open older version",
+        override_entity_code: str | None = None,
     ) -> None:
         self._conn = conn
         self._entity_type = entity_type
@@ -79,10 +81,10 @@ class FileManager(metaclass=ABCMeta):
         self._versioning = versioning
         self._version_glob = version_glob
         self._version_msg = version_msg
+        self._override_entity_code = override_entity_code
 
-    @staticmethod
     @abstractmethod
-    def _check_unsaved_changes() -> bool:
+    def _check_unsaved_changes(self) -> bool:
         pass
 
     @abstractmethod
@@ -109,38 +111,44 @@ class FileManager(metaclass=ABCMeta):
     def _prompt_create_if_not_exist(self, path: Path) -> bool:
         """Returns True if safe to proceed, False otherwise"""
         if not path.exists():
-            prompt_create = MessageDialogCustomButtons(
-                self._main_window,
-                f"{str(path)} does not exist. Create?",
-                has_cancel_button=True,
-                ok_name="Create Folder",
-                cancel_name="Cancel",
-            )
-            if not bool(prompt_create.exec_()):
-                return False
+            if not self._override_entity_code:
+                prompt_create = MessageDialogCustomButtons(
+                    self._main_window,
+                    f"{str(path)} does not exist. Create?",
+                    has_cancel_button=True,
+                    ok_name="Create Folder",
+                    cancel_name="Cancel",
+                )
+                if not bool(prompt_create.exec_()):
+                    return False
             path.mkdir(mode=0o770, parents=True)
         return True
 
     def open_file(self) -> None:
         if not self._check_unsaved_changes():
             return
+        if not self._override_entity_code:
+            entity_names = self._conn.get_entity_code_list(
+                self._entity_type,
+                sorted=True,
+                child_mode=DBInterface.ChildQueryMode.ROOTS,
+            )
+            open_file_dialog = OpenFileDialog(
+                self._main_window,
+                entity_names,
+                self._entity_type,
+                versioning=self._versioning,
+                version_msg=self._version_msg,
+            )
 
-        entity_names = self._conn.get_entity_code_list(
-            self._entity_type, sorted=True, child_mode=DBInterface.ChildQueryMode.ROOTS
-        )
-        open_file_dialog = OpenFileDialog(
-            self._main_window,
-            entity_names,
-            self._entity_type,
-            versioning=self._versioning,
-            version_msg=self._version_msg,
-        )
+            if not open_file_dialog.exec_():
+                log.debug("error intializing dialog")
+                return
 
-        if not open_file_dialog.exec_():
-            log.debug("error intializing dialog")
-            return
+            response = open_file_dialog.get_selected_item()
+        else:
+            response = self._override_entity_code
 
-        response = open_file_dialog.get_selected_item()
         if not response:
             return
 
@@ -171,7 +179,7 @@ class FileManager(metaclass=ABCMeta):
             )
 
             # prompt the user for which version to open
-            if open_file_dialog.open_old_file:
+            if (not self._override_entity_code) and open_file_dialog.open_old_file:
                 version_file_dialog = FilteredListDialog(
                     self._main_window,
                     [file.name for file in files],

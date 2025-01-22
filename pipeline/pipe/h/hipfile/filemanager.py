@@ -20,15 +20,23 @@ class HFileManager(FileManager):
         entity_type: type[SGEntity],
         versioning: bool = False,
         version_glob: str = "",
+        override_entity_code: str | None = None,
     ) -> None:
         conn = DB.Get(DB_Config)
         window = pipe.h.local.get_main_qt_window()
         super().__init__(
-            conn, entity_type, window, versioning=versioning, version_glob=version_glob
+            conn,
+            entity_type,
+            window,
+            versioning=versioning,
+            version_glob=version_glob,
+            override_entity_code=override_entity_code,
         )
 
-    @staticmethod
-    def _check_unsaved_changes() -> bool:
+    def _check_unsaved_changes(self) -> bool:
+        if self._override_entity_code:
+            return True
+
         if hou.hipFile.hasUnsavedChanges():
             warning_response = hou.ui.displayMessage(
                 "The current file has not been saved. Continue anyways?",

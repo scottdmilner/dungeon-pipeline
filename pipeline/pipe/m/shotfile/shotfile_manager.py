@@ -99,8 +99,7 @@ class MShotFileManager(FileManager):
         except Exception:
             mc.error("Warning! Could not set edit target!")
 
-    @staticmethod
-    def _check_unsaved_changes() -> bool:
+    def _check_unsaved_changes(self) -> bool:
         if mc.file(query=True, modified=True):
             warning_response = mc.confirmDialog(
                 title="Do you want to save?",

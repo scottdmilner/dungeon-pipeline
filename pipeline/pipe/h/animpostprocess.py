@@ -2,21 +2,29 @@ from __future__ import annotations
 
 import hou
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from pipe.db import DB
+from pipe.h.hipfile import HShotFileManager
 from env_sg import DB_Config
 
 if TYPE_CHECKING:
     pass
 
 
-class AnimPostProcessor:
+class PostProcessor:
     _conn: DB
 
     def __init__(self):
         self._conn = DB(DB_Config)
 
+    @abstractmethod
+    def run(self, shot_code: str) -> None:
+        pass
+
+
+class AnimPostProcessor(PostProcessor):
     def run(self, shot_code: str) -> None:
         # Set up
         shot = self._conn.get_shot_by_code(shot_code)
@@ -49,4 +57,15 @@ class AnimPostProcessor:
         postprocess.setInput(0, layer_break)
         publish.setInput(0, postprocess)
 
+        publish.parm("execute").pressButton()  # type: ignore[union-attr]
+
+
+class CfxPostProcessor(PostProcessor):
+    def run(self, shot_code: str) -> None:
+        HShotFileManager(
+            override_dept="cfx",
+            override_entity_code=shot_code,
+        ).open_file()
+
+        publish = hou.node("/stage/PUBLISH")
         publish.parm("execute").pressButton()  # type: ignore[union-attr]
