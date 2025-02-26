@@ -103,7 +103,7 @@ BackdropNode {
 Read {
  inputs 0
  file_type exr
- format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ format "1920 816 0 0 1920 816 1 Love_and_Dungeons_aspect_ratio"
  first 1001
  last 1101
  origfirst 1001
@@ -128,7 +128,7 @@ Dot {
 Read {
  inputs 0
  file_type exr
- format "2048 870 0 0 2048 870 1 Love_and_Dungeons_aspect_ratio"
+ format "1920 816 0 0 1920 816 1 Love_and_Dungeons_aspect_ratio"
  first 1001
  last 1101
  origfirst 1001

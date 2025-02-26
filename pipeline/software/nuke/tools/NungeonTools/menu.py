@@ -25,7 +25,7 @@ m.addCommand("FrameBurn", "nuke.createNode('FrameBurn')", icon="nungeonIcon.png"
 
 
 # aspect ratio
-nuke.addFormat("2048 870 Love_and_Dungeons_aspect_ratio")
+nuke.addFormat("1920 816 Love_and_Dungeons_aspect_ratio")
 
 
 # Shelf Tools
