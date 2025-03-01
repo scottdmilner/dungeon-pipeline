@@ -143,6 +143,7 @@ def get_users_name():
     """
     # Get the current login username
     username = os.getlogin()
+    
 
     # Determine the path to the usernames.json file in the same directory as this script.
     # script_dir = os.path.dirname(os.path.abspath(__file__))
