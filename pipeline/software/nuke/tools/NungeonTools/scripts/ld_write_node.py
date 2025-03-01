@@ -227,11 +227,11 @@ def make_MOV_node():
 def update_mov_node(write_node):
     # print("in the update mov node")
     write_node["mov64_codec"].setValue(
-        12
-    )  # option 12 should be Avid DnxHr WHY NOT 2?? Idk
+        13
+    )  # option 13 should be Avid DnxHr WHY NOT 3?? Idk
     write_node["mov64_dnxhd_codec_profile"].setValue(
-        1
-    )  # option 1 should be DNxHD 422 10-bit 220Mbit
+        0
+    )  # option 1 should be 4:4:4 12 bit
 
 
 def make_EXR_node():
