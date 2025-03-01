@@ -5,6 +5,7 @@ import re
 import json
 from pipe.db import DB
 from env_sg import DB_Config
+from shared.util import get_production_path
 
 project_file = nuke.root()["name"].value()
 
@@ -145,7 +146,9 @@ def get_users_name():
 
     # Determine the path to the usernames.json file in the same directory as this script.
     # script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = "/users/animation/sblancha/dev/dungeon-pipeline/pipeline/software/nuke/tools/NungeonTools/scripts/usernames.json"
+    # json_path = "/users/animation/sblancha/dev/dungeon-pipeline/pipeline/software/nuke/tools/NungeonTools/scripts/usernames.json"
+
+    json_path = str(get_production_path()) + "/json/usernames.json"
     # print(str(json_path))
 
     # Open and load the JSON file.
