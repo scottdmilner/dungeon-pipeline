@@ -30,6 +30,11 @@ def choose_shot():
     open_shot.run()
 
 
+def set_frameRange_and_aspectRatio():
+    import set_frameRange_and_aspectRatio # type: ignore[import-not-found]
+    set_frameRange_and_aspectRatio.run()
+
+
 ################################### Nungeon buttons (Sidebar) ###################################
 toolbar = nuke.menu("Nodes")
 m = toolbar.addMenu("Nungeon", icon="nungeonIcon.png")
@@ -51,5 +56,6 @@ m.addCommand("L&D Write Node", "make_ld_write_node()", icon="nungeonIcon.png")
 
 ################################### Nungeon Shelf Tool Buttons ###################################
 menu = nuke.menu("Nuke")
-menu.addCommand("Choose Shot", "choose_shot()")
-menu.addCommand("Import Render Layers", "import_render_layers()")
+menu.addCommand("[Choose Shot]", "choose_shot()")
+menu.addCommand("[Import Render Layers]", "import_render_layers()")
+menu.addCommand("[Set Project Settings]", "set_frameRange_and_aspectRatio()")
