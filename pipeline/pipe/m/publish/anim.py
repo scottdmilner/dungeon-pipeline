@@ -4,13 +4,14 @@ import json
 import logging
 import os
 
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from pxr import Sdf
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Generator
     from pipe.struct.db import Shot
 
 import maya.cmds as mc
@@ -33,6 +34,7 @@ PROP_SET = "prop_SET"
 
 class AnimPublisher(Publisher):
     _shot: Shot
+    _timeline: Timeline
     _init_success: bool
 
     def __init__(self, headless: bool = False):
@@ -51,10 +53,29 @@ class AnimPublisher(Publisher):
             self._init_success = False
 
         self._shot = self._conn.get_shot_by_code(shot_code)
+        self._timeline = Timeline.from_shot(self._shot, preroll_duration=55)
+
+    def _set_origin_keyframes(self) -> None:
+        with maintain_current_time():
+            keyframed = [
+                o
+                for o in mc.ls(dagObjects=True, type="transform")
+                if mc.keyframe(o, query=True)
+            ]
+            mc.currentTime(self._timeline.preroll + 4)
+            mc.setKeyframe(*keyframed, insert=True)
+            mc.currentTime(self._timeline.preroll)
+            mc.xform(
+                *keyframed,
+                matrix=(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),  # type: ignore[arg-type]
+            )
+            mc.setKeyframe(*keyframed)
 
     def _prepublish(self) -> bool:
         if not self._init_success:
             return False
+
+        self._set_origin_keyframes()
 
         cache_sets = mc.ls("::" + CACHE_SET, sets=True)
         prop_sets = mc.ls("::" + PROP_SET, sets=True)
@@ -72,7 +93,6 @@ class AnimPublisher(Publisher):
         return True
 
     def _get_mayausd_kwargs(self) -> dict[str, Any]:
-        timeline = Timeline.from_shot(self._shot, preroll_duration=55)
         prop_sets = mc.ls("::" + PROP_SET, sets=True)
         props = dict()
         with maintain_selection():
@@ -86,14 +106,14 @@ class AnimPublisher(Publisher):
             "chaserArgs": [
                 (ExportChaser.ID, "mode", ChaserMode.ANIM),
                 (ExportChaser.ID, "props", json.dumps(props)),
-                (ExportChaser.ID, "timeline", timeline.to_json()),
+                (ExportChaser.ID, "timeline", self._timeline.to_json()),
             ],
             "exportColorSets": False,
             "exportComponentTags": False,
             "exportUVs": False,
             "frameRange": (
-                timeline.preroll,
-                timeline.tail,
+                self._timeline.preroll,
+                self._timeline.tail,
             ),
             "frameStride": 1.0 / self._shot.substeps,
             "shadingMode": "none",
@@ -168,3 +188,12 @@ def generate_tractor_setenv(parms: list[str]) -> str:
         + [f"{var}={os.getenv(var)}" for var in parms if var]
         + ["HOUDINI_LICENSE_SERVER=animlic.cs.byu.edu"]
     )
+
+
+@contextmanager
+def maintain_current_time() -> Generator[int, None, None]:
+    ctime = mc.currentTime(query=True)
+    try:
+        yield ctime
+    finally:
+        mc.currentTime(ctime)
