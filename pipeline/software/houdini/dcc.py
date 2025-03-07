@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import atexit
+import filecmp
 import logging
 import os
 import platform
+import shutil
+import sqlite3
 
+from contextlib import closing, contextmanager, suppress
+from filelock import FileLock
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,9 +23,18 @@ from env import Executables
 
 log = logging.getLogger(__name__)
 
+_PROD_DB = str(get_production_path() / "asset/assetGallery.db")
+_TMPDIR = Path(os.getenv("TMPDIR", os.getenv("TEMP", "tmp"))).resolve() / str(
+    os.getpid()
+)
+_TMPDIR.mkdir(0o755, exist_ok=True)
+
 
 class HoudiniDCC(DCC):
     """Houdini DCC class"""
+
+    _assetdb_path: str
+    _orig_assetdb_path: str
 
     def __init__(
         self, is_python_shell: bool = False, extra_args: list[str] | None = None
@@ -27,11 +42,18 @@ class HoudiniDCC(DCC):
         this_path = Path(__file__).resolve()
         pipe_path = this_path.parents[2]
 
+        self._assetdb_path = str(_TMPDIR / "assetGallery.db")
+        self._orig_assetdb_path = str(_TMPDIR / "assetGallery_orig.db")
+
         env_vars: typing.Mapping[str, int | str | None] | None
         env_vars = {
             "DCC": str(this_path.parent.name),
             # Asset Gallery sqlite db (set in 456.py)
-            "HOUDINI_ASSETGALLERY_DATA_SOURCE": "$JOB/asset/assetGallery.db",
+            "HOUDINI_ASSETGALLERY_DATA_SOURCE": (
+                self._assetdb_path
+                if platform.system() == "Linux"
+                else self._assetdb_path.replace("\\", "/")
+            ),
             # Backup directory
             "HOUDINI_BACKUP_DIR": "./.backup",
             # Dump the core on crash to help debugging
@@ -93,10 +115,10 @@ class HoudiniDCC(DCC):
                     os.environ.get("PXR_PLUGINPATH_NAME", ""),
                 ]
             ),
-            # Add pipe modules to Pyton path
+            # Add pipe modules to Python path
             "PYTHONPATH": os.pathsep.join(
                 [
-                    str(pipe_path),
+                    str(resolve_mapped_path(pipe_path)),
                     # Add $RMANTREE/bin to PYTHONPATH for the Tractor PDG scheduler
                     # os.environ.get("RMANTREE", "") + "/bin",
                     str(
@@ -126,4 +148,98 @@ class HoudiniDCC(DCC):
         else:
             launch_args = ["-foreground", *(extra_args or [])]
 
-        super().__init__(launch_command, launch_args, env_vars)
+        super().__init__(
+            launch_command, launch_args, env_vars, lambda: self._set_up_asset_gallery()
+        )
+
+    def _set_up_asset_gallery(self) -> None:
+        for f in _TMPDIR.glob("assetGallery.*"):
+            f.unlink()
+
+        shutil.copy(_PROD_DB, self._assetdb_path)
+        shutil.copy(self._assetdb_path, self._orig_assetdb_path)
+
+        atexit.register(lambda: self._merge_asset_gallery_changes())
+
+    def _merge_asset_gallery_changes(self) -> None:
+        # test if the gallery has changed
+        filecmp.clear_cache()
+        if filecmp.cmp(self._orig_assetdb_path, self._assetdb_path, shallow=False):
+            return
+
+        print("Merging asset gallery changes")
+
+        lock_path = _PROD_DB + ".lock"
+
+        lock = FileLock(lock_path, mode=0o775)
+
+        # merge local modifications into the prod database
+        with lock.acquire(timeout=40), closing(sqlite3.connect(_PROD_DB)) as conn:
+            cur = conn.cursor()
+            with (
+                attach_db(cur, self._assetdb_path) as MODIFIED,
+                attach_db(cur, self._orig_assetdb_path) as ORIGINAL,
+                conn,
+            ):
+                cur.execute("BEGIN")
+                table_query = (
+                    f"SELECT * from {MODIFIED}.sqlite_master WHERE type='table'"
+                )
+                for table in (nm for tp, nm, *_ in cur.execute(table_query)):
+                    # find the insertion point we left off at
+                    cur.execute(f"SELECT MAX(id) FROM {ORIGINAL}.{table}")
+                    last_id = cur.fetchone()[0]
+
+                    if isinstance(last_id, int):  # if there are already entries
+                        # update any changes to existing entries
+                        cur.execute(
+                            f"INSERT OR REPLACE INTO {table} "
+                            f"SELECT * FROM {MODIFIED}.{table} WHERE id <= {last_id} "
+                            + (
+                                "AND marked_for_deletion = 0"
+                                if table == "items"
+                                else ""
+                            )
+                        )
+                        # find all the non-id columns
+                        cur.execute(f"SELECT * FROM {ORIGINAL}.{table}")
+                        columns_no_id = [d[0] for d in cur.description if d[0] != "id"]
+                        columns_str = ", ".join(columns_no_id)
+                        # insert any new entries, will generate a new ID
+                        cur.execute(
+                            f"INSERT INTO {table} ({columns_str}) "
+                            f"SELECT {columns_str} FROM {MODIFIED}.{table} WHERE id > {last_id} "
+                            + (
+                                "AND marked_for_deletion = 0"
+                                if table == "items"
+                                else ""
+                            )
+                        )
+                    else:
+                        # insert any new entries
+                        cur.execute(
+                            f"INSERT INTO {table} "
+                            f"SELECT * FROM {MODIFIED}.{table} "
+                            + (
+                                "WHERE marked_for_deletion = 0"
+                                if table == "items"
+                                else ""
+                            )
+                        )
+
+        # clean up
+        for f in _TMPDIR.glob("assetGallery.*"):
+            f.unlink()
+        with suppress(OSError):
+            _TMPDIR.rmdir()
+
+
+@contextmanager
+def attach_db(cur: sqlite3.Cursor, path: str):
+    name = "".join(c for c in path if c.isalpha())
+    cur.execute(f"ATTACH DATABASE '{path}' AS {name}")
+
+    try:
+        yield name
+    finally:
+        cur.execute(f"DETACH DATABASE {name}")

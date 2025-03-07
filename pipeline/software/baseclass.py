@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import typing
 
-from shared.util import fix_launcher_metadata, get_production_path
+from shared.util import fix_launcher_metadata
 
 from .interface import DCCInterface, DCCLocalizerInterface
 
@@ -78,12 +78,7 @@ class DCC(DCCInterface):
         PYTHONPATH = "PYTHONPATH"
         if PYTHONPATH not in venv:
             venv[PYTHONPATH] = ""
-        venv[PYTHONPATH] = os.pathsep.join(
-            [
-                venv[PYTHONPATH],
-                str(get_production_path() / "../pipeline/pipeline/lib/python/any"),
-            ]
-        )
+
         print(venv[PYTHONPATH])
         return venv
 

@@ -64,9 +64,9 @@ package-mode = false
 python = "^3.9"
 attrs = "^24.2.0"
 cattrs = "^23.2.3"
-numpy = "1.26.4"
 ffmpeg-python = "^0.2.0"
 qt-py = {extras = ["stubs"], version = "^1.4.1"}
+filelock = "^3.17.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.7"

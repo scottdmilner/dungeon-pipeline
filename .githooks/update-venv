@@ -6,9 +6,15 @@ command -v pipx || {
 }
 command -v poetry || pipx install poetry
 pipx upgrade poetry
-poetry install
 
+PROD_DIR=/groups/dungeons/pipeline
 LOCAL_DIR=$(git rev-parse --show-toplevel)
+
+if [[ "${PROD_DIR}" == "${LOCAL_DIR}" ]]; then
+    poetry sync --without dev
+else
+    poetry sync
+fi
 
 if [ -z "${VIRTUAL_ENV}" ]; then
     source "${LOCAL_DIR}/.venv/bin/activate"

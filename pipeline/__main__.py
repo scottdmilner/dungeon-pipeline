@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-import os
+import site
 import sys
 
 from argparse import ArgumentParser
@@ -18,7 +18,6 @@ When run as a script, parse the software from the command line
 arguments, then run launch().
 """
 
-pipe_true_root = os.path.realpath(os.path.dirname(__file__))
 
 # Configure logging
 log = logging.getLogger(__name__)
@@ -76,6 +75,9 @@ if __name__ == "__main__":
         level=args.log_level,
         format="%(asctime)s %(processName)s(%(process)s) %(threadName)s [%(name)s(%(lineno)s)] [%(levelname)s] %(message)s",
     )
+
+    # Windows Python explicitly needs site.main to be called
+    site.main()
 
     launch(args.software, args.python, extras)
 
