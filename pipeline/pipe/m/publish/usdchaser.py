@@ -15,11 +15,9 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Iterable, Protocol
 
     class TimeSampleble(Protocol):
-        def GetTimeSamples(self) -> list[float]:
-            ...
+        def GetTimeSamples(self) -> list[float]: ...
 
-        def GetNumTimeSamples(self) -> int:
-            ...
+        def GetNumTimeSamples(self) -> int: ...
 
 
 from pipe.db import DB

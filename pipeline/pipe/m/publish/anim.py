@@ -173,7 +173,7 @@ class AnimPublisher(Publisher):
                         "exit()"
                     ),
                 ],
-                maxrunsecs=1800,
+                maxrunsecs=3600,
                 retryrc=[-11, 3, 139],
                 service="EL9",
             )
