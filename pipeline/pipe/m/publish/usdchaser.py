@@ -210,7 +210,7 @@ def find_and_move_prim(
     move_prim(layer, prim_to_move, new_prim_parent)
 
 
-def remove_namespace(layer: Sdf.Layer, root: Sdf.Path = Sdf.Path("/")) -> None:
+def remove_namespace(layer: Sdf.Layer, root: Sdf.Path = Sdf.Path("/")) -> bool:
     edit = Sdf.BatchNamespaceEdit()
 
     def traverse_kernel(path: Sdf.Path | str):
@@ -223,7 +223,7 @@ def remove_namespace(layer: Sdf.Layer, root: Sdf.Path = Sdf.Path("/")) -> None:
                 print(f"Namespace not changed for {str(path)}")
 
     layer.Traverse(root, traverse_kernel)
-    layer.Apply(edit)
+    return layer.Apply(edit)
 
 
 def split_by_namespace(stage: Usd.Stage, suffix: str) -> dict[str, Sdf.Layer]:
@@ -232,7 +232,7 @@ def split_by_namespace(stage: Usd.Stage, suffix: str) -> dict[str, Sdf.Layer]:
     stage.SetEditTarget(root_layer)
 
     child_names = stage.GetPseudoRoot().GetChildrenNames()
-    namespaces = set()
+    namespaces: set[str] = set()
     for n in child_names:
         namespace, item = n.split("_", 1)
         if item.startswith("S_"):  # static props
@@ -249,16 +249,17 @@ def split_by_namespace(stage: Usd.Stage, suffix: str) -> dict[str, Sdf.Layer]:
         layer = create_or_clear_layer(layer_path)
         layer.TransferContent(root_layer)
 
-        children_to_keep = [c for c in child_names if c.startswith(namespace)]
+        children_to_keep = [c for c in child_names if c.startswith(namespace + "_")]
         edit = Sdf.BatchNamespaceEdit()
         for child in child_names:
             if child not in children_to_keep:
                 edit.Add(Sdf.NamespaceEdit.Remove("/" + child))
 
         layer.Apply(edit)
-        remove_namespace(layer)
-        layer.Save()
+        if not remove_namespace(layer):
+            raise RuntimeError(f"Could not remove namespace on layer `{layer_name}`")
 
+        layer.Save()
         layers.update({layer_name: layer})
 
     # clear out root layer
