@@ -1,0 +1,161 @@
+#! C:/Program Files/Nuke11.3v1/nuke-11.3.1.dll -nx
+version 11.3 v1
+Gizmo {
+ inputs 2
+ tile_color 0x55ffbfff
+ label v2.0
+ addUserKnob {20 user l Controls}
+ addUserKnob {26 text l "<b>Luma Distort</b>" T " "}
+ addUserKnob {26 text_1 l " " T " "}
+ addUserKnob {7 x l X-Axis R 0 4}
+ x 10
+ addUserKnob {7 y l Y-Axis R 0 4}
+ y 10
+ addUserKnob {14 distortion l Distortion R 0 100}
+ distortion 100
+ addUserKnob {7 offset l Offset}
+ addUserKnob {26 ""}
+ addUserKnob {26 copyright1 l "" +STARTLINE T "<b>T_LumaDistort v2.0</b> - Petar Tsonev (c)"}
+}
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  tile_color 0x388e8e00
+  label "Footage to Distort"
+  note_font_size 42
+  xpos 477
+  ypos -225
+  bdwidth 366
+  bdheight 257
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode2
+  tile_color 0x8e3737ff
+  label "Distortion Map"
+  note_font_size 42
+  xpos 1247
+  ypos -1281
+  bdwidth 366
+  bdheight 257
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode3
+  tile_color 0x398e37ff
+  label X-AXIS
+  note_font_size 42
+  xpos 1336
+  ypos -890
+  bdwidth 188
+  bdheight 339
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode4
+  tile_color 0x398e37ff
+  label Y-AXIS
+  note_font_size 42
+  xpos 1666
+  ypos -890
+  bdwidth 188
+  bdheight 339
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode5
+  tile_color 0x50378eff
+  label "Distortion Amount"
+  note_font_size 42
+  xpos 1228
+  ypos 315
+  bdwidth 405
+  bdheight 234
+ }
+ Input {
+  inputs 0
+  name Map
+  xpos 1390
+  ypos -1162
+ }
+ Dot {
+  name Dot14
+  xpos 1424
+  ypos -774
+ }
+set N3903d400 [stack 0]
+ Dot {
+  name Dot15
+  xpos 1754
+  ypos -774
+ }
+ Shuffle {
+  red black
+  blue black
+  alpha black
+  name Shuffle4
+  xpos 1720
+  ypos -682
+ }
+ Grade {
+  white {{parent.y}}
+  name yaxis_Control
+  xpos 1720
+  ypos -586
+ }
+ Dot {
+  name Dot16
+  xpos 1754
+  ypos -486
+ }
+push $N3903d400
+ Shuffle {
+  green black
+  blue black
+  alpha black
+  name Shuffle6
+  xpos 1390
+  ypos -682
+ }
+ Grade {
+  white {{parent.x}}
+  name xaxis_Control
+  xpos 1390
+  ypos -586
+ }
+ Merge2 {
+  inputs 2
+  name Merge12
+  xpos 1390
+  ypos -490
+ }
+ Input {
+  inputs 0
+  name Plate
+  xpos 620
+  ypos -106
+  number 1
+ }
+ ShuffleCopy {
+  inputs 2
+  red red
+  green green
+  out forward
+  name ShuffleCopy1
+  xpos 1390
+  ypos -106
+ }
+ IDistort {
+  uv forward
+  uv_offset {{parent.offset}}
+  uv_scale {{parent.distortion}}
+  name IDistort1
+  xpos 1390
+  ypos 416
+ }
+ Output {
+  name Output1
+  xpos 1390
+  ypos 614
+ }
+end_group
