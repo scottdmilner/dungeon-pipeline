@@ -87,7 +87,9 @@ class MShotFileManager(FileManager):
                 shot = conn.get_shot_by_code(shot_code)
 
                 # Import Timeline
-                frames, colors, comments = shot_timeline_generator(shot.cut_duration)
+                frames, colors, comments = shot_timeline_generator(
+                    shot.cut_duration, shot.cut_in
+                )
                 TimelineMarker.clear()
                 TimelineMarker.set(frames, colors, comments)
                 mc.playbackOptions(
