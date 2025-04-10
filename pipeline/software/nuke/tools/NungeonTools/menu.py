@@ -46,11 +46,7 @@ def set_frameRange_and_aspectRatio():
 toolbar = nuke.menu("Nodes")
 m = toolbar.addMenu("Nungeon", icon="nungeonIcon.png")
 
-# lens node
-m.addCommand("Lens", "nuke.createNode('Lens')", icon="nungeonIcon.png")
-print(
-    f"nuke.nodePaste({str(get_pipe_path() / 'software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')})"
-)
+
 m.addCommand(
     "Template",
     f'nuke.nodePaste("{str(get_pipe_path() / "software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk")}")',
@@ -76,12 +72,21 @@ m.addCommand(
     f'nuke.nodePaste("{str(get_pipe_path() / "software/nuke/tools/NungeonTools/toolsets/eyelights.nk")}")',
     icon="nungeonIcon.png",
 )
+m.addCommand(
+    "Sky Dome (Basic)",
+    f'nuke.nodePaste("{str(get_pipe_path() / "software/nuke/tools/NungeonTools/toolsets/ld_skydome.nk")}")',
+    icon="nungeonIcon.png",
+)
 
-m.addCommand("FrameBurn", "nuke.createNode('FrameBurn')", icon="nungeonIcon.png")
+#m.addCommand("FrameBurn", "nuke.createNode('FrameBurn')", icon="nungeonIcon.png")
 m.addCommand("Grade_AOV", "nuke.createNode('grade_AOV')", icon="nungeonIcon.png")
 m.addCommand("luma Distort", "nuke.createNode('lumaDistort')", icon="nungeonIcon.png")
 m.addCommand("Roughen Edges", "nuke.createNode('roughenEdges')", icon="nungeonIcon.png")
-
+# lens node
+m.addCommand("Lens", "nuke.createNode('Lens')", icon="nungeonIcon.png")
+print(
+    f"nuke.nodePaste({str(get_pipe_path() / 'software/nuke/tools/NungeonTools/toolsets/shotTemplate.nk')})"
+)
 m.addCommand("L&D Write Node", "make_ld_write_node()", icon="nungeonIcon.png")
 
 
